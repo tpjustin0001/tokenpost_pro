@@ -11,91 +11,54 @@
   overflow-x: hidden;
 }
 
-.heroSection {
-  margin-bottom: var(--spacing-lg);
+.content {
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
 }
 
-.advancedGrid {
+/* Blockworks Style Widget Grid */
+.widgetGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-lg);
+}
+
+.twoColumnGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
 }
 
-@media (max-width: 1400px) {
-  .advancedGrid {
+.threeColumnGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 1600px) {
+  .widgetGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .threeColumnGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 1200px) {
+  .widgetGrid {
     grid-template-columns: 1fr;
   }
-}
 
-.chartSection {
-  margin-top: var(--spacing-lg);
-}
-
-/* News Feed Styles */
-.liveBadge {
-  padding: 2px 6px;
-  background: var(--accent-red-dim);
-  color: var(--accent-red);
-  border-radius: var(--radius-sm);
-  font-size: 9px;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-
-  0%,
-  100% {
-    opacity: 1;
+  .twoColumnGrid {
+    grid-template-columns: 1fr;
   }
 
-  50% {
-    opacity: 0.5;
+  .threeColumnGrid {
+    grid-template-columns: 1fr;
   }
-}
-
-.newsFeed {
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.newsItem {
-  display: flex;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-bottom: 1px solid var(--border-color);
-  text-decoration: none;
-  transition: background var(--transition-fast);
-}
-
-.newsItem:hover {
-  background: var(--bg-tertiary);
-}
-
-.newsItem:last-child {
-  border-bottom: none;
-}
-
-.newsTime {
-  font-size: 10px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  min-width: 32px;
-  flex-shrink: 0;
-}
-
-.newsTitle {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.newsItem:hover .newsTitle {
-  color: var(--text-primary);
 }
 
 /* Quick Links */

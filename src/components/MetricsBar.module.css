@@ -1,0 +1,78 @@
+.metricsBar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.metricCard {
+    padding: var(--spacing-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+}
+
+.labelRow {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+.label {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.info {
+    font-size: 10px;
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+.valueRow {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.value {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+}
+
+.change {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    font-family: var(--font-mono);
+}
+
+.change.positive {
+    color: var(--accent-green);
+}
+
+.change.negative {
+    color: var(--accent-red);
+}
+
+.sparkline {
+    width: 60px;
+    height: 22px;
+    margin-left: auto;
+}
+
+@media (max-width: 1400px) {
+    .metricsBar {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .metricsBar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

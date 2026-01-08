@@ -1,0 +1,36 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.assetCell {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.assetIcon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    font-weight: 700;
+    color: var(--accent-blue);
+}
+
+.whyBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 10px;
+    opacity: 0.5;
+    transition: opacity var(--transition-fast);
+}
+
+.whyBtn:hover {
+    opacity: 1;
+}

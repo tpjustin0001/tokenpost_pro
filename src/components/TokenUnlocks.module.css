@@ -1,0 +1,128 @@
+.subtitle {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    margin-left: var(--spacing-sm);
+}
+
+.list {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.unlockItem {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr 1fr 0.8fr;
+    gap: var(--spacing-md);
+    align-items: center;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    transition: background var(--transition-fast);
+}
+
+.unlockItem:hover {
+    background: var(--bg-tertiary);
+}
+
+.unlockItem:last-child {
+    border-bottom: none;
+}
+
+.tokenInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.tokenIcon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--accent-blue);
+}
+
+.tokenName {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.tokenSymbol {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+.unlockDetails {
+    text-align: center;
+}
+
+.daysLeft {
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    font-weight: 700;
+}
+
+.date {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.amountInfo {
+    text-align: right;
+}
+
+.amount {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.value {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.supplyInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--spacing-xs);
+}
+
+.percent {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--accent-red);
+}
+
+.typeBadge {
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-size: 9px;
+    font-weight: 500;
+}
+
+.footer {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.viewAll {
+    font-size: var(--text-xs);
+    color: var(--accent-blue);
+    text-decoration: none;
+}
+
+.viewAll:hover {
+    text-decoration: underline;
+}

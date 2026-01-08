@@ -1,0 +1,125 @@
+'use client';
+
+import styles from './TokenUnlocks.module.css';
+
+interface UnlockEvent {
+    id: string;
+    symbol: string;
+    name: string;
+    date: string;
+    daysLeft: number;
+    amount: string;
+    value: string;
+    percentOfSupply: string;
+    type: 'cliff' | 'linear' | 'team' | 'investor';
+}
+
+const UPCOMING_UNLOCKS: UnlockEvent[] = [
+    {
+        id: '1', symbol: 'ARB', name: '아비트럼',
+        date: '2025.01.16', daysLeft: 8,
+        amount: '92.65M', value: '$148.5M', percentOfSupply: '2.13%',
+        type: 'investor'
+    },
+    {
+        id: '2', symbol: 'OP', name: '옵티미즘',
+        date: '2025.01.31', daysLeft: 23,
+        amount: '31.34M', value: '$89.2M', percentOfSupply: '2.74%',
+        type: 'team'
+    },
+    {
+        id: '3', symbol: 'APT', name: '앱토스',
+        date: '2025.02.11', daysLeft: 34,
+        amount: '11.31M', value: '$102.8M', percentOfSupply: '2.64%',
+        type: 'cliff'
+    },
+    {
+        id: '4', symbol: 'SUI', name: '수이',
+        date: '2025.02.01', daysLeft: 24,
+        amount: '64.19M', value: '$256.7M', percentOfSupply: '2.19%',
+        type: 'investor'
+    },
+    {
+        id: '5', symbol: 'SEI', name: '세이',
+        date: '2025.01.15', daysLeft: 7,
+        amount: '55.56M', value: '$44.4M', percentOfSupply: '1.32%',
+        type: 'linear'
+    },
+];
+
+export default function TokenUnlocks() {
+    const getTypeLabel = (type: string) => {
+        switch (type) {
+            case 'cliff': return '클리프';
+            case 'linear': return '선형';
+            case 'team': return '팀';
+            case 'investor': return '투자자';
+            default: return type;
+        }
+    };
+
+    const getTypeColor = (type: string) => {
+        switch (type) {
+            case 'cliff': return 'var(--accent-red)';
+            case 'team': return 'var(--accent-purple)';
+            case 'investor': return 'var(--accent-blue)';
+            default: return 'var(--accent-yellow)';
+        }
+    };
+
+    const getDaysColor = (days: number) => {
+        if (days <= 7) return 'var(--accent-red)';
+        if (days <= 14) return 'var(--accent-yellow)';
+        return 'var(--text-secondary)';
+    };
+
+    return (
+        <div className="card">
+            <div className="card-header">
+                <span className="card-title">토큰 언락 일정</span>
+                <span className={styles.subtitle}>30일 이내</span>
+            </div>
+            <div className={styles.list}>
+                {UPCOMING_UNLOCKS.map((unlock) => (
+                    <div key={unlock.id} className={styles.unlockItem}>
+                        <div className={styles.tokenInfo}>
+                            <div className={styles.tokenIcon}>{unlock.symbol.slice(0, 2)}</div>
+                            <div>
+                                <div className={styles.tokenName}>{unlock.name}</div>
+                                <div className={styles.tokenSymbol}>{unlock.symbol}</div>
+                            </div>
+                        </div>
+
+                        <div className={styles.unlockDetails}>
+                            <div className={styles.daysLeft} style={{ color: getDaysColor(unlock.daysLeft) }}>
+                                D-{unlock.daysLeft}
+                            </div>
+                            <div className={styles.date}>{unlock.date}</div>
+                        </div>
+
+                        <div className={styles.amountInfo}>
+                            <div className={styles.amount}>{unlock.amount}</div>
+                            <div className={styles.value}>{unlock.value}</div>
+                        </div>
+
+                        <div className={styles.supplyInfo}>
+                            <div className={styles.percent}>{unlock.percentOfSupply}</div>
+                            <span
+                                className={styles.typeBadge}
+                                style={{
+                                    background: `${getTypeColor(unlock.type)}20`,
+                                    color: getTypeColor(unlock.type)
+                                }}
+                            >
+                                {getTypeLabel(unlock.type)}
+                            </span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            <div className={styles.footer}>
+                <a href="/unlocks" className={styles.viewAll}>전체 보기 →</a>
+            </div>
+        </div>
+    );
+}

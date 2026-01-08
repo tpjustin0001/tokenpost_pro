@@ -1,0 +1,120 @@
+.period {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    padding: 2px 6px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+}
+
+.list {
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.roundItem {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr 1fr;
+    gap: var(--spacing-md);
+    align-items: center;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    transition: background var(--transition-fast);
+}
+
+.roundItem:hover {
+    background: var(--bg-tertiary);
+}
+
+.projectInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.projectIcon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+    border-radius: var(--radius-md);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: white;
+}
+
+.projectName {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.roundType {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.amountInfo {
+    text-align: right;
+}
+
+.amount {
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--accent-green);
+}
+
+.valuation {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+.investorsInfo {
+    text-align: right;
+}
+
+.investors {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.sector {
+    font-size: 10px;
+    color: var(--text-muted);
+    padding: 1px 4px;
+    background: var(--bg-tertiary);
+    border-radius: 2px;
+    display: inline-block;
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-tertiary);
+}
+
+.summaryItem {
+    text-align: center;
+}
+
+.summaryLabel {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+
+.summaryValue {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+}

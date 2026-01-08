@@ -1,0 +1,11 @@
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+@media (max-width: 768px) {
+    .headerActions {
+        display: none;
+    }
+}

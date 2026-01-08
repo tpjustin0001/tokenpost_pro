@@ -1,66 +1,94 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
 
-export default function Home() {
+import Sidebar from '@/components/Sidebar';
+import MarketPulse from '@/components/MarketPulse';
+import SectorHeatmap from '@/components/SectorHeatmap';
+import MacroChart from '@/components/MacroChart';
+import InstitutionalMetrics from '@/components/InstitutionalMetrics';
+import ResearchIntel from '@/components/ResearchIntel';
+import TopAssets from '@/components/TopAssets';
+import TokenUnlocks from '@/components/TokenUnlocks';
+import WhaleTracker from '@/components/WhaleTracker';
+import FundraisingTracker from '@/components/FundraisingTracker';
+import AIInsights from '@/components/AIInsights';
+import { usePrices } from '@/lib/prices';
+import styles from './page.module.css';
+
+export default function HomePage() {
+  const { prices, isLoading } = usePrices();
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className={styles.appLayout}>
+      <Sidebar />
+
+      <div className={styles.mainArea}>
+        <MarketPulse />
+
+        <main className="main-content">
+          {/* Hero: Sector Heatmap */}
+          <section className={styles.heroSection}>
+            <SectorHeatmap />
+          </section>
+
+          {/* Main 2-Column Grid */}
+          <div className="dashboard-grid">
+            <div className="dashboard-main">
+              {/* 1. AI Insights - Real-time AI Analysis (Most Important) */}
+              <AIInsights />
+
+              {/* 2. Research & Intel + Breaking News (Core Value) */}
+              <ResearchIntel />
+
+              {/* 3. Advanced Features Grid */}
+              <div className={styles.advancedGrid}>
+                <TokenUnlocks />
+                <WhaleTracker />
+              </div>
+
+              {/* 4. Institutional Metrics with AI X-Ray */}
+              <InstitutionalMetrics symbol="BTC" />
+
+              {/* 5. Macro Chart (Less Priority - Smaller) */}
+              <div className={styles.chartSection}>
+                <MacroChart />
+              </div>
+            </div>
+
+            <div className="dashboard-side">
+              {/* 1. Top Assets */}
+              <TopAssets prices={prices} isLoading={isLoading} />
+
+              {/* 2. Fundraising */}
+              <FundraisingTracker />
+
+              {/* 3. Quick Links */}
+              <div className="card">
+                <div className="card-header">
+                  <span className="card-title">빠른 접근</span>
+                </div>
+                <div className={styles.quickLinks}>
+                  <a href="/screener" className={styles.quickLink}>
+                    <span className={styles.linkIcon}>SC</span>
+                    <span>스크리너</span>
+                  </a>
+                  <a href="/watchlist" className={styles.quickLink}>
+                    <span className={styles.linkIcon}>WL</span>
+                    <span>관심목록</span>
+                  </a>
+                  <a href="/research" className={styles.quickLink}>
+                    <span className={styles.linkIcon}>RE</span>
+                    <span>리포트</span>
+                  </a>
+                  <a href="/admin" className={styles.quickLink}>
+                    <span className={styles.linkIcon}>AD</span>
+                    <span>관리자</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

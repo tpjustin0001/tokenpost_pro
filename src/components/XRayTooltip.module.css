@@ -1,0 +1,73 @@
+.trigger {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    cursor: help;
+}
+
+.xrayIcon {
+    width: 14px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-muted);
+    opacity: 0.6;
+    transition: all var(--transition-fast);
+}
+
+.trigger:hover .xrayIcon {
+    opacity: 1;
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+}
+
+.tooltip {
+    position: fixed;
+    z-index: 9999;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.tooltipArrow {
+    width: 8px;
+    height: 8px;
+    background: var(--bg-card);
+    border-left: 1px solid var(--border-color);
+    border-top: 1px solid var(--border-color);
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+}
+
+.tooltipContent {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    line-height: 1.5;
+    max-width: 280px;
+    box-shadow: var(--shadow-md);
+}
+
+.xrayBadge {
+    display: inline-block;
+    padding: 2px 6px;
+    background: var(--accent-blue-dim);
+    color: var(--accent-blue);
+    border-radius: var(--radius-sm);
+    font-size: 9px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    margin-right: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+}

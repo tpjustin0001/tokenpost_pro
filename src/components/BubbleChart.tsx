@@ -17,17 +17,6 @@ interface CoinData {
     market_cap: number;
 }
 
-// Fallback Mock Data
-const MOCK_COINS: CoinData[] = [
-    { id: 'btc', symbol: 'btc', name: 'Bitcoin', current_price: 65000, price_change_percentage_1h_in_currency: 0.5, price_change_percentage_24h: 2.5, total_volume: 50000000000, market_cap: 1200000000000 },
-    { id: 'eth', symbol: 'eth', name: 'Ethereum', current_price: 3500, price_change_percentage_1h_in_currency: -0.2, price_change_percentage_24h: 1.8, total_volume: 20000000000, market_cap: 400000000000 },
-    { id: 'sol', symbol: 'sol', name: 'Solana', current_price: 150, price_change_percentage_1h_in_currency: 1.2, price_change_percentage_24h: 5.5, total_volume: 5000000000, market_cap: 80000000000 },
-    { id: 'bnb', symbol: 'bnb', name: 'BNB', current_price: 600, price_change_percentage_1h_in_currency: 0.1, price_change_percentage_24h: -1.2, total_volume: 1000000000, market_cap: 90000000000 },
-    { id: 'xrp', symbol: 'xrp', name: 'XRP', current_price: 0.6, price_change_percentage_1h_in_currency: -0.5, price_change_percentage_24h: -2.5, total_volume: 2000000000, market_cap: 30000000000 },
-    { id: 'doge', symbol: 'doge', name: 'Dogecoin', current_price: 0.12, price_change_percentage_1h_in_currency: 2.0, price_change_percentage_24h: 8.0, total_volume: 3000000000, market_cap: 18000000000 },
-    { id: 'ada', symbol: 'ada', name: 'Cardano', current_price: 0.45, price_change_percentage_1h_in_currency: -0.1, price_change_percentage_24h: -0.8, total_volume: 500000000, market_cap: 16000000000 },
-];
-
 export default function BubbleChart() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -36,22 +25,18 @@ export default function BubbleChart() {
     const { data: apiData, error, isLoading } = useSWR<CoinData[]>(
         '/api/markets',
         fetcher,
-        { refreshInterval: 60000 }
+        { refreshInterval: 60000, revalidateOnFocus: false }
     );
 
-    // Use Mock if API fails or is loading strictly for demo, 
-    // BUT we prefer real data. If error or empty, use Mock to prove "Working".
-    const coins = (apiData && apiData.length > 0) ? apiData : (error ? MOCK_COINS : []);
-    const showMockWarning = !!error || (apiData && apiData.length === 0);
+    // User requested NO MOCK DATA. Real data or error only.
+    const coins = apiData || [];
 
     const bubblesRef = useRef<{ x: number, y: number, r: number, coin: CoinData }[]>([]);
 
     useEffect(() => {
         if (!canvasRef.current || !containerRef.current) return;
 
-        // Don't render until we have SOME data to render (or mock)
-        if (coins.length === 0) return;
-
+        // If no data, just clear
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
@@ -106,6 +91,8 @@ export default function BubbleChart() {
         ctx.fillText('24H Change ↑', width / 2 + 40, 20);
         ctx.fillText('24H Change ↓', width / 2 + 40, height - 20);
 
+        if (coins.length === 0) return;
+
         // Draw Bubbles
         const maxVolume = Math.max(...coins.map(c => c.total_volume));
         const newBubbles: { x: number, y: number, r: number, coin: CoinData }[] = [];
@@ -137,9 +124,10 @@ export default function BubbleChart() {
             ctx.beginPath();
             ctx.arc(x, y, size, 0, Math.PI * 2);
 
+            // Strong Gradient
             const grad = ctx.createRadialGradient(x, y, 0, x, y, size);
-            grad.addColorStop(0, color + (isHovered ? '99' : '90'));
-            grad.addColorStop(1, color + (isHovered ? '60' : '40'));
+            grad.addColorStop(0, color + (isHovered ? 'cc' : '99')); // Stronger opacity 
+            grad.addColorStop(1, color + (isHovered ? '80' : '60'));
             ctx.fillStyle = grad;
             ctx.fill();
 
@@ -197,7 +185,6 @@ export default function BubbleChart() {
             <div className="card-header">
                 <span className="card-title">
                     시장 심리 & 유동성 (Top 100)
-                    {showMockWarning && <span style={{ fontSize: '10px', color: 'orange', marginLeft: '8px' }}>(API Limit - Showing Demo Data)</span>}
                 </span>
                 <div className={styles.legend}>
                     <span className={styles.legendItem}>
@@ -211,9 +198,17 @@ export default function BubbleChart() {
                 </div>
             </div>
             <div ref={containerRef} className={styles.chartWrapper} style={{ height: '350px', position: 'relative' }}>
-                {isLoading && !coins.length && (
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', zIndex: 5 }}>
-                        Loading Market Data...
+                {/* Loading State */}
+                {isLoading && coins.length === 0 && (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', zIndex: 5, background: 'rgba(0,0,0,0.2)' }}>
+                        <span className={styles.loadingText}>Loading Data...</span>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f87171', zIndex: 5, background: 'rgba(0,0,0,0.2)' }}>
+                        <span>Failed to load market data</span>
                     </div>
                 )}
 

@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import Sidebar from '@/components/Sidebar';
 import MetricsBar from '@/components/MetricsBar';
 import KimchiPremium from '@/components/KimchiPremium';
 import PricePerformance from '@/components/PricePerformance';
-import TradingChart from '@/components/TradingChart';
+
 import { StablecoinInterestChart, BlockchainRevChart, ETFFlowsChart } from '@/components/DataWidgets';
 import AIInsights from '@/components/AIInsights';
 import ResearchIntel from '@/components/ResearchIntel';
@@ -14,6 +15,11 @@ import WhaleTracker from '@/components/WhaleTracker';
 import BubbleChart from '@/components/BubbleChart';
 import GlobalXRay, { GlobalXRayButton } from '@/components/GlobalXRay';
 import styles from './page.module.css';
+
+const TradingChart = dynamic(() => import('@/components/TradingChart'), {
+  ssr: false,
+  loading: () => <div style={{ height: 350, background: 'rgba(13,17,23,0.5)', borderRadius: '8px' }} />
+});
 
 const CHART_SYMBOLS = [
   { id: 'BTC', name: '비트코인' },

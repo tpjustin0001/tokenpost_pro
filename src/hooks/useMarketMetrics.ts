@@ -15,7 +15,7 @@ interface MarketMetrics {
 
 export function useMarketMetrics() {
     const { data, error, isLoading } = useSWR<{ data: any }>(
-        'https://api.coingecko.com/api/v3/global',
+        '/api/global', // 프록시 사용
         fetcher,
         {
             refreshInterval: 30000, // 30초

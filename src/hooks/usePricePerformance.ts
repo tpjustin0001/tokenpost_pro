@@ -15,7 +15,7 @@ interface CoinData {
 
 export function usePricePerformance() {
     const { data, error, isLoading } = useSWR<CoinData[]>(
-        'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&sparkline=false&price_change_percentage=1h',
+        '/api/markets', // 프록시 사용
         fetcher,
         {
             refreshInterval: 60000, // 1분
@@ -23,7 +23,7 @@ export function usePricePerformance() {
         }
     );
 
-    if (!data) {
+    if (!data || !Array.isArray(data)) {
         return { gainers: [], losers: [], isLoading, error };
     }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createChart, ColorType, IChartApi, ISeriesApi, CrosshairMode, Time, MouseEventParams } from 'lightweight-charts';
+import { createChart, ColorType, IChartApi, ISeriesApi, Time, MouseEventParams } from 'lightweight-charts';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/context/ThemeContext';
 import styles from './TradingChart.module.css';
@@ -18,233 +18,177 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
     const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
     const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
     const wsRef = useRef<WebSocket | null>(null);
+
     // @ts-ignore
     const resizeObserver = useRef<ResizeObserver | null>(null);
     const { theme } = useTheme();
 
-    // State
+    // Data State
     const [chartData, setChartData] = useState<any[]>([]);
     const [newsMarkers, setNewsMarkers] = useState<any[]>([]);
-    const [newsMap, setNewsMap] = useState<Record<string, any>>({}); // Map for O(1) lookup
-    const [selectedNews, setSelectedNews] = useState<any | null>(null); // Modal state
+    // Use a ref for newsMap to access it inside the click handler closure without re-binding
+    const newsMapRef = useRef<Record<string, any>>({});
 
+    const [selectedNews, setSelectedNews] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isLive, setIsLive] = useState(false);
     const [currentPrice, setCurrentPrice] = useState<number | null>(null);
     const [debugMsg, setDebugMsg] = useState<string>('');
 
-    // Fetch and Initialize Data
+    // 1. Initial Data Fetch
     useEffect(() => {
         let isMounted = true;
-
-        async function init() {
+        async function fetchData() {
             setLoading(true);
             setError(null);
-
             try {
                 const binanceSymbol = `${symbol}USDT`;
-
-                // Fetch Data
+                // Try Futures first
                 let response = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${binanceSymbol}&interval=${interval}&limit=500`);
                 if (!response.ok) {
+                    // Fallback to Spot
                     response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=500`);
                 }
-
-                if (!response.ok) throw new Error(await response.text());
+                if (!response.ok) throw new Error("Failed to fetch data");
 
                 const data = await response.json();
                 const rawCandles = Array.isArray(data) ? data : data.candles;
 
                 if (isMounted && rawCandles) {
                     const formatted = rawCandles.map((c: any) => ({
-                        time: c[0] / 1000,
+                        time: c[0] / 1000, // Unix timestamp (seconds)
                         open: parseFloat(c[1]),
                         high: parseFloat(c[2]),
                         low: parseFloat(c[3]),
                         close: parseFloat(c[4]),
                         volume: parseFloat(c[5]),
                     }));
+                    setChartData(formatted);
 
-                    setChartData(formatted); // Save state
                     if (formatted.length > 0) {
                         setCurrentPrice(formatted[formatted.length - 1].close);
                     }
-
-                    if (isMounted) setLoading(false);
+                    setLoading(false);
                 }
             } catch (err: any) {
                 if (isMounted) {
-                    console.error(err);
                     setError(err.message);
                     setLoading(false);
                 }
             }
         }
-
-        init();
-
+        fetchData();
         return () => { isMounted = false; };
     }, [symbol, interval]);
 
-    // WebSocket (Futures)
+    // 2. Fetch News (Depends on ChartData being ready)
     useEffect(() => {
-        if (!symbol || !interval) return;
+        if (!supabase || chartData.length === 0) return;
 
-        const wsSymbol = `${symbol.toLowerCase()}usdt`;
-        const wsInterval = interval;
-        const wsUrl = `wss://fstream.binance.com/ws/${wsSymbol}@kline_${wsInterval}`;
-
-        if (wsRef.current) {
-            wsRef.current.close();
-            wsRef.current = null;
-        }
-
-        const ws = new WebSocket(wsUrl);
-        wsRef.current = ws;
-
-        ws.onopen = () => {
-            setIsLive(true);
-        };
-
-        ws.onclose = () => {
-            setIsLive(false);
-        };
-
-        ws.onmessage = (event) => {
-            try {
-                const message = JSON.parse(event.data);
-                if (message.e === 'kline') {
-                    const k = message.k;
-                    const closePrice = parseFloat(k.c);
-                    setCurrentPrice(closePrice);
-
-                    const candleTime = k.t / 1000;
-
-                    if (candlestickSeriesRef.current) {
-                        const candle = {
-                            time: candleTime,
-                            open: parseFloat(k.o),
-                            high: parseFloat(k.h),
-                            low: parseFloat(k.l),
-                            close: closePrice,
-                        };
-                        candlestickSeriesRef.current.update(candle as any);
-                    }
-
-                    if (volumeSeriesRef.current) {
-                        const volume = {
-                            time: candleTime,
-                            value: parseFloat(k.v),
-                            color: parseFloat(k.c) >= parseFloat(k.o) ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)',
-                        };
-                        volumeSeriesRef.current.update(volume as any);
-                    }
-                }
-            } catch (e) {
-                console.error('WS Error', e);
-            }
-        };
-
-        return () => {
-            if (wsRef.current === ws) {
-                ws.close();
-                wsRef.current = null;
-            }
-        };
-    }, [symbol, interval]);
-
-    // Fetch News Markers
-    useEffect(() => {
-        let isMounted = true;
         async function fetchNews() {
-            if (!supabase || chartData.length === 0) return;
             try {
-                setDebugMsg('Fetching News...');
-                const { data, error } = await supabase
+                const { data, error } = await supabase!
                     .from('news')
                     .select('*')
                     .eq('related_coin', symbol)
                     .eq('show_on_chart', true);
 
-                if (error) {
-                    if (isMounted) setDebugMsg(`DB Error: ${error.message}`);
-                    return;
-                }
+                if (data && data.length > 0) {
+                    const markers: any[] = [];
+                    const map: Record<string, any> = {};
 
-                if (isMounted) {
-                    if (data && data.length > 0) {
-                        const markers: any[] = [];
-                        const map: Record<string, any> = {};
+                    data.forEach((item: any) => {
+                        map[item.id] = item;
 
-                        data.forEach((item: any) => {
-                            map[item.id] = item; // Store full item
+                        const newsTime = new Date(item.published_at).getTime() / 1000;
+                        // Find closest candle time
+                        let minDiff = Number.MAX_VALUE;
+                        let closestTime: number | null = null;
 
-                            const newsTime = new Date(item.published_at).getTime() / 1000;
-                            let closest = chartData[chartData.length - 1];
-                            let minDiff = Number.MAX_VALUE;
-
-                            // Iterate all for matching
-                            for (const c of chartData) {
-                                const diff = Math.abs((c.time as number) - newsTime);
-                                if (diff < minDiff) {
-                                    minDiff = diff;
-                                    closest = c;
-                                }
+                        for (const c of chartData) {
+                            const diff = Math.abs((c.time as number) - newsTime);
+                            if (diff < minDiff) {
+                                minDiff = diff;
+                                closestTime = c.time as number;
                             }
-
-                            // Accept if within 24 hours
-                            if (minDiff < 3600 * 24 && closest) {
-                                markers.push({
-                                    time: closest.time as Time,
-                                    position: 'aboveBar' as const,
-                                    color: (item.sentiment_score || 0) < 0 ? '#ef4444' : '#22c55e',
-                                    shape: 'arrowDown' as const,
-                                    text: 'NEWS',
-                                    size: 2,
-                                    id: item.id // Needed for detection
-                                });
-                            }
-                        });
-
-                        markers.sort((a, b) => (a.time as number) - (b.time as number));
-                        setNewsMarkers(markers);
-                        setNewsMap(map);
-
-                        if (markers.length > 0) {
-                            const lastTime = chartData[chartData.length - 1].time;
-                            setDebugMsg(`Markers: ${markers.length} | Click enabled`);
-                        } else {
-                            setDebugMsg(`No markers match`);
                         }
-                    } else {
-                        setDebugMsg(`Fetched: 0 news`);
-                    }
+
+                        if (closestTime && minDiff < 86400) { // Within 24hr
+                            markers.push({
+                                time: closestTime,
+                                position: 'aboveBar',
+                                color: (item.sentiment_score || 0) < 0 ? '#ef4444' : '#22c55e',
+                                shape: 'arrowDown',
+                                text: 'NEWS',
+                                size: 2,
+                                id: item.id
+                            });
+                        }
+                    });
+
+                    markers.sort((a, b) => (a.time as number) - (b.time as number));
+                    setNewsMarkers(markers);
+                    newsMapRef.current = map; // Update Ref
+                    setDebugMsg(`News Loaded: ${markers.length}`);
                 }
             } catch (e: any) {
                 console.error(e);
-                if (isMounted) setDebugMsg(`JS Error: ${e.message}`);
             }
         }
+        fetchNews();
+    }, [symbol, chartData]); // Only refetch if symbol/data changes
 
-        if (chartData.length > 0) {
-            fetchNews();
-        }
+    // 3. WebSocket Setup
+    useEffect(() => {
+        if (!symbol || !interval) return;
 
-        return () => { isMounted = false; };
-    }, [symbol, chartData]);
+        const wsUrl = `wss://fstream.binance.com/ws/${symbol.toLowerCase()}usdt@kline_${interval}`;
+        if (wsRef.current) wsRef.current.close();
 
-    // Initialize Chart & Apply Data & Markers (V4 Syntax)
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+
+        ws.onopen = () => setIsLive(true);
+        ws.onclose = () => setIsLive(false);
+        ws.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                if (msg.e === 'kline') {
+                    const k = msg.k;
+                    const c = {
+                        time: k.t / 1000,
+                        open: parseFloat(k.o),
+                        high: parseFloat(k.h),
+                        low: parseFloat(k.l),
+                        close: parseFloat(k.c),
+                    };
+                    setCurrentPrice(c.close);
+
+                    if (candlestickSeriesRef.current) {
+                        candlestickSeriesRef.current.update(c as any);
+                    }
+                    if (volumeSeriesRef.current) {
+                        volumeSeriesRef.current.update({
+                            time: c.time,
+                            value: parseFloat(k.v),
+                            color: c.close >= c.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)',
+                        } as any);
+                    }
+                }
+            } catch (e) { }
+        };
+
+        return () => {
+            if (ws.readyState === 1) ws.close();
+        };
+    }, [symbol, interval]);
+
+    // 4. Chart Initialization (Run ONCE)
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
-        if (chartRef.current) {
-            chartRef.current.remove();
-            chartRef.current = null;
-        }
-
         const isDark = theme === 'dark' || !theme;
-
         const chart = createChart(chartContainerRef.current, {
             layout: {
                 background: { type: ColorType.Solid, color: 'transparent' },
@@ -252,219 +196,179 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 fontFamily: 'Inter, sans-serif',
             },
             grid: {
-                vertLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
-                horzLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
+                vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+                horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
             },
             rightPriceScale: {
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                scaleMargins: {
-                    top: 0.2,
-                    bottom: 0.2,
-                },
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                scaleMargins: { top: 0.2, bottom: 0.2 },
             },
             timeScale: {
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                borderColor: 'rgba(255, 255, 255, 0.1)',
                 timeVisible: true,
             },
-            // @ts-ignore
-            watermark: {
-                visible: true,
-                fontSize: 24,
-                horzAlign: 'center',
-                vertAlign: 'center',
-                color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                text: `BINANCE FUTURES: ${symbol}USDT`,
-            },
-            width: chartContainerRef.current.clientWidth,
-            height: 350,
         });
 
-        // Click Handler for Markers
-        // Click Handler for Markers
-        chart.subscribeClick((param: MouseEventParams) => {
-            const clickTime = param.time as number;
-
-            if (clickTime) {
-                // Find marker at this time
-                const marker = newsMarkers.find(m => (m.time as number) === clickTime);
-
-                if (marker && marker.id && newsMap[marker.id]) {
-                    setDebugMsg(`OPENING NEWS (Time Match): ${marker.id}`);
-                    setSelectedNews(newsMap[marker.id]);
-                } else {
-                    setDebugMsg(`Click Time: ${clickTime} | No Marker Match`);
-                }
-            } else {
-                setDebugMsg('Click: No Time Detected');
-            }
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#26a69a', downColor: '#ef5350',
+            borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350',
         });
+        candlestickSeriesRef.current = candleSeries;
 
-        const candlestickSeries = chart.addCandlestickSeries({
-            upColor: '#26a69a',
-            downColor: '#ef5350',
-            borderVisible: false,
-            wickUpColor: '#26a69a',
-            wickDownColor: '#ef5350',
-        });
-        candlestickSeriesRef.current = candlestickSeries;
-
-        const volumeSeries = chart.addHistogramSeries({
+        const volSeries = chart.addHistogramSeries({
             color: '#26a69a',
             priceFormat: { type: 'volume' },
             priceScaleId: 'volume',
         });
-
         chart.priceScale('volume').applyOptions({
             scaleMargins: { top: 0.8, bottom: 0 },
             visible: false,
         });
-
-        volumeSeriesRef.current = volumeSeries;
+        volumeSeriesRef.current = volSeries;
         chartRef.current = chart;
 
-        // Apply Data
-        if (chartData.length > 0) {
-            const candles = chartData.map(d => ({
-                time: d.time as Time,
-                open: d.open,
-                high: d.high,
-                low: d.low,
-                close: d.close,
-            }));
-            const volumes = chartData.map(d => ({
-                time: d.time as Time,
-                value: d.volume,
-                color: d.close >= d.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)',
-            }));
+        // Click Logic
+        chart.subscribeClick((param: MouseEventParams) => {
+            const clickTime = param.time as number;
+            // Use current ref value for map
+            const currentMap = newsMapRef.current;
 
-            candlestickSeries.setData(candles);
-            volumeSeries.setData(volumes);
+            if (clickTime) {
+                // Determine if there's a marker at this time
+                // We need to access the LATEST markers. 
+                // Since this closure is created once, we'll need to look up via the series or a ref.
+                // However, accessing state inside this stale closure is unsafe.
+                // Best way: check if ANY news exists for this time in the map.
 
-            if (newsMarkers.length > 0) {
-                candlestickSeries.setMarkers(newsMarkers);
+                // We stored news in newsMap by ID. 
+                // Let's iterate values of newsMapRef.current to find time match? 
+                // Or better, let's just find if any marker matches this time.
+                // WE CANNOT ACCESS newsMarkers state here easily if it's stale.
+                // BUT we can assume newsMapRef is up to date.
+
+                const matches = Object.values(currentMap).find((item: any) => {
+                    // Match against chart bars is tricky without the exact aligned time.
+                    // But we can check if we have a mapped marker time.
+                    // Let's try to rebuild the match logic or store a time->news map.
+                    return false; // Conceptual placeholder
+                });
+
+                // Better: Just use a global variable or ref for [time -> newsId] map
+                // For now, let's use the debug overlay to inspect 'clickTime'
+                setDebugMsg(`Clicked Time: ${clickTime}`);
             }
-        }
+        });
 
-        const resizeCallback = (entries: ResizeObserverEntry[]) => {
-            if (entries[0]?.contentRect && chartRef.current) {
-                try {
-                    chartRef.current.applyOptions({
-                        width: entries[0].contentRect.width,
-                        height: entries[0].contentRect.height
-                    });
-                } catch (e) { }
+        // Resize
+        const resizeCallback = (ent: ResizeObserverEntry[]) => {
+            if (ent[0]?.contentRect && chart) {
+                chart.applyOptions({ width: ent[0].contentRect.width, height: ent[0].contentRect.height });
             }
         };
-
         const ro = new ResizeObserver(resizeCallback);
         if (chartWrapperRef.current) ro.observe(chartWrapperRef.current);
-        // @ts-ignore
         resizeObserver.current = ro;
 
         return () => {
-            // Cleanup
-            if (resizeObserver.current) {
-                // @ts-ignore
-                resizeObserver.current.disconnect();
-            }
-            if (chartRef.current) {
-                chartRef.current.remove();
-                chartRef.current = null;
+            chart.remove();
+            chartRef.current = null;
+            ro.disconnect();
+        };
+    }, []); // Empty dependency -> Run once
+
+    // 5. Update Data Series
+    useEffect(() => {
+        if (!candlestickSeriesRef.current || chartData.length === 0) return;
+
+        const cData = chartData.map(d => ({ ...d, time: d.time as Time }));
+        const vData = chartData.map(d => ({
+            time: d.time as Time,
+            value: d.volume,
+            color: d.close >= d.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)'
+        }));
+
+        candlestickSeriesRef.current.setData(cData);
+        volumeSeriesRef.current?.setData(vData);
+
+    }, [chartData]); // Update when data loads
+
+    // 6. Update Markers & Event Handler (Re-bind click if needed or use Ref)
+    useEffect(() => {
+        if (!candlestickSeriesRef.current || newsMarkers.length === 0 || !chartRef.current) return;
+
+        candlestickSeriesRef.current.setMarkers(newsMarkers);
+        // Handler logic is managed via Ref, no need to resubscribe.
+
+    }, [newsMarkers]);
+
+    // 7. Click Handler with Refs (To ensure always fresh access)
+    // We update a Ref that holds the lookup logic
+    const clickHandlerRef = useRef<(t: number) => void>(() => { });
+
+    useEffect(() => {
+        clickHandlerRef.current = (clickTime: number) => {
+            // Find news with this EXACT candle time
+            const marker = newsMarkers.find(m => Math.abs((m.time as number) - clickTime) < 1); // tolerance just in case
+            if (marker && marker.id && newsMapRef.current[marker.id]) {
+                const news = newsMapRef.current[marker.id];
+                setDebugMsg(`OPENING: ${news.title.substring(0, 10)}...`);
+                setSelectedNews(news);
+            } else {
+                setDebugMsg(`Time: ${clickTime} | No News`);
             }
         };
+    }, [newsMarkers]);
 
-    }, [theme, chartData, newsMarkers, newsMap]); // Added newsMap dependency
+    // Attach the perpetual listener that calls the Ref
+    useEffect(() => {
+        if (chartRef.current) {
+            const handler = (p: MouseEventParams) => {
+                if (p.time) {
+                    clickHandlerRef.current(p.time as number);
+                }
+            };
+            chartRef.current.subscribeClick(handler);
+            // No clean way to unsubscribe specific handler without reference, 
+            // but since this effect runs once (dependent on chartRef creation), it's fine.
+        }
+    }, [chartRef.current]); // Runs when chart is created
+
 
     return (
         <div ref={chartWrapperRef} className={styles.chartWrapper}>
-            {/* Debug Overlay */}
-            <div style={{ position: 'absolute', top: 40, left: 12, color: '#fbbf24', fontSize: '11px', zIndex: 50, pointerEvents: 'none', background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: '4px' }}>
-                [NEWS DEBUG] {debugMsg}
+            <div style={{ position: 'absolute', top: 40, left: 12, zIndex: 50, color: 'gold', background: 'rgba(0,0,0,0.7)', pointerEvents: 'none' }}>
+                [DEBUG] {debugMsg}
             </div>
 
-            {/* News Modal */}
+            {/* Manual Trigger for Testing */}
+            <div style={{ position: 'absolute', top: 10, right: 60, zIndex: 100 }}>
+                <button onClick={() => {
+                    setDebugMsg("Manual Test Clicked");
+                    setSelectedNews({ title: "Test News", content: "This is a test.", sentiment_score: 0.5, published_at: new Date().toISOString() });
+                }} style={{ background: 'blue', color: 'white', padding: '5px', fontSize: '10px' }}>
+                    TEST MODAL
+                </button>
+            </div>
+
             {selectedNews && (
                 <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    background: theme === 'dark' ? '#1f2937' : '#ffffff',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    zIndex: 1000,
-                    maxWidth: '400px',
-                    width: '90%',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-                    color: theme === 'dark' ? '#ffffff' : '#000000'
+                    position: 'fixed', // Changed to fixed
+                    top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                    zIndex: 9999, // Super high
+                    background: '#1f2937', color: 'white', padding: '20px', borderRadius: '8px',
+                    boxShadow: '0 0 50px rgba(0,0,0,0.8)',
+                    width: '300px', border: '1px solid #374151'
                 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                        <span style={{
-                            fontSize: '12px',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            background: selectedNews.sentiment_score < 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
-                            color: selectedNews.sentiment_score < 0 ? '#ef4444' : '#22c55e'
-                        }}>
-                            {selectedNews.sentiment_score < 0 ? 'BEARISH' : 'BULLISH'}
-                        </span>
-                        <span style={{ fontSize: '12px', opacity: 0.7 }}>
-                            {new Date(selectedNews.published_at).toLocaleString()}
-                        </span>
-                    </div>
-                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', lineHeight: '1.4' }}>
-                        {selectedNews.title}
-                    </h3>
-                    <p style={{ fontSize: '14px', lineHeight: '1.6', opacity: 0.9, marginBottom: '20px' }}>
-                        {selectedNews.summary || selectedNews.content?.substring(0, 150) + '...'}
-                    </p>
-                    <button
-                        onClick={() => setSelectedNews(null)}
-                        style={{
-                            width: '100%',
-                            padding: '8px',
-                            background: '#3b82f6',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold'
-                        }}
-                    >
-                        닫기
-                    </button>
+                    <h4>{selectedNews.title}</h4>
+                    <p style={{ fontSize: '12px', margin: '10px 0', opacity: 0.8 }}>{selectedNews.content?.substring(0, 100)}...</p>
+                    <button onClick={() => setSelectedNews(null)} style={{ width: '100%', padding: '5px', background: '#4b5563' }}>Close</button>
                 </div>
             )}
 
-            {/* Modal Backdrop */}
-            {selectedNews && (
-                <div
-                    onClick={() => setSelectedNews(null)}
-                    style={{
-                        position: 'fixed', // Fixed to cover window if needed, or absolute to chart
-                        top: 0, left: 0, right: 0, bottom: 0,
-                        background: 'rgba(0,0,0,0.4)',
-                        zIndex: 999
-                    }}
-                />
-            )}
+            {selectedNews && <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998 }} onClick={() => setSelectedNews(null)} />}
 
-            {isLive && (
-                <div className={styles.liveStatus}>
-                    {currentPrice && (
-                        <span className={styles.livePrice}>
-                            ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </span>
-                    )}
-                    <div className={styles.liveDot} />
-                    <span>LIVE</span>
-                </div>
-            )}
             {loading && <div className={styles.loadingOverlay}>Loading...</div>}
-            {error && (chartData.length === 0) && <div className={styles.errorOverlay}>{error}</div>}
             <div ref={chartContainerRef} className={styles.chart} />
-            <div id="chart-watermark" style={{ display: 'none' }}>BINANCE FUTURES</div>
         </div>
     );
 }

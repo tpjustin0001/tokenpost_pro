@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createChart, ColorType, IChartApi, ISeriesApi, CrosshairMode, Time } from 'lightweight-charts';
+import { createChart, ColorType, IChartApi, ISeriesApi, CrosshairMode, Time, MouseEventParams } from 'lightweight-charts';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/context/ThemeContext';
 import styles from './TradingChart.module.css';
@@ -15,7 +15,6 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartWrapperRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
-    // V4: Series types are generic, but we use any for simplicity in refs or specific interfaces if imported
     const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
     const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
     const wsRef = useRef<WebSocket | null>(null);
@@ -26,6 +25,9 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
     // State
     const [chartData, setChartData] = useState<any[]>([]);
     const [newsMarkers, setNewsMarkers] = useState<any[]>([]);
+    const [newsMap, setNewsMap] = useState<Record<string, any>>({}); // Map for O(1) lookup
+    const [selectedNews, setSelectedNews] = useState<any | null>(null); // Modal state
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isLive, setIsLive] = useState(false);
@@ -93,7 +95,6 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         const wsInterval = interval;
         const wsUrl = `wss://fstream.binance.com/ws/${wsSymbol}@kline_${wsInterval}`;
 
-        // Cleanup previous websocket properly
         if (wsRef.current) {
             wsRef.current.close();
             wsRef.current = null;
@@ -120,7 +121,6 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
                     const candleTime = k.t / 1000;
 
-                    // Update Chart Series directly
                     if (candlestickSeriesRef.current) {
                         const candle = {
                             time: candleTime,
@@ -175,8 +175,11 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 if (isMounted) {
                     if (data && data.length > 0) {
                         const markers: any[] = [];
+                        const map: Record<string, any> = {};
 
                         data.forEach((item: any) => {
+                            map[item.id] = item; // Store full item
+
                             const newsTime = new Date(item.published_at).getTime() / 1000;
                             let closest = chartData[chartData.length - 1];
                             let minDiff = Number.MAX_VALUE;
@@ -190,7 +193,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                                 }
                             }
 
-                            // Accept if within 24 hours (generous matching)
+                            // Accept if within 24 hours
                             if (minDiff < 3600 * 24 && closest) {
                                 markers.push({
                                     time: closest.time as Time,
@@ -199,19 +202,20 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                                     shape: 'arrowDown' as const,
                                     text: 'NEWS',
                                     size: 2,
-                                    id: item.id // custom field, library ignores it
+                                    id: item.id // Needed for detection
                                 });
                             }
                         });
 
                         markers.sort((a, b) => (a.time as number) - (b.time as number));
                         setNewsMarkers(markers);
+                        setNewsMap(map);
 
                         if (markers.length > 0) {
                             const lastTime = chartData[chartData.length - 1].time;
-                            setDebugMsg(`Markers: ${markers.length} | LastT: ${lastTime}`);
+                            setDebugMsg(`Markers: ${markers.length} | Click enabled`);
                         } else {
-                            setDebugMsg(`No markers match (fetched ${data.length})`);
+                            setDebugMsg(`No markers match`);
                         }
                     } else {
                         setDebugMsg(`Fetched: 0 news`);
@@ -234,7 +238,6 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
-        // Cleanup old chart
         if (chartRef.current) {
             chartRef.current.remove();
             chartRef.current = null;
@@ -276,7 +279,17 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             height: 350,
         });
 
-        // V4: addCandlestickSeries
+        // Click Handler for Markers
+        chart.subscribeClick((param: MouseEventParams) => {
+            const p = param as any;
+            if (p.hoveredMarkerId) {
+                const id = p.hoveredMarkerId as string;
+                if (newsMap[id]) {
+                    setSelectedNews(newsMap[id]);
+                }
+            }
+        });
+
         const candlestickSeries = chart.addCandlestickSeries({
             upColor: '#26a69a',
             downColor: '#ef5350',
@@ -286,11 +299,10 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         });
         candlestickSeriesRef.current = candlestickSeries;
 
-        // V4: addHistogramSeries
         const volumeSeries = chart.addHistogramSeries({
             color: '#26a69a',
             priceFormat: { type: 'volume' },
-            priceScaleId: 'volume', // Separate Scale
+            priceScaleId: 'volume',
         });
 
         chart.priceScale('volume').applyOptions({
@@ -319,10 +331,8 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             candlestickSeries.setData(candles);
             volumeSeries.setData(volumes);
 
-            // Markers
             if (newsMarkers.length > 0) {
                 candlestickSeries.setMarkers(newsMarkers);
-                // Temporarily force update debug msg if needed, but handled in fetchNews
             }
         }
 
@@ -343,6 +353,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         resizeObserver.current = ro;
 
         return () => {
+            // Cleanup
             if (resizeObserver.current) {
                 // @ts-ignore
                 resizeObserver.current.disconnect();
@@ -353,14 +364,82 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             }
         };
 
-    }, [theme, chartData, newsMarkers]); // Re-render when markers ready
+    }, [theme, chartData, newsMarkers, newsMap]); // Added newsMap dependency
 
     return (
         <div ref={chartWrapperRef} className={styles.chartWrapper}>
             {/* Debug Overlay */}
-            <div style={{ position: 'absolute', top: 40, left: 12, color: '#fbbf24', fontSize: '11px', zIndex: 100, pointerEvents: 'none', background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: '4px' }}>
+            <div style={{ position: 'absolute', top: 40, left: 12, color: '#fbbf24', fontSize: '11px', zIndex: 50, pointerEvents: 'none', background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: '4px' }}>
                 [NEWS DEBUG] {debugMsg}
             </div>
+
+            {/* News Modal */}
+            {selectedNews && (
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    background: theme === 'dark' ? '#1f2937' : '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    zIndex: 1000,
+                    maxWidth: '400px',
+                    width: '90%',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                    color: theme === 'dark' ? '#ffffff' : '#000000'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                        <span style={{
+                            fontSize: '12px',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            background: selectedNews.sentiment_score < 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
+                            color: selectedNews.sentiment_score < 0 ? '#ef4444' : '#22c55e'
+                        }}>
+                            {selectedNews.sentiment_score < 0 ? 'BEARISH' : 'BULLISH'}
+                        </span>
+                        <span style={{ fontSize: '12px', opacity: 0.7 }}>
+                            {new Date(selectedNews.published_at).toLocaleString()}
+                        </span>
+                    </div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', lineHeight: '1.4' }}>
+                        {selectedNews.title}
+                    </h3>
+                    <p style={{ fontSize: '14px', lineHeight: '1.6', opacity: 0.9, marginBottom: '20px' }}>
+                        {selectedNews.summary || selectedNews.content?.substring(0, 150) + '...'}
+                    </p>
+                    <button
+                        onClick={() => setSelectedNews(null)}
+                        style={{
+                            width: '100%',
+                            padding: '8px',
+                            background: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        닫기
+                    </button>
+                </div>
+            )}
+
+            {/* Modal Backdrop */}
+            {selectedNews && (
+                <div
+                    onClick={() => setSelectedNews(null)}
+                    style={{
+                        position: 'fixed', // Fixed to cover window if needed, or absolute to chart
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(0,0,0,0.4)',
+                        zIndex: 999
+                    }}
+                />
+            )}
 
             {isLive && (
                 <div className={styles.liveStatus}>

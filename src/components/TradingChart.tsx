@@ -104,7 +104,6 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
                         const newsTime = new Date(item.published_at).getTime() / 1000;
 
                         // Find closest candle to snap marker to
-                        // This prevents marker from disappearing if time doesn't match exactly
                         let closest = chartData[0];
                         let minDiff = Number.MAX_VALUE;
 
@@ -241,17 +240,19 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
         candlestickSeriesRef.current.setData(candles);
         volumeSeriesRef.current.setData(volumes);
 
-        // Fit content just once initially if needed, or always?
-        // Let's rely on user scroll, but initially fit
-        // chartRef.current?.timeScale().fitContent();
-
     }, [chartData]);
 
     // Update Markers
     useEffect(() => {
         if (candlestickSeriesRef.current && newsMarkers.length > 0) {
-            // @ts-ignore
-            candlestickSeriesRef.current.setMarkers(newsMarkers);
+            const series = candlestickSeriesRef.current as any;
+            if (series && typeof series.setMarkers === 'function') {
+                try {
+                    series.setMarkers(newsMarkers);
+                } catch (e) {
+                    console.error('Marker error', e);
+                }
+            }
         }
     }, [newsMarkers]);
 

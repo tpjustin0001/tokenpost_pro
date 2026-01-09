@@ -160,7 +160,11 @@ export default function ResearchIntel() {
             </div>
             <div className={styles.list}>
                 {filteredData.map((item) => (
-                    <div key={item.id} className={`${styles.intelItem} ${item.isBreaking ? styles.breaking : ''}`}>
+                    <a
+                        key={item.id}
+                        href={`/content/${item.id}`}
+                        className={`${styles.intelItem} ${item.isBreaking ? styles.breaking : ''}`}
+                    >
                         {item.thumbnail && (
                             <div className={styles.thumbnail}>
                                 <img src={item.thumbnail} alt="" />
@@ -182,7 +186,7 @@ export default function ResearchIntel() {
                                 <div className={styles.meta}>{item.source} · {item.time}</div>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 ))}
             </div>
             <div className={styles.footer}>

@@ -1,0 +1,147 @@
+.loading {
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.liveBadge {
+    padding: 2px 6px;
+    background: var(--accent-green-dim);
+    color: var(--accent-green);
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 2px;
+}
+
+.content {
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.gaugeSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.gauge {
+    position: relative;
+    width: 140px;
+    height: 140px;
+}
+
+.gaugeSvg {
+    width: 100%;
+    height: 100%;
+}
+
+.gaugeCenter {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.score {
+    font-size: var(--text-3xl);
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.gateLabel {
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.summary {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.components {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.component {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.componentHeader {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--text-xs);
+}
+
+.componentName {
+    color: var(--text-secondary);
+}
+
+.componentScore {
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+.bar {
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.barFill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.indicators {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+}
+
+.indicator {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--text-xs);
+    padding: var(--spacing-xs);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+}
+
+.indName {
+    color: var(--text-muted);
+}
+
+.indValue {
+    font-family: var(--font-mono);
+    font-weight: 500;
+}
+
+.bullish {
+    color: var(--accent-green);
+}
+
+.bearish {
+    color: var(--accent-red);
+}
+
+.neutral {
+    color: var(--text-secondary);
+}

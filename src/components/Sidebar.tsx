@@ -10,6 +10,7 @@ const NAV_ITEMS = [
     { id: 'news', icon: '📰', label: '뉴스', href: '/news' },
     { id: 'research', icon: '🔬', label: '리서치', href: '/research' },
     { id: 'data', icon: '📈', label: '데이터', href: '/data' },
+    { id: 'analysis', icon: '🤖', label: 'AI 분석', href: '/analysis' },
 ];
 
 export default function Sidebar() {

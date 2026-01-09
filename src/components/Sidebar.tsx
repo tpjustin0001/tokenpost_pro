@@ -6,11 +6,11 @@ import { useTheme } from '@/context/ThemeContext';
 import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
-    { id: 'home', icon: '📊', label: '대시보드', href: '/' },
-    { id: 'news', icon: '📰', label: '뉴스', href: '/news' },
-    { id: 'research', icon: '🔬', label: '리서치', href: '/research' },
-    { id: 'data', icon: '📈', label: '데이터', href: '/data' },
-    { id: 'analysis', icon: '🤖', label: 'AI 분석', href: '/analysis' },
+    { id: 'home', icon: 'H', label: '대시보드', href: '/' },
+    { id: 'news', icon: 'N', label: '뉴스', href: '/news' },
+    { id: 'research', icon: 'R', label: '리서치', href: '/research' },
+    { id: 'data', icon: 'D', label: '데이터', href: '/data' },
+    { id: 'analysis', icon: 'AI', label: 'AI 분석', href: '/analysis' },
 ];
 
 export default function Sidebar() {
@@ -49,7 +49,7 @@ export default function Sidebar() {
                     onClick={toggleTheme}
                     title={theme === 'dark' ? '라이트 모드' : '다크 모드'}
                 >
-                    <span className={styles.themeIcon}>{theme === 'dark' ? '☀️' : '🌙'}</span>
+                    <span className={styles.themeIcon}>{theme === 'dark' ? 'L' : 'D'}</span>
                     <span className={styles.themeLabel}>{theme === 'dark' ? 'Light' : 'Dark'}</span>
                 </button>
             </div>

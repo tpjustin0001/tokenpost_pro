@@ -25,6 +25,8 @@ export interface News {
     sentiment_score: number | null;
     image_url: string | null;
     category?: string;
+    show_on_chart?: boolean;      // 차트 표시 여부
+    related_coin?: string | null;  // 어떤 코인 차트에 표시할지 (BTC, ETH 등)
 }
 
 export interface Research {

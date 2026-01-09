@@ -130,8 +130,9 @@ export default function AdminPage() {
             <section className={styles.quickActions}>
                 <h3>Quick Actions</h3>
                 <div className={styles.actionButtons}>
+                    <Link href="/admin/news" className="btn btn-primary">📰 뉴스 관리</Link>
+                    <Link href="/admin/research" className="btn btn-primary">📊 리서치 관리</Link>
                     <button className="btn btn-secondary">🔄 가격 동기화</button>
-                    <button className="btn btn-secondary">📊 통계 새로고침</button>
                     <button className="btn btn-secondary">📧 알림 발송</button>
                     <button className="btn btn-secondary">🗑️ 캐시 초기화</button>
                 </div>

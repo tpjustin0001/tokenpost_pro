@@ -1,12 +1,21 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType, IChartApi, CandlestickSeries, CandlestickData, Time, ISeriesApi, SeriesType } from 'lightweight-charts';
+import { supabase } from '@/lib/supabase';
 import styles from './TradingChart.module.css';
 
 interface TradingChartProps {
     symbol: string;
     data?: CandlestickData<Time>[];
+}
+
+interface NewsMarker {
+    time: Time;
+    position: 'aboveBar' | 'belowBar';
+    color: string;
+    shape: 'arrowDown' | 'arrowUp' | 'circle' | 'square';
+    text: string;
 }
 
 // Generate mock OHLC data
@@ -34,6 +43,36 @@ export default function TradingChart({ symbol, data }: TradingChartProps) {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
     const seriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
+    const [newsMarkers, setNewsMarkers] = useState<NewsMarker[]>([]);
+
+    // Fetch news markers from Supabase
+    useEffect(() => {
+        async function fetchNewsMarkers() {
+            if (!supabase) return;
+
+            // Convert symbol (e.g., "BTCUSDT") to coin code (e.g., "BTC")
+            const coinCode = symbol.replace('USDT', '').replace('USD', '');
+
+            const { data: newsItems } = await supabase
+                .from('news')
+                .select('published_at, title, sentiment_score')
+                .eq('related_coin', coinCode)
+                .eq('show_on_chart', true)
+                .order('published_at', { ascending: true });
+
+            if (newsItems && newsItems.length > 0) {
+                const markers: NewsMarker[] = newsItems.map(item => ({
+                    time: Math.floor(new Date(item.published_at).getTime() / 1000) as Time,
+                    position: 'aboveBar',
+                    color: (item.sentiment_score || 0) < 0 ? '#ef5350' : '#26a69a',
+                    shape: 'arrowDown',
+                    text: item.title,
+                }));
+                setNewsMarkers(markers);
+            }
+        }
+        fetchNewsMarkers();
+    }, [symbol]);
 
     useEffect(() => {
         if (!chartContainerRef.current) return;
@@ -83,6 +122,12 @@ export default function TradingChart({ symbol, data }: TradingChartProps) {
         const chartData = data || generateMockData();
         candlestickSeries.setData(chartData);
 
+        // Set news markers
+        if (newsMarkers.length > 0) {
+            // @ts-ignore - setMarkers is available but types may not include it
+            candlestickSeries.setMarkers(newsMarkers);
+        }
+
         chartRef.current = chart;
         seriesRef.current = candlestickSeries;
 
@@ -104,7 +149,7 @@ export default function TradingChart({ symbol, data }: TradingChartProps) {
             window.removeEventListener('resize', handleResize);
             chart.remove();
         };
-    }, [symbol, data]);
+    }, [symbol, data, newsMarkers]);
 
     return (
         <div ref={chartContainerRef} className={styles.chart} />

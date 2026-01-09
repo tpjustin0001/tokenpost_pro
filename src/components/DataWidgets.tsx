@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { createChart, ColorType, IChartApi, LineSeries, AreaSeries, Time, LineData } from 'lightweight-charts';
+import { createChart, ColorType, LineSeries, AreaSeries, Time, LineData } from 'lightweight-charts';
 import styles from './DataWidgets.module.css';
 
-// Generate mock data
 function generateChartData(days: number, baseValue: number, volatility: number): LineData<Time>[] {
     const data: LineData<Time>[] = [];
     const now = Date.now();
@@ -17,12 +16,6 @@ function generateChartData(days: number, baseValue: number, volatility: number):
     }
 
     return data;
-}
-
-interface ChartWidgetProps {
-    title: string;
-    subtitle?: string;
-    chartType: 'line' | 'area' | 'dual';
 }
 
 export function StablecoinInterestChart() {
@@ -79,23 +72,19 @@ export function StablecoinInterestChart() {
         <div className={styles.widget}>
             <div className={styles.header}>
                 <div>
-                    <h3 className={styles.title}>Lending: Stablecoin Interest Rates</h3>
+                    <h3 className={styles.title}>스테이블코인 이자율</h3>
                 </div>
-                <a href="#" className={styles.viewData}>View data →</a>
+                <a href="#" className={styles.viewData}>상세 보기 →</a>
             </div>
             <div ref={chartContainerRef} className={styles.chart} />
             <div className={styles.legend}>
                 <span className={styles.legendItem}>
-                    <span className={styles.dot} style={{ background: '#374151' }}></span>
-                    All
-                </span>
-                <span className={styles.legendItem}>
                     <span className={styles.dot} style={{ background: '#ef4444' }}></span>
-                    Borrow APY
+                    대출 APY
                 </span>
                 <span className={styles.legendItem}>
                     <span className={styles.dot} style={{ background: '#22c55e' }}></span>
-                    Supply APY
+                    예치 APY
                 </span>
             </div>
         </div>
@@ -152,10 +141,10 @@ export function BlockchainRevChart() {
         <div className={styles.widget}>
             <div className={styles.header}>
                 <div>
-                    <h3 className={styles.title}>Total Blockchain REV</h3>
-                    <p className={styles.subtitle}>All fees paid for general purpose blockspace</p>
+                    <h3 className={styles.title}>블록체인 수수료 수익</h3>
+                    <p className={styles.subtitle}>네트워크 수수료 총합 (Daily)</p>
                 </div>
-                <a href="#" className={styles.viewData}>View data →</a>
+                <a href="#" className={styles.viewData}>상세 보기 →</a>
             </div>
             <div ref={chartContainerRef} className={styles.chart} />
         </div>
@@ -191,12 +180,11 @@ export function ETFFlowsChart() {
             lineWidth: 2,
         });
 
-        // Generate ETF flow data with some negative values
         const data: LineData<Time>[] = [];
         const now = Date.now();
         for (let i = 90; i >= 0; i--) {
             const time = Math.floor((now - i * 24 * 60 * 60 * 1000) / 1000) as Time;
-            const value = (Math.random() - 0.3) * 500000000; // Some negative flows
+            const value = (Math.random() - 0.3) * 500000000;
             data.push({ time, value });
         }
         areaSeries.setData(data);
@@ -221,10 +209,10 @@ export function ETFFlowsChart() {
         <div className={styles.widget}>
             <div className={styles.header}>
                 <div>
-                    <h3 className={styles.title}>Crypto ETF Flows</h3>
-                    <p className={styles.subtitle}>Rolling 5d flows into BTC, ETH, and SOL ETFs</p>
+                    <h3 className={styles.title}>암호화폐 ETF 자금 흐름</h3>
+                    <p className={styles.subtitle}>BTC, ETH, SOL ETF 5일 롤링 유입량</p>
                 </div>
-                <a href="#" className={styles.viewData}>View data →</a>
+                <a href="#" className={styles.viewData}>상세 보기 →</a>
             </div>
             <div ref={chartContainerRef} className={styles.chart} />
         </div>

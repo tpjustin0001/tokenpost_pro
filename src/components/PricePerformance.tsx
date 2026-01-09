@@ -27,21 +27,21 @@ export default function PricePerformance() {
         <div className={styles.widget}>
             <div className={styles.header}>
                 <div className={styles.titleRow}>
-                    <h3 className={styles.title}>Price Performance 1h</h3>
-                    <span className={styles.liveBadge}>LIVE</span>
+                    <h3 className={styles.title}>1시간 가격 변동</h3>
+                    <span className={styles.liveBadge}>실시간</span>
                 </div>
                 <div className={styles.tabs}>
                     <button
                         className={`${styles.tab} ${activeTab === 'gainers' ? styles.active : ''}`}
                         onClick={() => setActiveTab('gainers')}
                     >
-                        Gainers
+                        상승
                     </button>
                     <button
                         className={`${styles.tab} ${activeTab === 'losers' ? styles.active : ''}`}
                         onClick={() => setActiveTab('losers')}
                     >
-                        Losers
+                        하락
                     </button>
                 </div>
             </div>

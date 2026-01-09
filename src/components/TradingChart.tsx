@@ -346,8 +346,13 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         volumeSeriesRef.current.setData(volumes);
 
         // Re-apply markers after data reset
-        if (newsMarkers.length > 0) {
-            (candlestickSeriesRef.current as any).setMarkers(newsMarkers);
+        if (newsMarkers.length > 0 && candlestickSeriesRef.current) {
+            const series = candlestickSeriesRef.current as any;
+            if (typeof series.setMarkers === 'function') {
+                series.setMarkers(newsMarkers);
+            } else {
+                console.warn('setMarkers missing on series', series);
+            }
         }
 
     }, [chartData, newsMarkers]);

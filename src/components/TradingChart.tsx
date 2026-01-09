@@ -246,6 +246,10 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             },
             rightPriceScale: {
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                scaleMargins: {
+                    top: 0.2, // 마커 공간 확보
+                    bottom: 0.2,
+                },
             },
             timeScale: {
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
@@ -341,7 +345,12 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         candlestickSeriesRef.current.setData(candles);
         volumeSeriesRef.current.setData(volumes);
 
-    }, [chartData]);
+        // Re-apply markers after data reset
+        if (newsMarkers.length > 0) {
+            (candlestickSeriesRef.current as any).setMarkers(newsMarkers);
+        }
+
+    }, [chartData, newsMarkers]);
 
     // Update Markers
     useEffect(() => {

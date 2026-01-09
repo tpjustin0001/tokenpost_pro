@@ -1,88 +1,91 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import ContentModal from '@/components/ContentModal';
+import { supabase, News } from '@/lib/supabase';
 import styles from './page.module.css';
 
-interface NewsItem {
-    id: string;
-    category: string;
-    title: string;
-    summary: string;
-    source: string;
-    time: string;
-    thumbnail: string;
-    isPro?: boolean;
-}
-
-const NEWS_DATA: NewsItem[] = [
+// Fallback mock data (Supabase 연결 전)
+const MOCK_NEWS = [
     {
-        id: '1',
+        id: 1,
         category: '규제',
         title: 'SEC, 비트코인 현물 ETF 옵션 거래 최종 승인',
-        summary: 'SEC가 BlacRock, Fidelity 등 주요 자산운용사의 비트코인 현물 ETF에 대한 옵션 거래를 승인했습니다.',
+        summary: 'SEC가 BlackRock, Fidelity 등 주요 자산운용사의 비트코인 현물 ETF에 대한 옵션 거래를 승인했습니다.',
         source: 'Reuters',
-        time: '30분 전',
-        thumbnail: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=250&fit=crop',
+        published_at: new Date().toISOString(),
+        image_url: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=250&fit=crop',
     },
     {
-        id: '2',
+        id: 2,
         category: '시장',
         title: '비트코인 $95,000 돌파, 사상 최고치 경신',
         summary: 'ETF 승인 기대감과 기관 수요 증가로 비트코인이 $95,000를 돌파하며 사상 최고치를 경신했습니다.',
         source: 'CoinDesk',
-        time: '1시간 전',
-        thumbnail: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=400&h=250&fit=crop',
+        published_at: new Date(Date.now() - 3600000).toISOString(),
+        image_url: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=400&h=250&fit=crop',
     },
     {
-        id: '3',
+        id: 3,
         category: 'DeFi',
         title: 'Uniswap V4, 메인넷 출시 임박',
         summary: '후크(Hooks) 기능을 도입한 Uniswap V4가 테스트넷 완료 후 메인넷 출시를 앞두고 있습니다.',
         source: 'The Block',
-        time: '2시간 전',
-        thumbnail: 'https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=400&h=250&fit=crop',
-        isPro: true,
-    },
-    {
-        id: '4',
-        category: '정책',
-        title: '트럼프 행정부, 암호화폐 규제 완화 신호',
-        summary: '트럼프 대통령 당선인이 암호화폐 친화적 정책을 시사하며 시장에 긍정적 영향을 미치고 있습니다.',
-        source: 'Bloomberg',
-        time: '3시간 전',
-        thumbnail: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=400&h=250&fit=crop',
-    },
-    {
-        id: '5',
-        category: 'Layer2',
-        title: 'Base, 일일 트랜잭션 500만 건 돌파',
-        summary: 'Coinbase의 Layer2 Base가 일일 트랜잭션 500만 건을 기록하며 성장세를 이어가고 있습니다.',
-        source: 'Decrypt',
-        time: '4시간 전',
-        thumbnail: 'https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=400&h=250&fit=crop',
-    },
-    {
-        id: '6',
-        category: 'NFT',
-        title: 'Pudgy Penguins, 아마존 장난감 매출 1위',
-        summary: 'NFT 프로젝트 Pudgy Penguins의 실물 장난감이 아마존에서 베스트셀러에 등극했습니다.',
-        source: 'NFT Now',
-        time: '5시간 전',
-        thumbnail: 'https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=400&h=250&fit=crop',
+        published_at: new Date(Date.now() - 7200000).toISOString(),
+        image_url: 'https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=400&h=250&fit=crop',
     },
 ];
 
 const CATEGORIES = ['전체', '규제', '시장', 'DeFi', '정책', 'Layer2', 'NFT'];
 
+function getTimeAgo(dateString: string): string {
+    const diff = Date.now() - new Date(dateString).getTime();
+    const hours = Math.floor(diff / 3600000);
+    if (hours < 1) return '방금 전';
+    if (hours < 24) return `${hours}시간 전`;
+    const days = Math.floor(hours / 24);
+    return `${days}일 전`;
+}
+
 export default function NewsPage() {
+    const [news, setNews] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState('전체');
     const [selectedId, setSelectedId] = useState<string | null>(null);
 
+    useEffect(() => {
+        async function fetchNews() {
+            try {
+                if (!supabase) {
+                    setNews(MOCK_NEWS);
+                    setLoading(false);
+                    return;
+                }
+
+                const { data, error } = await supabase
+                    .from('news')
+                    .select('*')
+                    .order('published_at', { ascending: false })
+                    .limit(20);
+
+                if (error || !data || data.length === 0) {
+                    setNews(MOCK_NEWS);
+                } else {
+                    setNews(data);
+                }
+            } catch {
+                setNews(MOCK_NEWS);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchNews();
+    }, []);
+
     const filteredNews = activeCategory === '전체'
-        ? NEWS_DATA
-        : NEWS_DATA.filter(item => item.category === activeCategory);
+        ? news
+        : news.filter(item => item.category === activeCategory);
 
     return (
         <div className={styles.appLayout}>
@@ -107,30 +110,33 @@ export default function NewsPage() {
                         ))}
                     </div>
 
-                    <div className={styles.newsGrid}>
-                        {filteredNews.map(item => (
-                            <article
-                                key={item.id}
-                                className={styles.newsCard}
-                                onClick={() => setSelectedId(item.id)}
-                            >
-                                <div className={styles.thumbnailWrapper}>
-                                    <img src={item.thumbnail} alt="" className={styles.thumbnail} />
-                                    {item.isPro && <span className={styles.proBadge}>PRO</span>}
-                                </div>
-                                <div className={styles.cardContent}>
-                                    <span className={styles.category}>{item.category}</span>
-                                    <h3 className={styles.title}>{item.title}</h3>
-                                    <p className={styles.summary}>{item.summary}</p>
-                                    <div className={styles.meta}>
-                                        <span>{item.source}</span>
-                                        <span>·</span>
-                                        <span>{item.time}</span>
+                    {loading ? (
+                        <div className={styles.loading}>뉴스 로딩 중...</div>
+                    ) : (
+                        <div className={styles.newsGrid}>
+                            {filteredNews.map(item => (
+                                <article
+                                    key={item.id}
+                                    className={styles.newsCard}
+                                    onClick={() => setSelectedId(String(item.id))}
+                                >
+                                    <div className={styles.thumbnailWrapper}>
+                                        <img src={item.image_url || 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=250&fit=crop'} alt="" className={styles.thumbnail} />
                                     </div>
-                                </div>
-                            </article>
-                        ))}
-                    </div>
+                                    <div className={styles.cardContent}>
+                                        <span className={styles.category}>{item.category || '뉴스'}</span>
+                                        <h3 className={styles.title}>{item.title}</h3>
+                                        <p className={styles.summary}>{item.summary}</p>
+                                        <div className={styles.meta}>
+                                            <span>{item.source || 'TokenPost'}</span>
+                                            <span>·</span>
+                                            <span>{item.published_at ? getTimeAgo(item.published_at) : '최근'}</span>
+                                        </div>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
                 </main>
             </div>
 

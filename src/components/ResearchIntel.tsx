@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ContentModal from './ContentModal';
+import { supabase } from '@/lib/supabase';
 import styles from './ResearchIntel.module.css';
 
 interface IntelItem {
@@ -16,7 +17,8 @@ interface IntelItem {
     thumbnail?: string;
 }
 
-const INTEL_DATA: IntelItem[] = [
+// Fallback mock data
+const MOCK_DATA: IntelItem[] = [
     {
         id: '1',
         type: 'BREAKING',
@@ -29,35 +31,6 @@ const INTEL_DATA: IntelItem[] = [
     },
     {
         id: '2',
-        type: 'KPI',
-        typeKo: '지표',
-        title: '트랜잭션 수 전월 대비 +20%',
-        source: '온체인',
-        time: '2시간',
-        isPro: true,
-        thumbnail: 'https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=120&h=80&fit=crop'
-    },
-    {
-        id: '3',
-        type: 'KPI',
-        typeKo: '지표',
-        title: '활성 지갑 수 전월 대비 -15%',
-        source: '온체인',
-        time: '2시간',
-        isPro: true,
-        thumbnail: 'https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=120&h=80&fit=crop'
-    },
-    {
-        id: '4',
-        type: 'NEWS',
-        typeKo: '뉴스',
-        title: 'EIP-4844 업그레이드 성공적으로 완료',
-        source: 'CoinDesk',
-        time: '5시간',
-        thumbnail: 'https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=120&h=80&fit=crop'
-    },
-    {
-        id: '5',
         type: 'PRO',
         typeKo: 'PRO',
         title: 'AI 분석: 비트코인 단기 지지선 $92,000',
@@ -67,7 +40,7 @@ const INTEL_DATA: IntelItem[] = [
         thumbnail: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=120&h=80&fit=crop'
     },
     {
-        id: '6',
+        id: '3',
         type: 'NEWS',
         typeKo: '뉴스',
         title: '트럼프 암호화폐 특별자문단 임명발표',
@@ -75,21 +48,78 @@ const INTEL_DATA: IntelItem[] = [
         time: '3시간',
         thumbnail: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=120&h=80&fit=crop'
     },
+    {
+        id: '4',
+        type: 'KPI',
+        typeKo: '지표',
+        title: '트랜잭션 수 전월 대비 +20%',
+        source: '온체인',
+        time: '2시간',
+        isPro: true,
+        thumbnail: 'https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=120&h=80&fit=crop'
+    },
 ];
 
 type TabType = 'ALL' | 'PRO' | 'NEWS';
 
+function getTimeAgo(dateString: string): string {
+    const diff = Date.now() - new Date(dateString).getTime();
+    const hours = Math.floor(diff / 3600000);
+    if (hours < 1) return '방금';
+    if (hours < 24) return `${hours}시간`;
+    const days = Math.floor(hours / 24);
+    return `${days}일`;
+}
+
 export default function ResearchIntel() {
+    const [data, setData] = useState<IntelItem[]>(MOCK_DATA);
     const [activeTab, setActiveTab] = useState<TabType>('ALL');
     const [selectedId, setSelectedId] = useState<string | null>(null);
 
-    const filteredData = activeTab === 'ALL'
-        ? INTEL_DATA
-        : activeTab === 'PRO'
-            ? INTEL_DATA.filter(item => item.isPro)
-            : INTEL_DATA.filter(item => item.type === 'NEWS' || item.type === 'BREAKING');
+    useEffect(() => {
+        async function fetchResearch() {
+            try {
+                if (!supabase) {
+                    return; // Keep mock data
+                }
 
-    const breakingCount = INTEL_DATA.filter(item => item.isBreaking).length;
+                const { data: researchData, error } = await supabase
+                    .from('research')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (error || !researchData || researchData.length === 0) {
+                    return; // Keep mock data
+                }
+
+                // Transform to IntelItem format
+                const transformed: IntelItem[] = researchData.map((r: any) => ({
+                    id: String(r.id),
+                    type: r.is_premium ? 'PRO' : 'REPORT',
+                    typeKo: r.is_premium ? 'PRO' : '리서치',
+                    title: r.title,
+                    source: r.author || 'TokenPost',
+                    time: getTimeAgo(r.created_at),
+                    isPro: r.is_premium,
+                    thumbnail: r.thumbnail_url,
+                }));
+
+                setData(transformed);
+            } catch {
+                // Keep mock data on error
+            }
+        }
+        fetchResearch();
+    }, []);
+
+    const filteredData = activeTab === 'ALL'
+        ? data
+        : activeTab === 'PRO'
+            ? data.filter(item => item.isPro)
+            : data.filter(item => item.type === 'NEWS' || item.type === 'BREAKING');
+
+    const breakingCount = data.filter(item => item.isBreaking).length;
 
     const getTypeColor = (type: string) => {
         switch (type) {
@@ -98,10 +128,6 @@ export default function ResearchIntel() {
             case 'PRO': return 'var(--accent-yellow)';
             default: return 'var(--text-muted)';
         }
-    };
-
-    const handleItemClick = (id: string) => {
-        setSelectedId(id);
     };
 
     return (
@@ -142,7 +168,7 @@ export default function ResearchIntel() {
                     <div
                         key={item.id}
                         className={`${styles.intelItem} ${item.isBreaking ? styles.breaking : ''}`}
-                        onClick={() => handleItemClick(item.id)}
+                        onClick={() => setSelectedId(item.id)}
                     >
                         {item.thumbnail && (
                             <div className={styles.thumbnail}>

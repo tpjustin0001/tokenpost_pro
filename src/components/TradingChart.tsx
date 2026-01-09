@@ -280,18 +280,22 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         });
 
         // Click Handler for Markers
+        // Click Handler for Markers
         chart.subscribeClick((param: MouseEventParams) => {
-            const p = param as any;
-            setDebugMsg(prev => `Click: ${p.point?.x},${p.point?.y} | ID: ${p.hoveredMarkerId}`);
+            const clickTime = param.time as number;
 
-            if (p.hoveredMarkerId) {
-                const id = p.hoveredMarkerId as string;
-                if (newsMap[id]) {
-                    setDebugMsg(`OPENING NEWS: ${id}`);
-                    setSelectedNews(newsMap[id]);
+            if (clickTime) {
+                // Find marker at this time
+                const marker = newsMarkers.find(m => (m.time as number) === clickTime);
+
+                if (marker && marker.id && newsMap[marker.id]) {
+                    setDebugMsg(`OPENING NEWS (Time Match): ${marker.id}`);
+                    setSelectedNews(newsMap[marker.id]);
                 } else {
-                    setDebugMsg(`Map Miss: ${id}`);
+                    setDebugMsg(`Click Time: ${clickTime} | No Marker Match`);
                 }
+            } else {
+                setDebugMsg('Click: No Time Detected');
             }
         });
 

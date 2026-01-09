@@ -9,7 +9,6 @@ import AIInsights from '@/components/AIInsights';
 import ResearchIntel from '@/components/ResearchIntel';
 import TokenUnlocks from '@/components/TokenUnlocks';
 import WhaleTracker from '@/components/WhaleTracker';
-import FundraisingTracker from '@/components/FundraisingTracker';
 import GlobalXRay, { GlobalXRayButton } from '@/components/GlobalXRay';
 import styles from './page.module.css';
 
@@ -21,11 +20,9 @@ export default function HomePage() {
       <Sidebar />
 
       <div className={styles.mainArea}>
-        {/* Top Metrics Bar - Blockworks Style */}
         <MetricsBar />
 
         <main className={styles.content}>
-          {/* Global X-Ray Button */}
           <div className={styles.xrayHeader}>
             <h2 className={styles.pageTitle}>대시보드</h2>
             <GlobalXRayButton onClick={() => setGlobalXRayOpen(true)} />
@@ -45,16 +42,14 @@ export default function HomePage() {
             <ResearchIntel />
           </div>
 
-          {/* Row 3: Token Unlocks + Whale Tracker + Fundraising */}
-          <div className={styles.threeColumnGrid}>
+          {/* Row 3: Token Unlocks + Whale Tracker */}
+          <div className={styles.twoColumnGrid}>
             <TokenUnlocks />
             <WhaleTracker />
-            <FundraisingTracker />
           </div>
         </main>
       </div>
 
-      {/* Global X-Ray Modal */}
       <GlobalXRay
         isOpen={globalXRayOpen}
         onClose={() => setGlobalXRayOpen(false)}

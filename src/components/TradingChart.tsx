@@ -7,7 +7,6 @@ import styles from './TradingChart.module.css';
 
 interface TradingChartProps {
     symbol: string;
-    data?: CandlestickData<Time>[];
 }
 
 interface NewsMarker {
@@ -18,45 +17,63 @@ interface NewsMarker {
     text: string;
 }
 
-// Generate mock OHLC data
-function generateMockData(days: number = 90): CandlestickData<Time>[] {
-    const data: CandlestickData<Time>[] = [];
-    const now = Date.now();
-    let basePrice = 50000 + Math.random() * 50000;
-
-    for (let i = days; i >= 0; i--) {
-        const time = Math.floor((now - i * 24 * 60 * 60 * 1000) / 1000) as Time;
-        const volatility = basePrice * 0.03;
-        const open = basePrice;
-        const close = basePrice + (Math.random() - 0.5) * volatility * 2;
-        const high = Math.max(open, close) + Math.random() * volatility;
-        const low = Math.min(open, close) - Math.random() * volatility;
-
-        data.push({ time, open, high, low, close });
-        basePrice = close;
-    }
-
-    return data;
-}
-
-export default function TradingChart({ symbol, data }: TradingChartProps) {
+export default function TradingChart({ symbol }: TradingChartProps) {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
     const seriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
+    const [chartData, setChartData] = useState<CandlestickData<Time>[]>([]);
     const [newsMarkers, setNewsMarkers] = useState<NewsMarker[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Fetch Binance candle data
+    useEffect(() => {
+        async function fetchCandles() {
+            setLoading(true);
+            setError(null);
+
+            try {
+                const binanceSymbol = `${symbol}USDT`;
+                const response = await fetch(`/api/klines?symbol=${binanceSymbol}&interval=1d&limit=100`);
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch chart data');
+                }
+
+                const data = await response.json();
+
+                if (data.candles && data.candles.length > 0) {
+                    const formattedCandles = data.candles.map((c: any) => ({
+                        time: c.time as Time,
+                        open: c.open,
+                        high: c.high,
+                        low: c.low,
+                        close: c.close,
+                    }));
+                    setChartData(formattedCandles);
+                } else {
+                    throw new Error('No candle data available');
+                }
+            } catch (err: any) {
+                console.error('Chart data error:', err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchCandles();
+    }, [symbol]);
 
     // Fetch news markers from Supabase
     useEffect(() => {
         async function fetchNewsMarkers() {
             if (!supabase) return;
 
-            // Convert symbol (e.g., "BTCUSDT") to coin code (e.g., "BTC")
-            const coinCode = symbol.replace('USDT', '').replace('USD', '');
-
             const { data: newsItems } = await supabase
                 .from('news')
                 .select('published_at, title, sentiment_score')
-                .eq('related_coin', coinCode)
+                .eq('related_coin', symbol)
                 .eq('show_on_chart', true)
                 .order('published_at', { ascending: true });
 
@@ -64,7 +81,7 @@ export default function TradingChart({ symbol, data }: TradingChartProps) {
                 const markers: NewsMarker[] = newsItems.map(item => ({
                     time: Math.floor(new Date(item.published_at).getTime() / 1000) as Time,
                     position: 'aboveBar',
-                    color: (item.sentiment_score || 0) < 0 ? '#ef5350' : '#26a69a',
+                    color: (item.sentiment_score || 0) < 0 ? '#f87171' : '#4ade80',
                     shape: 'arrowDown',
                     text: item.title,
                 }));
@@ -74,8 +91,14 @@ export default function TradingChart({ symbol, data }: TradingChartProps) {
         fetchNewsMarkers();
     }, [symbol]);
 
+    // Create/update chart
     useEffect(() => {
-        if (!chartContainerRef.current) return;
+        if (!chartContainerRef.current || chartData.length === 0) return;
+
+        // Cleanup existing chart
+        if (chartRef.current) {
+            chartRef.current.remove();
+        }
 
         const chart = createChart(chartContainerRef.current, {
             layout: {
@@ -119,12 +142,11 @@ export default function TradingChart({ symbol, data }: TradingChartProps) {
             wickDownColor: '#f87171',
         });
 
-        const chartData = data || generateMockData();
         candlestickSeries.setData(chartData);
 
         // Set news markers
         if (newsMarkers.length > 0) {
-            // @ts-ignore - setMarkers is available but types may not include it
+            // @ts-ignore
             candlestickSeries.setMarkers(newsMarkers);
         }
 
@@ -142,14 +164,29 @@ export default function TradingChart({ symbol, data }: TradingChartProps) {
 
         handleResize();
         window.addEventListener('resize', handleResize);
-
         chart.timeScale().fitContent();
 
         return () => {
             window.removeEventListener('resize', handleResize);
             chart.remove();
         };
-    }, [symbol, data, newsMarkers]);
+    }, [chartData, newsMarkers]);
+
+    if (loading) {
+        return (
+            <div className={styles.chart}>
+                <div className={styles.loading}>차트 로딩 중...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className={styles.chart}>
+                <div className={styles.error}>{error}</div>
+            </div>
+        );
+    }
 
     return (
         <div ref={chartContainerRef} className={styles.chart} />

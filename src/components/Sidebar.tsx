@@ -10,8 +10,6 @@ const NAV_ITEMS = [
     { id: 'news', icon: '📰', label: '뉴스', href: '/news' },
     { id: 'research', icon: '🔬', label: '리서치', href: '/research' },
     { id: 'data', icon: '📈', label: '데이터', href: '/data' },
-    { divider: true },
-    { id: 'admin', icon: '⚙️', label: '관리', href: '/admin' },
 ];
 
 export default function Sidebar() {
@@ -26,11 +24,7 @@ export default function Sidebar() {
             </div>
 
             <nav className={styles.nav}>
-                {NAV_ITEMS.map((item, index) => {
-                    if ('divider' in item) {
-                        return <div key={index} className={styles.divider} />;
-                    }
-
+                {NAV_ITEMS.map((item) => {
                     const isActive = pathname === item.href ||
                         (item.href !== '/' && pathname.startsWith(item.href));
 

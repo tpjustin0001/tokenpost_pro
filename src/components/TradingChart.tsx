@@ -17,6 +17,7 @@ interface NewsMarker {
     color: string;
     shape: 'arrowDown' | 'arrowUp' | 'circle' | 'square';
     text: string;
+    id: any;
 }
 
 export default function TradingChart({ symbol, interval = '1d' }: TradingChartProps) {
@@ -46,26 +47,43 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
             try {
                 const binanceSymbol = `${symbol}USDT`;
                 // Try Binance.US first
-                const res1 = await fetch(`https://api.binance.us/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=200`);
-                let response = res1;
+                let response = await fetch(`https://api.binance.us/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=200`);
 
-                if (res1.status === 451 || !res1.ok) {
+                if (response.status === 451 || !response.ok) {
                     // Fallback to Global
                     response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=200`);
                 }
 
-                // Fallback to internal proxy if both fail or CORS issues (though direct fetch might be faster if allowed)
-                // Actually, client-side fetch to Binance might get CORS error. Better use our proxy always?
-                // Reverting to use our proxy which handles the failover logic safely
-                const proxyRes = await fetch(`/api/klines?symbol=${binanceSymbol}&interval=${interval}&limit=200`);
-                if (!proxyRes.ok) throw new Error(await proxyRes.text());
+                // Final fallback to proxy
+                if (response.status === 451 || !response.ok) {
+                    response = await fetch(`/api/klines?symbol=${binanceSymbol}&interval=${interval}&limit=200`);
+                }
 
-                const data = await proxyRes.json();
-                if (data.error) throw new Error(data.error);
+                if (!response.ok) throw new Error(await response.text());
+
+                const data = await response.json();
+                const candles = Array.isArray(data) ? data : data.candles; // Handle both direct API and proxy format
 
                 if (isMounted) {
-                    if (data.candles) {
-                        setChartData(data.candles);
+                    if (candles && Array.isArray(candles)) {
+                        // Direct API format: [time, open, high, low, close, vol, ...]
+                        // Proxy format: { time: ..., open: ... }
+                        const formatted = candles.map((c: any) => {
+                            if (Array.isArray(c)) {
+                                return {
+                                    time: c[0] / 1000,
+                                    open: parseFloat(c[1]),
+                                    high: parseFloat(c[2]),
+                                    low: parseFloat(c[3]),
+                                    close: parseFloat(c[4]),
+                                    volume: parseFloat(c[5]),
+                                };
+                            }
+                            return c;
+                        });
+                        setChartData(formatted);
+                    } else {
+                        setChartData([]);
                     }
                     setLoading(false);
                 }
@@ -90,17 +108,20 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
                 const { data } = await supabase
                     .from('news')
                     .select('*')
-                    .eq('related_coin', symbol)
+                    .eq('related_coin', symbol) // 'BTC'
                     .eq('show_on_chart', true);
 
                 if (isMounted && data && data.length > 0) {
                     const markers: any[] = [];
+
                     data.forEach((item: any) => {
                         const newsTime = new Date(item.published_at).getTime() / 1000;
-                        // Find closest candle
-                        let closest = chartData[0];
-                        let minDiff = Math.abs((closest.time as number) - newsTime);
 
+                        // Find closest candle
+                        let closest = chartData[chartData.length - 1]; // Default to latest
+                        let minDiff = Number.MAX_VALUE;
+
+                        // Simple search
                         for (const c of chartData) {
                             const diff = Math.abs((c.time as number) - newsTime);
                             if (diff < minDiff) {
@@ -109,15 +130,23 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
                             }
                         }
 
+                        // Only add if relatively close (e.g. within reason) or force correct logic?
+                        // For daily charts, news might be intraday.
+
+                        // Use the candle time exactly
                         markers.push({
                             time: closest.time,
                             position: 'aboveBar',
-                            color: item.sentiment_score < 0 ? '#ef4444' : '#22c55e',
+                            color: (item.sentiment_score || 0) < 0 ? '#ef4444' : '#22c55e',
                             shape: 'arrowDown',
                             text: item.title,
-                            id: item.id // Keep ID for reference
+                            id: item.id
                         });
                     });
+
+                    // Sort markers by time (required by lightweight-charts)
+                    markers.sort((a, b) => (a.time as number) - (b.time as number));
+
                     setNewsMarkers(markers);
                 }
             } catch (e) {
@@ -132,7 +161,7 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
-        const isDark = theme === 'dark' || !theme; // Default dark
+        const isDark = theme === 'dark' || !theme;
 
         const chart = createChart(chartContainerRef.current, {
             layout: {
@@ -149,18 +178,15 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
             },
             rightPriceScale: {
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                visible: true,
             },
             timeScale: {
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
                 timeVisible: true,
-                rightOffset: 5,
             },
             width: chartContainerRef.current.clientWidth,
             height: 350,
         });
 
-        // Candlestick Series
         const candlestickSeries = chart.addSeries(CandlestickSeries, {
             upColor: '#26a69a',
             downColor: '#ef5350',
@@ -170,94 +196,98 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
         });
         candlestickSeriesRef.current = candlestickSeries;
 
-        // Volume Series (Histogram)
         const volumeSeries = chart.addSeries(HistogramSeries, {
             color: '#26a69a',
             priceFormat: { type: 'volume' },
-            priceScaleId: '', // Overlay on same scale? or separate? usually separate
+            priceScaleId: '',
         });
-        // Setting volume to overlay at bottom
         volumeSeries.priceScale().applyOptions({
-            scaleMargins: {
-                top: 0.8, // Highest volume bar takes up bottom 20%
-                bottom: 0,
-            },
+            scaleMargins: { top: 0.8, bottom: 0 },
         });
         volumeSeriesRef.current = volumeSeries;
 
-
         chartRef.current = chart;
 
-        // Tooltip updates
+        // Tooltip updates with safety check
         chart.subscribeCrosshairMove((param: MouseEventParams) => {
-            if (!chartContainerRef.current || !tooltipRef.current) return;
+            if (!tooltipRef.current) return;
 
-            if (
-                param.point === undefined ||
-                !param.time ||
-                param.point.x < 0 ||
-                param.point.x > chartContainerRef.current.clientWidth ||
-                param.point.y < 0 ||
-                param.point.y > chartContainerRef.current.clientHeight
-            ) {
-                tooltipRef.current.style.display = 'none';
-                return;
-            }
+            try {
+                if (
+                    !param.point ||
+                    !param.time ||
+                    param.point.x < 0 ||
+                    param.point.x > (chartContainerRef.current?.clientWidth || 0) ||
+                    param.point.y < 0 ||
+                    param.point.y > (chartContainerRef.current?.clientHeight || 0)
+                ) {
+                    tooltipRef.current.style.display = 'none';
+                    return;
+                }
 
-            const dateStr = new Date((param.time as number) * 1000).toLocaleString();
+                // Safe access to series data
+                const candle = param.seriesData.get(candlestickSeries) as any;
+                const volume = param.seriesData.get(volumeSeries) as any;
 
-            // Get data
-            const candle = param.seriesData.get(candlestickSeries) as any;
-            const volume = param.seriesData.get(volumeSeries) as any;
+                if (candle) {
+                    tooltipRef.current.style.display = 'block';
+                    const dateStr = new Date((param.time as number) * 1000).toLocaleString();
+                    const open = candle.open?.toFixed(2) || '-';
+                    const high = candle.high?.toFixed(2) || '-';
+                    const low = candle.low?.toFixed(2) || '-';
+                    const close = candle.close?.toFixed(2) || '-';
+                    const vol = volume?.value?.toFixed(2) || 'N/A';
+                    const color = (candle.close >= candle.open) ? '#26a69a' : '#ef5350';
+                    const textColor = isDark ? '#fff' : '#000';
 
-            if (candle) {
-                tooltipRef.current.style.display = 'block';
-                const open = candle.open.toFixed(2);
-                const high = candle.high.toFixed(2);
-                const low = candle.low.toFixed(2);
-                const close = candle.close.toFixed(2);
-                const vol = volume ? volume.value.toFixed(2) : 'N/A';
-                const color = candle.close >= candle.open ? '#26a69a' : '#ef5350';
-
-                // Find visible marker text for this time if any
-                // (Complex to find exact marker data here easily, for now just OHLCV)
-
-                tooltipRef.current.innerHTML = `
-                    <div style="font-size: 10px; color: ${isDark ? '#9ca3af' : '#6b7280'}">${dateStr}</div>
-                    <div style="display: flex; gap: 8px; font-size: 11px; font-weight: 600;">
-                        <span style="color: ${isDark ? '#fff' : '#000'}">O: ${open}</span>
-                        <span style="color: ${isDark ? '#fff' : '#000'}">H: ${high}</span>
-                        <span style="color: ${isDark ? '#fff' : '#000'}">L: ${low}</span>
-                        <span style="color: ${color}">C: ${close}</span>
-                    </div>
-                    <div style="font-size: 10px; color: ${isDark ? '#9ca3af' : '#6b7280'}">Vol: ${vol}</div>
-                `;
+                    tooltipRef.current.innerHTML = `
+                        <div style="font-size: 10px; color: ${isDark ? '#9ca3af' : '#6b7280'}">${dateStr}</div>
+                        <div style="display: flex; gap: 8px; font-size: 11px; font-weight: 600;">
+                            <span style="color: ${textColor}">O: ${open}</span>
+                            <span style="color: ${textColor}">H: ${high}</span>
+                            <span style="color: ${textColor}">L: ${low}</span>
+                            <span style="color: ${color}">C: ${close}</span>
+                        </div>
+                        <div style="font-size: 10px; color: ${isDark ? '#9ca3af' : '#6b7280'}">Vol: ${vol}</div>
+                    `;
+                }
+            } catch (err) {
+                // Silently fail for tooltip
             }
         });
 
         // Resize
-        resizeObserver.current = new ResizeObserver(entries => {
-            if (entries[0]?.contentRect && chart) {
-                chart.applyOptions({
-                    width: entries[0].contentRect.width,
-                    height: entries[0].contentRect.height
-                });
+        const resizeCallback = (entries: ResizeObserverEntry[]) => {
+            if (entries[0]?.contentRect && chartRef.current) {
+                try {
+                    chartRef.current.applyOptions({
+                        width: entries[0].contentRect.width,
+                        height: entries[0].contentRect.height
+                    });
+                } catch (e) {
+                    // Ignore resize errors
+                }
             }
-        });
-        if (chartWrapperRef.current) resizeObserver.current.observe(chartWrapperRef.current);
-
-        return () => {
-            resizeObserver.current?.disconnect();
-            chart.remove();
         };
 
-    }, [theme]); // Re-create chart on theme change to reset options easily
+        const ro = new ResizeObserver(resizeCallback);
+        if (chartWrapperRef.current) ro.observe(chartWrapperRef.current);
+        resizeObserver.current = ro;
+
+        return () => {
+            if (resizeObserver.current) resizeObserver.current.disconnect();
+            if (chartRef.current) {
+                chartRef.current.remove();
+                chartRef.current = null;
+            }
+        };
+
+    }, [theme]);
 
     // Update Data
     useEffect(() => {
         if (!candlestickSeriesRef.current || !volumeSeriesRef.current || chartData.length === 0) return;
 
-        // Separate data
         const candles = chartData.map(d => ({
             time: d.time,
             open: d.open,
@@ -274,6 +304,8 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
 
         candlestickSeriesRef.current.setData(candles);
         volumeSeriesRef.current.setData(volumes);
+
+        // Only fit content if initialization
         chartRef.current?.timeScale().fitContent();
 
     }, [chartData]);
@@ -281,6 +313,7 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
     // Update Markers
     useEffect(() => {
         if (candlestickSeriesRef.current && newsMarkers.length > 0) {
+            // Check if setData has been called? Data update effect runs before this generally.
             // @ts-ignore
             candlestickSeriesRef.current.setMarkers(newsMarkers);
         }
@@ -290,13 +323,11 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
         <div ref={chartWrapperRef} className={styles.chartWrapper}>
             <div
                 ref={tooltipRef}
-                className={styles.tooltip} // Need to add css
+                className={styles.tooltip}
                 style={{ display: 'none' }}
             />
-
             {loading && <div className={styles.loadingOverlay}>Loading...</div>}
             {error && <div className={styles.errorOverlay}>{error}</div>}
-
             <div ref={chartContainerRef} className={styles.chart} />
         </div>
     );

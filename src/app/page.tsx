@@ -23,9 +23,18 @@ const CHART_SYMBOLS = [
   { id: 'DOGE', name: '도지코인' },
 ];
 
+const CHART_INTERVALS = [
+  { id: '15m', label: '15분' },
+  { id: '1h', label: '1시간' },
+  { id: '4h', label: '4시간' },
+  { id: '1d', label: '일봉' },
+  { id: '1w', label: '주봉' },
+];
+
 export default function HomePage() {
   const [globalXRayOpen, setGlobalXRayOpen] = useState(false);
   const [activeSymbol, setActiveSymbol] = useState('BTC');
+  const [activeInterval, setActiveInterval] = useState('1d');
 
   return (
     <div className={styles.appLayout}>
@@ -46,22 +55,36 @@ export default function HomePage() {
           {/* Main Chart Section */}
           <div className={styles.chartSection}>
             <div className={styles.chartHeader}>
-              <div className={styles.chartTabs}>
-                {CHART_SYMBOLS.map(sym => (
-                  <button
-                    key={sym.id}
-                    className={`${styles.chartTab} ${activeSymbol === sym.id ? styles.active : ''}`}
-                    onClick={() => setActiveSymbol(sym.id)}
-                  >
-                    {sym.name}
-                  </button>
-                ))}
+              <div className={styles.chartControlsLeft}>
+                <div className={styles.chartTabs}>
+                  {CHART_SYMBOLS.map(sym => (
+                    <button
+                      key={sym.id}
+                      className={`${styles.chartTab} ${activeSymbol === sym.id ? styles.active : ''}`}
+                      onClick={() => setActiveSymbol(sym.id)}
+                    >
+                      {sym.name}
+                    </button>
+                  ))}
+                </div>
+                <div className={styles.dividerVertical} />
+                <div className={styles.chartTabs}>
+                  {CHART_INTERVALS.map(int => (
+                    <button
+                      key={int.id}
+                      className={`${styles.chartTab} ${activeInterval === int.id ? styles.active : ''}`}
+                      onClick={() => setActiveInterval(int.id)}
+                    >
+                      {int.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               <span className={styles.chartLabel}>
-                {activeSymbol}/USDT · 1D
+                {activeSymbol}/USDT · {CHART_INTERVALS.find(i => i.id === activeInterval)?.label}
               </span>
             </div>
-            <TradingChart symbol={activeSymbol} />
+            <TradingChart symbol={activeSymbol} interval={activeInterval} />
           </div>
 
           {/* Row 1: 4 Widgets Grid */}

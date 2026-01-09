@@ -199,12 +199,13 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
         }
 
         // Update Markers (Needs to happen after data set generally, or lightweight-charts handles it)
-        if (newsMarkers.length > 0) {
+        if (seriesRef.current) {
+            // Check if setMarkers exists before calling (it should for CandlestickSeries)
             // @ts-ignore
-            seriesRef.current.setMarkers(newsMarkers);
-        } else {
-            // @ts-ignore
-            seriesRef.current.setMarkers([]);
+            if (typeof seriesRef.current.setMarkers === 'function') {
+                // @ts-ignore
+                seriesRef.current.setMarkers(newsMarkers || []);
+            }
         }
 
     }, [chartData, newsMarkers]); // Run when data changes

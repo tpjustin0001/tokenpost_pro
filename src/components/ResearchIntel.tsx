@@ -145,12 +145,6 @@ export default function ResearchIntel() {
                         ALL
                     </button>
                     <button
-                        className={`${styles.tab} ${activeTab === 'BREAKING' ? styles.active : ''}`}
-                        onClick={() => setActiveTab('BREAKING')}
-                    >
-                        <span className={styles.breakingLabel}>속보</span>
-                    </button>
-                    <button
                         className={`${styles.tab} ${activeTab === 'PRO' ? styles.active : ''}`}
                         onClick={() => setActiveTab('PRO')}
                     >

@@ -28,6 +28,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isLive, setIsLive] = useState(false);
+    const [currentPrice, setCurrentPrice] = useState<number | null>(null);
 
     // Initial Data Fetch
     useEffect(() => {
@@ -68,6 +69,10 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                             return c;
                         });
                         setChartData(formatted);
+                        // Initial Price
+                        if (formatted.length > 0) {
+                            setCurrentPrice(formatted[formatted.length - 1].close);
+                        }
                     }
                     setLoading(false);
                 }
@@ -85,7 +90,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
     // WebSocket for Real-time Updates
     useEffect(() => {
-        if (!symbol || !interval || chartData.length === 0) return;
+        if (!symbol || !interval) return;
 
         const wsSymbol = `${symbol.toLowerCase()}usdt`;
         const wsInterval = interval;
@@ -106,12 +111,15 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             const message = JSON.parse(event.data);
             if (message.e === 'kline') {
                 const k = message.k;
+                const closePrice = parseFloat(k.c);
+                setCurrentPrice(closePrice); // Display on UI
+
                 const candle = {
                     time: k.t / 1000,
                     open: parseFloat(k.o),
                     high: parseFloat(k.h),
                     low: parseFloat(k.l),
-                    close: parseFloat(k.c),
+                    close: closePrice,
                 };
                 const volume = {
                     time: k.t / 1000,
@@ -127,7 +135,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         return () => {
             if (ws.readyState === 1) ws.close();
         };
-    }, [symbol, interval, chartData.length]);
+    }, [symbol, interval]); // Remove chartData dep to allow reconnects
 
     // Fetch News Markers
     useEffect(() => {
@@ -321,6 +329,11 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         <div ref={chartWrapperRef} className={styles.chartWrapper}>
             {isLive && (
                 <div className={styles.liveStatus}>
+                    {currentPrice && (
+                        <span className={styles.livePrice}>
+                            ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </span>
+                    )}
                     <div className={styles.liveDot} />
                     <span>LIVE</span>
                 </div>

@@ -94,6 +94,15 @@
     animation: pulse 2s infinite;
 }
 
+.livePrice {
+    margin-right: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.5px;
+}
+
 @keyframes pulse {
     0% {
         opacity: 1;

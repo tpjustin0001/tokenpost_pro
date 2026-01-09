@@ -1,18 +1,18 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { createChart, ColorType, IChartApi, CandlestickSeries, CandlestickData, Time, ISeriesApi, SeriesType, CrosshairMode } from 'lightweight-charts';
+import { useEffect, useRef, useState } from 'react';
+import { createChart, ColorType, IChartApi, CandlestickSeries, HistogramSeries, ISeriesApi, CrosshairMode, MouseEventParams } from 'lightweight-charts';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/context/ThemeContext';
 import styles from './TradingChart.module.css';
 
 interface TradingChartProps {
     symbol: string;
-    interval?: string; // e.g., '15m', '1h', '4h', '1d', '1w'
+    interval?: string;
 }
 
 interface NewsMarker {
-    time: Time;
+    time: number; // Use number for easier comparison
     position: 'aboveBar' | 'belowBar';
     color: string;
     shape: 'arrowDown' | 'arrowUp' | 'circle' | 'square';
@@ -23,259 +23,280 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartWrapperRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
-    const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+    const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+    const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
     const resizeObserver = useRef<ResizeObserver | null>(null);
-    const { theme } = useTheme(); // 'dark' or 'light'
+    const { theme } = useTheme();
+
+    // Tooltip Refs
+    const tooltipRef = useRef<HTMLDivElement>(null);
 
     // State
-    const [chartData, setChartData] = useState<CandlestickData<Time>[]>([]);
-    const [newsMarkers, setNewsMarkers] = useState<NewsMarker[]>([]);
+    const [chartData, setChartData] = useState<any[]>([]); // { time, open, high, low, close, volume }
+    const [newsMarkers, setNewsMarkers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch Binance candle data
+    // Fetch Candle Data
     useEffect(() => {
         let isMounted = true;
-
         async function fetchCandles() {
             setLoading(true);
             setError(null);
-
             try {
-                // Ensure valid Binance interval
                 const binanceSymbol = `${symbol}USDT`;
+                // Try Binance.US first
+                const res1 = await fetch(`https://api.binance.us/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=200`);
+                let response = res1;
 
-                // Try Binance.US first (likely Vercel server is in US)
-                let apiUrl = `https://api.binance.us/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=150`;
-                let response = await fetch(`/api/klines?symbol=${binanceSymbol}&interval=${interval}&limit=150`);
-
-                if (!response.ok) {
-                    const errText = await response.text();
-                    throw new Error(errText || `Failed to fetch chart data (${response.status})`);
+                if (res1.status === 451 || !res1.ok) {
+                    // Fallback to Global
+                    response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=200`);
                 }
 
-                const data = await response.json();
+                // Fallback to internal proxy if both fail or CORS issues (though direct fetch might be faster if allowed)
+                // Actually, client-side fetch to Binance might get CORS error. Better use our proxy always?
+                // Reverting to use our proxy which handles the failover logic safely
+                const proxyRes = await fetch(`/api/klines?symbol=${binanceSymbol}&interval=${interval}&limit=200`);
+                if (!proxyRes.ok) throw new Error(await proxyRes.text());
 
-                if (data.error) {
-                    throw new Error(data.error);
-                }
+                const data = await proxyRes.json();
+                if (data.error) throw new Error(data.error);
 
                 if (isMounted) {
-                    if (data.candles && data.candles.length > 0) {
-                        const formattedCandles = data.candles.map((c: any) => ({
-                            time: c.time as Time,
-                            open: c.open,
-                            high: c.high,
-                            low: c.low,
-                            close: c.close,
-                        }));
-                        setChartData(formattedCandles);
-                    } else {
-                        console.warn('No candle data available', data);
-                        setChartData([]);
+                    if (data.candles) {
+                        setChartData(data.candles);
                     }
                     setLoading(false);
                 }
             } catch (err: any) {
                 if (isMounted) {
-                    console.error('Chart data error:', err);
+                    console.error(err);
                     setError(err.message);
                     setLoading(false);
                 }
             }
         }
-
         fetchCandles();
-
-        return () => {
-            isMounted = false;
-        };
+        return () => { isMounted = false; };
     }, [symbol, interval]);
 
-    // Fetch news markers from Supabase (Dependent on chartData to match timestamps)
+    // Fetch News Markers
     useEffect(() => {
         let isMounted = true;
-
-        async function fetchNewsMarkers() {
+        async function fetchNews() {
             if (!supabase || chartData.length === 0) return;
-
             try {
-                const { data: newsItems } = await supabase
+                const { data } = await supabase
                     .from('news')
-                    .select('published_at, title, sentiment_score')
+                    .select('*')
                     .eq('related_coin', symbol)
-                    .eq('show_on_chart', true)
-                    .order('published_at', { ascending: true });
+                    .eq('show_on_chart', true);
 
-                if (isMounted && newsItems && newsItems.length > 0) {
-                    const markers: NewsMarker[] = [];
-
-                    newsItems.forEach(item => {
+                if (isMounted && data && data.length > 0) {
+                    const markers: any[] = [];
+                    data.forEach((item: any) => {
                         const newsTime = new Date(item.published_at).getTime() / 1000;
+                        // Find closest candle
+                        let closest = chartData[0];
+                        let minDiff = Math.abs((closest.time as number) - newsTime);
 
-                        // Find closest candle time to attach marker
-                        let closestCandle = chartData[0];
-                        let minDiff = Math.abs((closestCandle.time as number) - newsTime);
-
-                        for (const candle of chartData) {
-                            const candleTime = candle.time as number;
-                            const diff = Math.abs(candleTime - newsTime);
-
+                        for (const c of chartData) {
+                            const diff = Math.abs((c.time as number) - newsTime);
                             if (diff < minDiff) {
                                 minDiff = diff;
-                                closestCandle = candle;
+                                closest = c;
                             }
                         }
 
                         markers.push({
-                            time: closestCandle.time as Time,
+                            time: closest.time,
                             position: 'aboveBar',
-                            color: (item.sentiment_score || 0) < 0 ? '#f87171' : '#4ade80',
+                            color: item.sentiment_score < 0 ? '#ef4444' : '#22c55e',
                             shape: 'arrowDown',
                             text: item.title,
+                            id: item.id // Keep ID for reference
                         });
                     });
-
                     setNewsMarkers(markers);
-                } else if (isMounted) {
-                    setNewsMarkers([]);
                 }
             } catch (e) {
-                console.error("Failed to load news markers", e);
+                console.error(e);
             }
         }
-
-        if (chartData.length > 0) {
-            fetchNewsMarkers();
-        }
-
+        if (chartData.length > 0) fetchNews();
         return () => { isMounted = false; };
     }, [symbol, chartData]);
 
-    // Chart Options based on Theme
-    const getChartOptions = (currentTheme: string) => {
-        const isDark = currentTheme === 'dark';
-
-        return {
-            layout: {
-                background: { type: ColorType.Solid, color: 'transparent' },
-                textColor: isDark ? '#9ca3af' : '#4b5563', // gray-400 : gray-600
-                fontFamily: 'Roboto Mono, monospace',
-                fontSize: 11,
-            },
-            grid: {
-                vertLines: { color: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)' },
-                horzLines: { color: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)' },
-            },
-            crosshair: {
-                mode: CrosshairMode.Normal,
-                vertLine: {
-                    color: '#60a5fa',
-                    labelBackgroundColor: '#60a5fa',
-                },
-                horzLine: {
-                    color: '#60a5fa',
-                    labelBackgroundColor: '#60a5fa',
-                },
-            },
-            rightPriceScale: {
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
-            },
-            timeScale: {
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
-                timeVisible: true,
-                rightOffset: 12, // Add some space on the right to prevent clipping
-            },
-            handleScroll: true,
-            handleScale: true,
-        };
-    };
-
-    // Initialize Chart
+    // Chart Initialization
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
-        // Create Chart
+        const isDark = theme === 'dark' || !theme; // Default dark
+
         const chart = createChart(chartContainerRef.current, {
-            ...getChartOptions(theme || 'dark'),
+            layout: {
+                background: { type: ColorType.Solid, color: 'transparent' },
+                textColor: isDark ? '#D9D9D9' : '#191919',
+                fontFamily: 'Inter, sans-serif',
+            },
+            grid: {
+                vertLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
+                horzLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
+            },
+            crosshair: {
+                mode: CrosshairMode.Normal,
+            },
+            rightPriceScale: {
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                visible: true,
+            },
+            timeScale: {
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                timeVisible: true,
+                rightOffset: 5,
+            },
             width: chartContainerRef.current.clientWidth,
             height: 350,
         });
 
-        // Add Series
+        // Candlestick Series
         const candlestickSeries = chart.addSeries(CandlestickSeries, {
-            upColor: '#4ade80',
-            downColor: '#f87171',
-            borderUpColor: '#4ade80',
-            borderDownColor: '#f87171',
-            wickUpColor: '#4ade80',
-            wickDownColor: '#f87171',
+            upColor: '#26a69a',
+            downColor: '#ef5350',
+            borderVisible: false,
+            wickUpColor: '#26a69a',
+            wickDownColor: '#ef5350',
         });
+        candlestickSeriesRef.current = candlestickSeries;
+
+        // Volume Series (Histogram)
+        const volumeSeries = chart.addSeries(HistogramSeries, {
+            color: '#26a69a',
+            priceFormat: { type: 'volume' },
+            priceScaleId: '', // Overlay on same scale? or separate? usually separate
+        });
+        // Setting volume to overlay at bottom
+        volumeSeries.priceScale().applyOptions({
+            scaleMargins: {
+                top: 0.8, // Highest volume bar takes up bottom 20%
+                bottom: 0,
+            },
+        });
+        volumeSeriesRef.current = volumeSeries;
+
 
         chartRef.current = chart;
-        seriesRef.current = candlestickSeries;
 
-        // Resize Observer
-        resizeObserver.current = new ResizeObserver(entries => {
-            if (entries.length === 0 || !entries[0].contentRect) return;
-            const { width, height } = entries[0].contentRect;
-            chart.applyOptions({ width, height });
+        // Tooltip updates
+        chart.subscribeCrosshairMove((param: MouseEventParams) => {
+            if (!chartContainerRef.current || !tooltipRef.current) return;
+
+            if (
+                param.point === undefined ||
+                !param.time ||
+                param.point.x < 0 ||
+                param.point.x > chartContainerRef.current.clientWidth ||
+                param.point.y < 0 ||
+                param.point.y > chartContainerRef.current.clientHeight
+            ) {
+                tooltipRef.current.style.display = 'none';
+                return;
+            }
+
+            const dateStr = new Date((param.time as number) * 1000).toLocaleString();
+
+            // Get data
+            const candle = param.seriesData.get(candlestickSeries) as any;
+            const volume = param.seriesData.get(volumeSeries) as any;
+
+            if (candle) {
+                tooltipRef.current.style.display = 'block';
+                const open = candle.open.toFixed(2);
+                const high = candle.high.toFixed(2);
+                const low = candle.low.toFixed(2);
+                const close = candle.close.toFixed(2);
+                const vol = volume ? volume.value.toFixed(2) : 'N/A';
+                const color = candle.close >= candle.open ? '#26a69a' : '#ef5350';
+
+                // Find visible marker text for this time if any
+                // (Complex to find exact marker data here easily, for now just OHLCV)
+
+                tooltipRef.current.innerHTML = `
+                    <div style="font-size: 10px; color: ${isDark ? '#9ca3af' : '#6b7280'}">${dateStr}</div>
+                    <div style="display: flex; gap: 8px; font-size: 11px; font-weight: 600;">
+                        <span style="color: ${isDark ? '#fff' : '#000'}">O: ${open}</span>
+                        <span style="color: ${isDark ? '#fff' : '#000'}">H: ${high}</span>
+                        <span style="color: ${isDark ? '#fff' : '#000'}">L: ${low}</span>
+                        <span style="color: ${color}">C: ${close}</span>
+                    </div>
+                    <div style="font-size: 10px; color: ${isDark ? '#9ca3af' : '#6b7280'}">Vol: ${vol}</div>
+                `;
+            }
         });
 
-        if (chartWrapperRef.current) {
-            resizeObserver.current.observe(chartWrapperRef.current);
-        }
+        // Resize
+        resizeObserver.current = new ResizeObserver(entries => {
+            if (entries[0]?.contentRect && chart) {
+                chart.applyOptions({
+                    width: entries[0].contentRect.width,
+                    height: entries[0].contentRect.height
+                });
+            }
+        });
+        if (chartWrapperRef.current) resizeObserver.current.observe(chartWrapperRef.current);
 
         return () => {
-            if (resizeObserver.current) {
-                resizeObserver.current.disconnect();
-            }
-            if (chartRef.current) {
-                chartRef.current.remove();
-                chartRef.current = null;
-                seriesRef.current = null;
-            }
+            resizeObserver.current?.disconnect();
+            chart.remove();
         };
-    }, []); // Run once
 
-    // Update Theme
-    useEffect(() => {
-        if (chartRef.current) {
-            chartRef.current.applyOptions(getChartOptions(theme || 'dark'));
-        }
-    }, [theme]);
+    }, [theme]); // Re-create chart on theme change to reset options easily
 
     // Update Data
     useEffect(() => {
-        if (!seriesRef.current || !chartRef.current) return;
+        if (!candlestickSeriesRef.current || !volumeSeriesRef.current || chartData.length === 0) return;
 
-        if (chartData.length > 0) {
-            seriesRef.current.setData(chartData);
-            chartRef.current.timeScale().fitContent();
-        }
+        // Separate data
+        const candles = chartData.map(d => ({
+            time: d.time,
+            open: d.open,
+            high: d.high,
+            low: d.low,
+            close: d.close,
+        }));
 
-        if (seriesRef.current) {
+        const volumes = chartData.map(d => ({
+            time: d.time,
+            value: d.volume,
+            color: d.close >= d.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)',
+        }));
+
+        candlestickSeriesRef.current.setData(candles);
+        volumeSeriesRef.current.setData(volumes);
+        chartRef.current?.timeScale().fitContent();
+
+    }, [chartData]);
+
+    // Update Markers
+    useEffect(() => {
+        if (candlestickSeriesRef.current && newsMarkers.length > 0) {
             // @ts-ignore
-            if (typeof seriesRef.current.setMarkers === 'function') {
-                // @ts-ignore
-                seriesRef.current.setMarkers(newsMarkers || []);
-            }
+            candlestickSeriesRef.current.setMarkers(newsMarkers);
         }
-
-    }, [chartData, newsMarkers]);
+    }, [newsMarkers]);
 
     return (
         <div ref={chartWrapperRef} className={styles.chartWrapper}>
-            {loading && (
-                <div className={styles.loadingOverlay}>
-                    <span>Loading...</span>
-                </div>
-            )}
-            {error && (
-                <div className={styles.errorOverlay}>
-                    <span>{error?.includes('403') ? 'API Limit/Restricted' : error}</span>
-                </div>
-            )}
+            <div
+                ref={tooltipRef}
+                className={styles.tooltip} // Need to add css
+                style={{ display: 'none' }}
+            />
+
+            {loading && <div className={styles.loadingOverlay}>Loading...</div>}
+            {error && <div className={styles.errorOverlay}>{error}</div>}
+
             <div ref={chartContainerRef} className={styles.chart} />
         </div>
     );

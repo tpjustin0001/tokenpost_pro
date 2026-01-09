@@ -26,15 +26,16 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
     // Data State
     const [chartData, setChartData] = useState<any[]>([]);
     const [newsMarkers, setNewsMarkers] = useState<any[]>([]);
+
     // Use a ref for newsMap to access it inside the click handler closure without re-binding
     const newsMapRef = useRef<Record<string, any>>({});
+    const clickHandlerRef = useRef<(t: number) => void>(() => { });
 
     const [selectedNews, setSelectedNews] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isLive, setIsLive] = useState(false);
     const [currentPrice, setCurrentPrice] = useState<number | null>(null);
-    const [debugMsg, setDebugMsg] = useState<string>('');
 
     // 1. Initial Data Fetch
     useEffect(() => {
@@ -84,11 +85,13 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
     // 2. Fetch News (Depends on ChartData being ready)
     useEffect(() => {
-        if (!supabase || chartData.length === 0) return;
+        if (chartData.length === 0) return;
 
         async function fetchNews() {
             try {
-                const { data, error } = await supabase!
+                if (!supabase) return;
+
+                const { data, error } = await supabase
                     .from('news')
                     .select('*')
                     .eq('related_coin', symbol)
@@ -102,7 +105,6 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                         map[item.id] = item;
 
                         const newsTime = new Date(item.published_at).getTime() / 1000;
-                        // Find closest candle time
                         let minDiff = Number.MAX_VALUE;
                         let closestTime: number | null = null;
 
@@ -118,10 +120,9 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                             markers.push({
                                 time: closestTime,
                                 position: 'aboveBar',
-                                color: (item.sentiment_score || 0) < 0 ? '#ef4444' : '#22c55e',
-                                shape: 'arrowDown',
-                                text: 'NEWS',
-                                size: 2,
+                                color: (item.sentiment_score || 0) < 0 ? '#f87171' : '#4ade80', // Red/Green
+                                shape: 'circle', // Simple circle
+                                size: 1, // Small and clean
                                 id: item.id
                             });
                         }
@@ -129,15 +130,14 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
                     markers.sort((a, b) => (a.time as number) - (b.time as number));
                     setNewsMarkers(markers);
-                    newsMapRef.current = map; // Update Ref
-                    setDebugMsg(`News Loaded: ${markers.length}`);
+                    newsMapRef.current = map;
                 }
             } catch (e: any) {
                 console.error(e);
             }
         }
         fetchNews();
-    }, [symbol, chartData]); // Only refetch if symbol/data changes
+    }, [symbol, chartData]);
 
     // 3. WebSocket Setup
     useEffect(() => {
@@ -196,15 +196,15 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 fontFamily: 'Inter, sans-serif',
             },
             grid: {
-                vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
-                horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+                vertLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
+                horzLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
             },
             rightPriceScale: {
-                borderColor: 'rgba(255, 255, 255, 0.1)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
                 scaleMargins: { top: 0.2, bottom: 0.2 },
             },
             timeScale: {
-                borderColor: 'rgba(255, 255, 255, 0.1)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
                 timeVisible: true,
             },
         });
@@ -227,38 +227,6 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         volumeSeriesRef.current = volSeries;
         chartRef.current = chart;
 
-        // Click Logic
-        chart.subscribeClick((param: MouseEventParams) => {
-            const clickTime = param.time as number;
-            // Use current ref value for map
-            const currentMap = newsMapRef.current;
-
-            if (clickTime) {
-                // Determine if there's a marker at this time
-                // We need to access the LATEST markers. 
-                // Since this closure is created once, we'll need to look up via the series or a ref.
-                // However, accessing state inside this stale closure is unsafe.
-                // Best way: check if ANY news exists for this time in the map.
-
-                // We stored news in newsMap by ID. 
-                // Let's iterate values of newsMapRef.current to find time match? 
-                // Or better, let's just find if any marker matches this time.
-                // WE CANNOT ACCESS newsMarkers state here easily if it's stale.
-                // BUT we can assume newsMapRef is up to date.
-
-                const matches = Object.values(currentMap).find((item: any) => {
-                    // Match against chart bars is tricky without the exact aligned time.
-                    // But we can check if we have a mapped marker time.
-                    // Let's try to rebuild the match logic or store a time->news map.
-                    return false; // Conceptual placeholder
-                });
-
-                // Better: Just use a global variable or ref for [time -> newsId] map
-                // For now, let's use the debug overlay to inspect 'clickTime'
-                setDebugMsg(`Clicked Time: ${clickTime}`);
-            }
-        });
-
         // Resize
         const resizeCallback = (ent: ResizeObserverEntry[]) => {
             if (ent[0]?.contentRect && chart) {
@@ -274,7 +242,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             chartRef.current = null;
             ro.disconnect();
         };
-    }, []); // Empty dependency -> Run once
+    }, [theme]); // Empty dependency -> Run once
 
     // 5. Update Data Series
     useEffect(() => {
@@ -290,36 +258,30 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         candlestickSeriesRef.current.setData(cData);
         volumeSeriesRef.current?.setData(vData);
 
-    }, [chartData]); // Update when data loads
+    }, [chartData]);
 
-    // 6. Update Markers & Event Handler (Re-bind click if needed or use Ref)
+    // 6. Update Markers & Event Handler
     useEffect(() => {
-        if (!candlestickSeriesRef.current || newsMarkers.length === 0 || !chartRef.current) return;
+        if (!candlestickSeriesRef.current || !chartRef.current) return;
 
+        // Always set markers even if empty (to clear)
         candlestickSeriesRef.current.setMarkers(newsMarkers);
-        // Handler logic is managed via Ref, no need to resubscribe.
 
     }, [newsMarkers]);
 
-    // 7. Click Handler with Refs (To ensure always fresh access)
-    // We update a Ref that holds the lookup logic
-    const clickHandlerRef = useRef<(t: number) => void>(() => { });
-
+    // 7. Click Handler with Refs
     useEffect(() => {
         clickHandlerRef.current = (clickTime: number) => {
             // Find news with this EXACT candle time
-            const marker = newsMarkers.find(m => Math.abs((m.time as number) - clickTime) < 1); // tolerance just in case
+            const marker = newsMarkers.find(m => Math.abs((m.time as number) - clickTime) < 1);
             if (marker && marker.id && newsMapRef.current[marker.id]) {
                 const news = newsMapRef.current[marker.id];
-                setDebugMsg(`OPENING: ${news.title.substring(0, 10)}...`);
                 setSelectedNews(news);
-            } else {
-                setDebugMsg(`Time: ${clickTime} | No News`);
             }
         };
     }, [newsMarkers]);
 
-    // Attach the perpetual listener that calls the Ref
+    // Attach listener
     useEffect(() => {
         if (chartRef.current) {
             const handler = (p: MouseEventParams) => {
@@ -328,46 +290,48 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 }
             };
             chartRef.current.subscribeClick(handler);
-            // No clean way to unsubscribe specific handler without reference, 
-            // but since this effect runs once (dependent on chartRef creation), it's fine.
         }
-    }, [chartRef.current]); // Runs when chart is created
-
+    }, [chartRef.current]);
 
     return (
         <div ref={chartWrapperRef} className={styles.chartWrapper}>
-            <div style={{ position: 'absolute', top: 40, left: 12, zIndex: 50, color: 'gold', background: 'rgba(0,0,0,0.7)', pointerEvents: 'none' }}>
-                [DEBUG] {debugMsg}
-            </div>
-
-            {/* Manual Trigger for Testing */}
-            <div style={{ position: 'absolute', top: 10, right: 60, zIndex: 100 }}>
-                <button onClick={() => {
-                    setDebugMsg("Manual Test Clicked");
-                    setSelectedNews({ title: "Test News", content: "This is a test.", sentiment_score: 0.5, published_at: new Date().toISOString() });
-                }} style={{ background: 'blue', color: 'white', padding: '5px', fontSize: '10px' }}>
-                    TEST MODAL
-                </button>
-            </div>
-
             {selectedNews && (
-                <div style={{
-                    position: 'fixed', // Changed to fixed
-                    top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                    zIndex: 9999, // Super high
-                    background: '#1f2937', color: 'white', padding: '20px', borderRadius: '8px',
-                    boxShadow: '0 0 50px rgba(0,0,0,0.8)',
-                    width: '300px', border: '1px solid #374151'
-                }}>
-                    <h4>{selectedNews.title}</h4>
-                    <p style={{ fontSize: '12px', margin: '10px 0', opacity: 0.8 }}>{selectedNews.content?.substring(0, 100)}...</p>
-                    <button onClick={() => setSelectedNews(null)} style={{ width: '100%', padding: '5px', background: '#4b5563' }}>Close</button>
+                <div className={styles.newsModal}>
+                    <div className={styles.modalHeader}>
+                        <span className={`${styles.modalBadge} ${selectedNews.sentiment_score < 0 ? styles.badgeBear : styles.badgeBull}`}>
+                            {selectedNews.sentiment_score < 0 ? 'BEARISH' : 'BULLISH'}
+                        </span>
+                        <span className={styles.modalDate}>
+                            {new Date(selectedNews.published_at).toLocaleString(undefined, {
+                                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                            })}
+                        </span>
+                    </div>
+                    <h3 className={styles.modalTitle}>{selectedNews.title}</h3>
+                    <div className={styles.modalContent}>
+                        {selectedNews.summary || selectedNews.content}
+                    </div>
+                    <button className={styles.closeButton} onClick={() => setSelectedNews(null)}>
+                        닫기
+                    </button>
                 </div>
             )}
 
-            {selectedNews && <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998 }} onClick={() => setSelectedNews(null)} />}
+            {/* Backdrop */}
+            {selectedNews && <div className={styles.modalBackdrop} onClick={() => setSelectedNews(null)} />}
 
-            {loading && <div className={styles.loadingOverlay}>Loading...</div>}
+            {isLive && (
+                <div className={styles.liveStatus}>
+                    {currentPrice && (
+                        <span className={styles.livePrice}>
+                            ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </span>
+                    )}
+                    <div className={styles.liveDot} />
+                    <span>LIVE</span>
+                </div>
+            )}
+            {loading && <div className={styles.loadingOverlay}><span>Loading Chart...</span></div>}
             <div ref={chartContainerRef} className={styles.chart} />
         </div>
     );

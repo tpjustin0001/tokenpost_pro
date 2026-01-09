@@ -1,0 +1,28 @@
+.chartWrapper {
+    padding: var(--spacing-md);
+    height: 350px;
+}
+
+.canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.legend {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}

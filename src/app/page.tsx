@@ -10,6 +10,7 @@ import AIInsights from '@/components/AIInsights';
 import ResearchIntel from '@/components/ResearchIntel';
 import TokenUnlocks from '@/components/TokenUnlocks';
 import WhaleTracker from '@/components/WhaleTracker';
+import BubbleChart from '@/components/BubbleChart';
 import GlobalXRay, { GlobalXRayButton } from '@/components/GlobalXRay';
 import styles from './page.module.css';
 
@@ -46,7 +47,9 @@ export default function HomePage() {
             <ResearchIntel />
           </div>
 
-          {/* Row 3: Token Unlocks + Whale Tracker */}
+          {/* Row 3: Bubble Chart + Token Unlocks + Whale Tracker */}
+          <BubbleChart />
+
           <div className={styles.twoColumnGrid}>
             <TokenUnlocks />
             <WhaleTracker />

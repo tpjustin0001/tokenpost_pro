@@ -5,6 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import MetricsBar from '@/components/MetricsBar';
 import KimchiPremium from '@/components/KimchiPremium';
 import PricePerformance from '@/components/PricePerformance';
+import TradingChart from '@/components/TradingChart';
 import { StablecoinInterestChart, BlockchainRevChart, ETFFlowsChart } from '@/components/DataWidgets';
 import AIInsights from '@/components/AIInsights';
 import ResearchIntel from '@/components/ResearchIntel';
@@ -14,8 +15,15 @@ import BubbleChart from '@/components/BubbleChart';
 import GlobalXRay, { GlobalXRayButton } from '@/components/GlobalXRay';
 import styles from './page.module.css';
 
+const CHART_SYMBOLS = [
+  { id: 'BTC', name: '비트코인' },
+  { id: 'ETH', name: '이더리움' },
+  { id: 'SOL', name: '솔라나' },
+];
+
 export default function HomePage() {
   const [globalXRayOpen, setGlobalXRayOpen] = useState(false);
+  const [activeSymbol, setActiveSymbol] = useState('BTC');
 
   return (
     <div className={styles.appLayout}>
@@ -31,6 +39,27 @@ export default function HomePage() {
               <KimchiPremium />
               <GlobalXRayButton onClick={() => setGlobalXRayOpen(true)} />
             </div>
+          </div>
+
+          {/* Main Chart Section */}
+          <div className={styles.chartSection}>
+            <div className={styles.chartHeader}>
+              <div className={styles.chartTabs}>
+                {CHART_SYMBOLS.map(sym => (
+                  <button
+                    key={sym.id}
+                    className={`${styles.chartTab} ${activeSymbol === sym.id ? styles.active : ''}`}
+                    onClick={() => setActiveSymbol(sym.id)}
+                  >
+                    {sym.name}
+                  </button>
+                ))}
+              </div>
+              <span className={styles.chartLabel}>
+                {activeSymbol}/USDT · 1D
+              </span>
+            </div>
+            <TradingChart symbol={activeSymbol} />
           </div>
 
           {/* Row 1: 4 Widgets Grid */}

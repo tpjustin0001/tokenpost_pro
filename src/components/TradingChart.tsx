@@ -135,7 +135,7 @@ export default function TradingChart({ symbol, data }: TradingChartProps) {
             if (chartContainerRef.current && chartRef.current) {
                 chartRef.current.applyOptions({
                     width: chartContainerRef.current.clientWidth,
-                    height: 280,
+                    height: 350,
                 });
             }
         };

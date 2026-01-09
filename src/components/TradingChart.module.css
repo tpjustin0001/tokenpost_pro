@@ -1,5 +1,11 @@
 .chart {
     width: 100%;
-    height: 280px;
-    border-bottom: 1px solid var(--border-color);
+    height: 350px;
+    padding: var(--spacing-md);
+    background: linear-gradient(180deg, rgba(13, 17, 23, 0.8) 0%, rgba(13, 17, 23, 0.95) 100%);
+}
+
+/* Ensure chart fills container properly */
+.chart>div {
+    border-radius: var(--radius-sm);
 }

@@ -19,10 +19,9 @@ export default function Sidebar() {
 
     return (
         <aside className={styles.sidebar}>
-            <div className={styles.logo}>
-                <span className={styles.logoText}>TP</span>
-                <span className={styles.logoSub}>PRO</span>
-            </div>
+            <Link href="/" className={styles.logo}>
+                <img src="/icon.jpg" alt="TokenPost PRO" className={styles.logoImg} />
+            </Link>
 
             <nav className={styles.nav}>
                 {NAV_ITEMS.map((item) => {

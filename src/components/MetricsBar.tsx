@@ -1,11 +1,13 @@
 'use client';
 
+import { XRayIcon } from './XRayTooltip';
 import styles from './MetricsBar.module.css';
 
 interface Metric {
     label: string;
     value: string;
     change: number;
+    xrayKey: string;
     sparkline?: number[];
 }
 
@@ -14,30 +16,35 @@ const METRICS: Metric[] = [
         label: '24시간 현물 거래량',
         value: '$37.34B',
         change: 41.28,
+        xrayKey: 'spot_volume',
         sparkline: [20, 35, 28, 45, 38, 52, 48, 60, 55, 70]
     },
     {
         label: '24시간 선물 거래량',
         value: '$214.35B',
         change: 65.83,
+        xrayKey: 'perps_volume',
         sparkline: [30, 25, 40, 35, 50, 45, 60, 55, 75, 80]
     },
     {
         label: '오픈 인터레스트',
         value: '$102.61B',
         change: 11.96,
+        xrayKey: 'open_interest',
         sparkline: [40, 42, 38, 45, 43, 48, 50, 52, 55, 58]
     },
     {
         label: '총 시가총액',
         value: '$3.17T',
         change: 4.04,
+        xrayKey: 'market_cap',
         sparkline: [50, 48, 52, 55, 53, 58, 60, 62, 65, 68]
     },
     {
         label: '24시간 청산',
         value: '$264.29M',
         change: 45.02,
+        xrayKey: 'liquidations',
         sparkline: [10, 25, 15, 40, 20, 55, 30, 45, 35, 60]
     },
 ];
@@ -74,7 +81,7 @@ export default function MetricsBar() {
                 <div key={index} className={styles.metricCard}>
                     <div className={styles.labelRow}>
                         <span className={styles.label}>{metric.label}</span>
-                        <span className={styles.info}>ⓘ</span>
+                        <XRayIcon dataKey={metric.xrayKey} />
                     </div>
                     <div className={styles.valueRow}>
                         <span className={styles.value}>{metric.value}</span>

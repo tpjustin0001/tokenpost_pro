@@ -157,9 +157,6 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
                             closest = chartData[chartData.length - 1];
                         }
 
-                        // Force snap if diff is reasonably small (e.g. same candle interval)
-                        // If logic is too strict, markers disappear.
-
                         if (closest) {
                             markers.push({
                                 time: closest.time,
@@ -209,6 +206,15 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
                 timeVisible: true,
             },
+            // @ts-ignore
+            watermark: {
+                visible: true,
+                fontSize: 24,
+                horzAlign: 'center',
+                vertAlign: 'center',
+                color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                text: `BINANCE: ${symbol}USDT`,
+            },
             width: chartContainerRef.current.clientWidth,
             height: 350,
         });
@@ -222,14 +228,19 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
         });
         candlestickSeriesRef.current = candlestickSeries;
 
+        // Separate Volume Series
         const volumeSeries = chart.addSeries(HistogramSeries, {
             color: '#26a69a',
             priceFormat: { type: 'volume' },
-            priceScaleId: '',
+            priceScaleId: 'volume', // Separate Scale
         });
-        volumeSeries.priceScale().applyOptions({
+
+        // Configure Volume Scale
+        chart.priceScale('volume').applyOptions({
             scaleMargins: { top: 0.8, bottom: 0 },
+            visible: false, // Hide volume axis labels to keep it clean
         });
+
         volumeSeriesRef.current = volumeSeries;
 
         chartRef.current = chart;

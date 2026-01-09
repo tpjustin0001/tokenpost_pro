@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import MetricsBar from '@/components/MetricsBar';
+import KimchiPremium from '@/components/KimchiPremium';
 import PricePerformance from '@/components/PricePerformance';
 import { StablecoinInterestChart, BlockchainRevChart, ETFFlowsChart } from '@/components/DataWidgets';
 import AIInsights from '@/components/AIInsights';
@@ -25,7 +26,10 @@ export default function HomePage() {
         <main className={styles.content}>
           <div className={styles.xrayHeader}>
             <h2 className={styles.pageTitle}>대시보드</h2>
-            <GlobalXRayButton onClick={() => setGlobalXRayOpen(true)} />
+            <div className={styles.headerRight}>
+              <KimchiPremium />
+              <GlobalXRayButton onClick={() => setGlobalXRayOpen(true)} />
+            </div>
           </div>
 
           {/* Row 1: 4 Widgets Grid */}

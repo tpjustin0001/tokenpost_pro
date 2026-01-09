@@ -1,0 +1,86 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.main {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.flag {
+    font-size: 14px;
+}
+
+.label {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.value {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+.badge {
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 9px;
+    font-weight: 600;
+}
+
+.green {
+    color: var(--accent-green);
+}
+
+.green.badge {
+    background: var(--accent-green-dim);
+    color: var(--accent-green);
+}
+
+.neutral {
+    color: var(--text-primary);
+}
+
+.neutral.badge {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+}
+
+.orange {
+    color: var(--accent-yellow);
+}
+
+.orange.badge {
+    background: var(--accent-yellow-dim);
+    color: var(--accent-yellow);
+}
+
+.red {
+    color: var(--accent-red);
+}
+
+.red.badge {
+    background: var(--accent-red-dim);
+    color: var(--accent-red);
+}
+
+.prices {
+    display: flex;
+    gap: var(--spacing-sm);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+.divider {
+    opacity: 0.3;
+}

@@ -30,6 +30,12 @@
   color: var(--text-primary);
 }
 
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
 /* Blockworks Style Widget Grid */
 .widgetGrid {
   display: grid;

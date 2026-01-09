@@ -6,10 +6,11 @@ import { useTheme } from '@/context/ThemeContext';
 import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
-    { id: 'home', icon: 'H', label: '홈', href: '/' },
-    { id: 'research', icon: 'R', label: '리서치', href: '/research' },
+    { id: 'home', icon: '📊', label: '대시보드', href: '/' },
+    { id: 'research', icon: '📰', label: '리서치', href: '/research' },
+    { id: 'academy', icon: '📚', label: '아카데미', href: '/academy' },
     { divider: true },
-    { id: 'admin', icon: 'AD', label: '관리자', href: '/admin' },
+    { id: 'admin', icon: '⚙️', label: '관리', href: '/admin' },
 ];
 
 export default function Sidebar() {
@@ -29,7 +30,8 @@ export default function Sidebar() {
                         return <div key={index} className={styles.divider} />;
                     }
 
-                    const isActive = pathname === item.href;
+                    const isActive = pathname === item.href ||
+                        (item.href !== '/' && pathname.startsWith(item.href));
 
                     return (
                         <Link
@@ -54,10 +56,6 @@ export default function Sidebar() {
                     <span className={styles.themeIcon}>{theme === 'dark' ? '☀️' : '🌙'}</span>
                     <span className={styles.themeLabel}>{theme === 'dark' ? 'Light' : 'Dark'}</span>
                 </button>
-
-                <div className={styles.userBtn}>
-                    <span className={styles.userIcon}>U</span>
-                </div>
             </div>
         </aside>
     );

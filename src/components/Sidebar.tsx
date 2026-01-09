@@ -7,8 +7,9 @@ import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
     { id: 'home', icon: '📊', label: '대시보드', href: '/' },
-    { id: 'research', icon: '📰', label: '리서치', href: '/research' },
-    { id: 'academy', icon: '📚', label: '아카데미', href: '/academy' },
+    { id: 'news', icon: '📰', label: '뉴스', href: '/news' },
+    { id: 'research', icon: '🔬', label: '리서치', href: '/research' },
+    { id: 'data', icon: '📈', label: '데이터', href: '/data' },
     { divider: true },
     { id: 'admin', icon: '⚙️', label: '관리', href: '/admin' },
 ];

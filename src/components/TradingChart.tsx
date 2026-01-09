@@ -282,10 +282,15 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         // Click Handler for Markers
         chart.subscribeClick((param: MouseEventParams) => {
             const p = param as any;
+            setDebugMsg(prev => `Click: ${p.point?.x},${p.point?.y} | ID: ${p.hoveredMarkerId}`);
+
             if (p.hoveredMarkerId) {
                 const id = p.hoveredMarkerId as string;
                 if (newsMap[id]) {
+                    setDebugMsg(`OPENING NEWS: ${id}`);
                     setSelectedNews(newsMap[id]);
+                } else {
+                    setDebugMsg(`Map Miss: ${id}`);
                 }
             }
         });

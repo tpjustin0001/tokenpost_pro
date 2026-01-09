@@ -43,8 +43,6 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
 
             try {
                 // Ensure valid Binance interval
-                // Binance intervals: 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
-                // Our props: '15m', '1h', '4h', '1d', '1w' -> Matches Binance
                 const binanceSymbol = `${symbol}USDT`;
 
                 // Try Binance.US first (likely Vercel server is in US)
@@ -94,12 +92,12 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
         };
     }, [symbol, interval]);
 
-    // Fetch news markers from Supabase
+    // Fetch news markers from Supabase (Dependent on chartData to match timestamps)
     useEffect(() => {
         let isMounted = true;
 
         async function fetchNewsMarkers() {
-            if (!supabase) return;
+            if (!supabase || chartData.length === 0) return;
 
             try {
                 const { data: newsItems } = await supabase
@@ -110,13 +108,34 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
                     .order('published_at', { ascending: true });
 
                 if (isMounted && newsItems && newsItems.length > 0) {
-                    const markers: NewsMarker[] = newsItems.map(item => ({
-                        time: Math.floor(new Date(item.published_at).getTime() / 1000) as Time,
-                        position: 'aboveBar',
-                        color: (item.sentiment_score || 0) < 0 ? '#f87171' : '#4ade80',
-                        shape: 'arrowDown',
-                        text: item.title,
-                    }));
+                    const markers: NewsMarker[] = [];
+
+                    newsItems.forEach(item => {
+                        const newsTime = new Date(item.published_at).getTime() / 1000;
+
+                        // Find closest candle time to attach marker
+                        let closestCandle = chartData[0];
+                        let minDiff = Math.abs((closestCandle.time as number) - newsTime);
+
+                        for (const candle of chartData) {
+                            const candleTime = candle.time as number;
+                            const diff = Math.abs(candleTime - newsTime);
+
+                            if (diff < minDiff) {
+                                minDiff = diff;
+                                closestCandle = candle;
+                            }
+                        }
+
+                        markers.push({
+                            time: closestCandle.time as Time,
+                            position: 'aboveBar',
+                            color: (item.sentiment_score || 0) < 0 ? '#f87171' : '#4ade80',
+                            shape: 'arrowDown',
+                            text: item.title,
+                        });
+                    });
+
                     setNewsMarkers(markers);
                 } else if (isMounted) {
                     setNewsMarkers([]);
@@ -125,10 +144,13 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
                 console.error("Failed to load news markers", e);
             }
         }
-        fetchNewsMarkers();
+
+        if (chartData.length > 0) {
+            fetchNewsMarkers();
+        }
 
         return () => { isMounted = false; };
-    }, [symbol]);
+    }, [symbol, chartData]);
 
     // Chart Options based on Theme
     const getChartOptions = (currentTheme: string) => {
@@ -198,8 +220,6 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
             if (entries.length === 0 || !entries[0].contentRect) return;
             const { width, height } = entries[0].contentRect;
             chart.applyOptions({ width, height });
-            // Optionally fit content on resize if needed
-            // chart.timeScale().fitContent(); 
         });
 
         if (chartWrapperRef.current) {

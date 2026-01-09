@@ -68,6 +68,18 @@
 .chartTabs {
   display: flex;
   gap: var(--spacing-xs);
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+  max-width: 100%;
+  padding-bottom: 2px;
+  /* For scrollbar space if visible */
+}
+
+.chartTabs::-webkit-scrollbar {
+  display: none;
 }
 
 .chartTab {

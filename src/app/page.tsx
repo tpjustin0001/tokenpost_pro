@@ -24,11 +24,16 @@ const CHART_SYMBOLS = [
 ];
 
 const CHART_INTERVALS = [
+  { id: '1m', label: '1분' },
+  { id: '5m', label: '5분' },
   { id: '15m', label: '15분' },
+  { id: '30m', label: '30분' },
   { id: '1h', label: '1시간' },
   { id: '4h', label: '4시간' },
+  { id: '12h', label: '12시간' },
   { id: '1d', label: '일봉' },
   { id: '1w', label: '주봉' },
+  { id: '1M', label: '월봉' },
 ];
 
 export default function HomePage() {

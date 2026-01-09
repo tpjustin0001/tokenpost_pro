@@ -24,56 +24,51 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
     // State
     const [chartData, setChartData] = useState<any[]>([]);
-    const [newsMarkers, setNewsMarkers] = useState<any[]>([]);
+    // const [newsMarkers, setNewsMarkers] = useState<any[]>([]); // Temporarily unused
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isLive, setIsLive] = useState(false);
     const [currentPrice, setCurrentPrice] = useState<number | null>(null);
     const [debugMsg, setDebugMsg] = useState<string>('');
 
-    // Initial Data Fetch
+    // Fetch and Initialize
     useEffect(() => {
         let isMounted = true;
-        async function fetchCandles() {
+
+        async function init() {
             setLoading(true);
             setError(null);
+
             try {
                 const binanceSymbol = `${symbol}USDT`;
 
-                // Binance Futures API
+                // Fetch Data
                 let response = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${binanceSymbol}&interval=${interval}&limit=500`);
-
                 if (!response.ok) {
-                    console.warn('Futures API failed, trying Spot API');
                     response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=500`);
                 }
 
                 if (!response.ok) throw new Error(await response.text());
 
                 const data = await response.json();
-                const candles = Array.isArray(data) ? data : data.candles;
+                const rawCandles = Array.isArray(data) ? data : data.candles;
 
-                if (isMounted) {
-                    if (candles && Array.isArray(candles)) {
-                        const formatted = candles.map((c: any) => {
-                            if (Array.isArray(c)) {
-                                return {
-                                    time: c[0] / 1000,
-                                    open: parseFloat(c[1]),
-                                    high: parseFloat(c[2]),
-                                    low: parseFloat(c[3]),
-                                    close: parseFloat(c[4]),
-                                    volume: parseFloat(c[5]),
-                                };
-                            }
-                            return c;
-                        });
-                        setChartData(formatted);
-                        if (formatted.length > 0) {
-                            setCurrentPrice(formatted[formatted.length - 1].close);
-                        }
+                if (isMounted && rawCandles) {
+                    const formatted = rawCandles.map((c: any) => ({
+                        time: c[0] / 1000,
+                        open: parseFloat(c[1]),
+                        high: parseFloat(c[2]),
+                        low: parseFloat(c[3]),
+                        close: parseFloat(c[4]),
+                        volume: parseFloat(c[5]),
+                    }));
+
+                    setChartData(formatted); // Save state
+                    if (formatted.length > 0) {
+                        setCurrentPrice(formatted[formatted.length - 1].close);
                     }
-                    setLoading(false);
+
+                    if (isMounted) setLoading(false);
                 }
             } catch (err: any) {
                 if (isMounted) {
@@ -83,7 +78,9 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 }
             }
         }
-        fetchCandles();
+
+        init();
+
         return () => { isMounted = false; };
     }, [symbol, interval]);
 
@@ -94,6 +91,12 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         const wsSymbol = `${symbol.toLowerCase()}usdt`;
         const wsInterval = interval;
         const wsUrl = `wss://fstream.binance.com/ws/${wsSymbol}@kline_${wsInterval}`;
+
+        // Cleanup previous websocket properly
+        if (wsRef.current) {
+            wsRef.current.close();
+            wsRef.current = null;
+        }
 
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
@@ -107,121 +110,59 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         };
 
         ws.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            if (message.e === 'kline') {
-                const k = message.k;
-                const closePrice = parseFloat(k.c);
-                setCurrentPrice(closePrice);
+            try {
+                const message = JSON.parse(event.data);
+                if (message.e === 'kline') {
+                    const k = message.k;
+                    const closePrice = parseFloat(k.c);
+                    setCurrentPrice(closePrice);
 
-                const candleTime = k.t / 1000;
+                    const candleTime = k.t / 1000;
 
-                const lastData = candlestickSeriesRef.current?.data().slice(-1)[0] as any;
-                if (lastData && candleTime < (lastData.time as number)) {
-                    return;
+                    // Update Chart Series directly
+                    if (candlestickSeriesRef.current) {
+                        const candle = {
+                            time: candleTime,
+                            open: parseFloat(k.o),
+                            high: parseFloat(k.h),
+                            low: parseFloat(k.l),
+                            close: closePrice,
+                        };
+                        candlestickSeriesRef.current.update(candle as any);
+                    }
+
+                    if (volumeSeriesRef.current) {
+                        const volume = {
+                            time: candleTime,
+                            value: parseFloat(k.v),
+                            color: parseFloat(k.c) >= parseFloat(k.o) ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)',
+                        };
+                        volumeSeriesRef.current.update(volume as any);
+                    }
                 }
-
-                const candle = {
-                    time: candleTime,
-                    open: parseFloat(k.o),
-                    high: parseFloat(k.h),
-                    low: parseFloat(k.l),
-                    close: closePrice,
-                };
-                const volume = {
-                    time: candleTime,
-                    value: parseFloat(k.v),
-                    color: parseFloat(k.c) >= parseFloat(k.o) ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)',
-                };
-
-                try {
-                    if (candlestickSeriesRef.current) candlestickSeriesRef.current.update(candle as any);
-                    if (volumeSeriesRef.current) volumeSeriesRef.current.update(volume as any);
-                } catch (e) {
-                    console.error('Chart update error', e);
-                }
+            } catch (e) {
+                console.error('WS Error', e);
             }
         };
 
         return () => {
-            if (ws.readyState === 1) ws.close();
+            if (wsRef.current === ws) {
+                ws.close();
+                wsRef.current = null;
+            }
         };
     }, [symbol, interval]);
 
-    // Fetch News Markers
-    useEffect(() => {
-        let isMounted = true;
-        async function fetchNews() {
-            if (!supabase || chartData.length === 0) return;
-            try {
-                const { data, error } = await supabase
-                    .from('news')
-                    .select('*')
-                    .eq('related_coin', symbol)
-                    .eq('show_on_chart', true);
 
-                if (error) {
-                    if (isMounted) setDebugMsg(`DB Error: ${error.message}`);
-                    return;
-                }
-
-                if (isMounted) {
-                    if (data && data.length > 0) {
-                        const markers: any[] = [];
-
-                        data.forEach((item: any) => {
-                            const newsTime = new Date(item.published_at).getTime() / 1000;
-                            let closest = chartData[chartData.length - 1];
-                            let minDiff = Number.MAX_VALUE;
-
-                            // Iterate all for safety
-                            for (const c of chartData) {
-                                const diff = Math.abs((c.time as number) - newsTime);
-                                if (diff < minDiff) {
-                                    minDiff = diff;
-                                    closest = c;
-                                }
-                            }
-
-                            // Accept if within 1 day (for easier matching)
-                            if (minDiff < 3600 * 24 && closest) {
-                                markers.push({
-                                    time: closest.time, // Must match exact candle time
-                                    position: 'aboveBar', // Back to aboveBar
-                                    color: '#facc15', // Yellow
-                                    shape: 'arrowDown', // Big Arrow
-                                    size: 2,
-                                    text: 'NEWS',
-                                    id: item.id
-                                });
-                            }
-                        });
-
-                        markers.sort((a, b) => (a.time as number) - (b.time as number));
-                        setNewsMarkers(markers);
-
-                        if (markers.length > 0) {
-                            const lastTime = chartData[chartData.length - 1].time;
-                            const markerTime = markers[markers.length - 1].time;
-                            setDebugMsg(`M: ${markers.length} | LastT: ${lastTime} | MarkerT: ${markerTime}`);
-                        } else {
-                            setDebugMsg(`No match`);
-                        }
-                    } else {
-                        setDebugMsg(`Fetched: 0`);
-                    }
-                }
-            } catch (e: any) {
-                console.error(e);
-                if (isMounted) setDebugMsg(`JS Error: ${e.message}`);
-            }
-        }
-        if (chartData.length > 0) fetchNews();
-        return () => { isMounted = false; };
-    }, [symbol, chartData]);
-
-    // Chart Initialization & Marker Rendering
+    // Initialize Chart & Apply Data & FORCE TEST MARKER
     useEffect(() => {
         if (!chartContainerRef.current) return;
+
+        // Cleanup old chart
+        if (chartRef.current) {
+            chartRef.current.remove();
+            chartRef.current = null;
+        }
 
         const isDark = theme === 'dark' || !theme;
 
@@ -235,13 +176,10 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 vertLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
                 horzLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
             },
-            crosshair: {
-                mode: CrosshairMode.Normal,
-            },
             rightPriceScale: {
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
                 scaleMargins: {
-                    top: 0.2, // Ensure space for aboveBar markers
+                    top: 0.2,
                     bottom: 0.2,
                 },
             },
@@ -278,17 +216,15 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             priceScaleId: 'volume', // Separate Scale
         });
 
-        // Configure Volume Scale
         chart.priceScale('volume').applyOptions({
             scaleMargins: { top: 0.8, bottom: 0 },
-            visible: false, // Hide volume axis labels
+            visible: false,
         });
 
         volumeSeriesRef.current = volumeSeries;
-
         chartRef.current = chart;
 
-        // Initial Data Render
+        // Apply Data
         if (chartData.length > 0) {
             const candles = chartData.map(d => ({
                 time: d.time,
@@ -302,8 +238,29 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 value: d.volume,
                 color: d.close >= d.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)',
             }));
+
             candlestickSeries.setData(candles);
             volumeSeries.setData(volumes);
+
+            // --- TEST MARKER Injection ---
+            try {
+                const lastCandle = candles[candles.length - 1]; // Use last candle
+                const testMarker = {
+                    time: lastCandle.time,
+                    position: 'aboveBar',
+                    color: '#e91e63', // Magenta
+                    shape: 'arrowDown',
+                    text: 'TEST MARKER',
+                    size: 2
+                };
+
+                (candlestickSeries as any).setMarkers([testMarker]);
+                setDebugMsg(`Test Marker injected at ${lastCandle.time}`);
+            } catch (e: any) {
+                setDebugMsg(`Marker Injection Failed: ${e.message}`);
+            }
+        } else {
+            setDebugMsg('Waiting for data...');
         }
 
         const resizeCallback = (entries: ResizeObserverEntry[]) => {
@@ -331,35 +288,15 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 chartRef.current.remove();
                 chartRef.current = null;
             }
-            if (wsRef.current) wsRef.current.close();
         };
 
-    }, [theme, chartData]); // Re-create chart if needed? ideally not but for simplicity
-
-    // Update Markers Effect (Separated)
-    useEffect(() => {
-        if (candlestickSeriesRef.current && newsMarkers.length > 0) {
-            const series = candlestickSeriesRef.current as any;
-            const setMarkersFn = series.setMarkers;
-
-            if (typeof setMarkersFn === 'function') {
-                try {
-                    setMarkersFn.call(series, newsMarkers);
-                    setDebugMsg(prev => `${prev} | SetMarkers: OK`);
-                } catch (e: any) {
-                    setDebugMsg(prev => `${prev} | SetMarkers Error: ${e.message}`);
-                }
-            } else {
-                setDebugMsg(prev => `${prev} | SetMarkers: Missing`);
-            }
-        }
-    }, [newsMarkers, chartData]); // Ensure it runs when data or markers update
+    }, [theme, chartData]); // Re-create chart on data change (Safe approach for debugging)
 
     return (
         <div ref={chartWrapperRef} className={styles.chartWrapper}>
             {/* Debug Overlay */}
-            <div style={{ position: 'absolute', top: 40, left: 12, color: '#fbbf24', fontSize: '11px', zIndex: 50, pointerEvents: 'none', background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: '4px' }}>
-                [Debug] {debugMsg}
+            <div style={{ position: 'absolute', top: 40, left: 12, color: '#e91e63', fontSize: '12px', fontWeight: 'bold', zIndex: 100, pointerEvents: 'none', background: 'rgba(255,255,255,0.8)', padding: '4px 8px', borderRadius: '4px' }}>
+                [DEBUG MODE] {debugMsg}
             </div>
 
             {isLive && (

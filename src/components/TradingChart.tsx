@@ -29,6 +29,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
     const [error, setError] = useState<string | null>(null);
     const [isLive, setIsLive] = useState(false);
     const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+    const [debugMsg, setDebugMsg] = useState<string>('');
 
     // Initial Data Fetch (Futures)
     useEffect(() => {
@@ -42,9 +43,9 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 // Binance Futures API
                 let response = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${binanceSymbol}&interval=${interval}&limit=500`);
 
-                // Fallback to Spot if Futures fails (e.g. Geo-blocking)
+                // Fallback
                 if (!response.ok) {
-                    console.warn('Futures API failed, trying Spot API as fallback');
+                    console.warn('Futures API failed, trying Spot API');
                     response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=500`);
                 }
 
@@ -116,7 +117,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
                 const candleTime = k.t / 1000;
 
-                // Safety check: Prevent updating with old data
+                // Safety check
                 const lastData = candlestickSeriesRef.current?.data().slice(-1)[0] as any;
                 if (lastData && candleTime < (lastData.time as number)) {
                     return;
@@ -155,50 +156,69 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         async function fetchNews() {
             if (!supabase || chartData.length === 0) return;
             try {
-                const { data } = await supabase
+                // Debug: Check if Supabase is connected
+                const { data, error } = await supabase
                     .from('news')
                     .select('*')
                     .eq('related_coin', symbol)
                     .eq('show_on_chart', true);
 
-                if (isMounted && data && data.length > 0) {
-                    const markers: any[] = [];
-
-                    data.forEach((item: any) => {
-                        const newsTime = new Date(item.published_at).getTime() / 1000;
-                        let closest = chartData[chartData.length - 1];
-                        let minDiff = Number.MAX_VALUE;
-
-                        const lastTime = chartData[chartData.length - 1].time as number;
-                        if (Math.abs(lastTime - newsTime) < 3600 * 24 * 7) {
-                            for (const c of chartData) {
-                                const diff = Math.abs((c.time as number) - newsTime);
-                                if (diff < minDiff) {
-                                    minDiff = diff;
-                                    closest = c;
-                                }
-                            }
-                        } else {
-                            closest = chartData[chartData.length - 1];
-                        }
-
-                        if (closest) {
-                            markers.push({
-                                time: closest.time,
-                                position: 'aboveBar',
-                                color: (item.sentiment_score || 0) < 0 ? '#ef4444' : '#22c55e',
-                                shape: 'arrowDown',
-                                text: 'News: ' + item.title.substring(0, 15) + '...',
-                                id: item.id
-                            });
-                        }
-                    });
-
-                    markers.sort((a, b) => (a.time as number) - (b.time as number));
-                    setNewsMarkers(markers);
+                if (error) {
+                    console.error('Supabase fetch error:', error);
+                    if (isMounted) setDebugMsg(`DB Error: ${error.message}`);
+                    return;
                 }
-            } catch (e) {
+
+                if (isMounted) {
+                    setDebugMsg(`Fetched: ${data?.length || 0} items for ${symbol}`);
+                    if (data && data.length > 0) {
+                        const markers: any[] = [];
+
+                        data.forEach((item: any) => {
+                            const newsTime = new Date(item.published_at).getTime() / 1000;
+                            let closest = chartData[chartData.length - 1];
+                            let minDiff = Number.MAX_VALUE;
+
+                            const lastTime = chartData[chartData.length - 1].time as number;
+                            // Check if within reasonable range (7 days)
+                            if (Math.abs(lastTime - newsTime) < 3600 * 24 * 7) {
+                                for (const c of chartData) {
+                                    const diff = Math.abs((c.time as number) - newsTime);
+                                    if (diff < minDiff) {
+                                        minDiff = diff;
+                                        closest = c;
+                                    }
+                                }
+                            } else {
+                                // If too old/new, ignore for now (or force to latest for demo?)
+                                // closest = chartData[chartData.length - 1]; 
+                            }
+
+                            // If diff is reasonable (< 4 hours), add marker
+                            if (minDiff < 3600 * 4 && closest) {
+                                markers.push({
+                                    time: closest.time,
+                                    position: 'aboveBar',
+                                    color: (item.sentiment_score || 0) < 0 ? '#ef4444' : '#22c55e',
+                                    shape: 'arrowDown',
+                                    text: 'News: ' + item.title.substring(0, 15) + '...',
+                                    id: item.id
+                                });
+                            }
+                        });
+
+                        markers.sort((a, b) => (a.time as number) - (b.time as number));
+                        setNewsMarkers(markers);
+                        if (markers.length > 0) {
+                            setDebugMsg(prev => `${prev} | Markers: ${markers.length}`);
+                        } else {
+                            setDebugMsg(prev => `${prev} | No markers match (Time diff too big?)`);
+                        }
+                    }
+                }
+            } catch (e: any) {
                 console.error(e);
+                if (isMounted) setDebugMsg(`JS Error: ${e.message}`);
             }
         }
         if (chartData.length > 0) fetchNews();
@@ -339,6 +359,11 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
     return (
         <div ref={chartWrapperRef} className={styles.chartWrapper}>
+            {/* Debug Overlay */}
+            <div style={{ position: 'absolute', top: 40, left: 12, color: '#fbbf24', fontSize: '11px', zIndex: 50, pointerEvents: 'none', background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: '4px' }}>
+                [Debug] Supabase: {debugMsg}
+            </div>
+
             {isLive && (
                 <div className={styles.liveStatus}>
                     {currentPrice && (

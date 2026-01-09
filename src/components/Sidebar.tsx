@@ -20,7 +20,7 @@ export default function Sidebar() {
     return (
         <aside className={styles.sidebar}>
             <Link href="/" className={styles.logo}>
-                <img src="/icon.jpg" alt="TokenPost PRO" className={styles.logoImg} />
+                <img src="/logo.png" alt="TokenPost PRO" className={styles.logoImg} />
             </Link>
 
             <nav className={styles.nav}>

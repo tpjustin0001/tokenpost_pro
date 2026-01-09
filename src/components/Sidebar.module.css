@@ -20,10 +20,9 @@
 }
 
 .logoImg {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-md);
-    object-fit: cover;
+    width: 140px;
+    height: auto;
+    object-fit: contain;
 }
 
 .nav {

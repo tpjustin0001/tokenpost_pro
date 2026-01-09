@@ -20,10 +20,17 @@ export async function GET(request: Request) {
     const limit = searchParams.get('limit') || '100';
 
     try {
-        const response = await fetch(
-            `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`,
-            { next: { revalidate: 60 } } // 1분 캐싱
-        );
+        // Try Binance.US first (likely Vercel server is in US)
+        let apiUrl = `https://api.binance.us/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+
+        let response = await fetch(apiUrl, { next: { revalidate: 60 } });
+
+        // If 451 or 4xx, try global Binance (api.binance.com) as backup
+        if (response.status === 451 || !response.ok) {
+            console.warn(`Binance.US failed (${response.status}), trying global API...`);
+            apiUrl = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+            response = await fetch(apiUrl, { next: { revalidate: 60 } });
+        }
 
         if (!response.ok) {
             throw new Error(`Binance API error: ${response.status}`);
@@ -48,7 +55,8 @@ export async function GET(request: Request) {
         });
     } catch (error: any) {
         console.error('Binance klines error:', error);
-        console.error(`Failed URL: https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+        // @ts-ignore
+        console.error(`Failed URL: ${apiUrl || 'Unknown'}`);
 
         return NextResponse.json(
             { error: error.message || 'Failed to fetch klines', details: error.toString() },

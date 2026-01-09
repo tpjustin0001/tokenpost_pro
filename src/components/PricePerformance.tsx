@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import AIXRay from './AIXRay';
 import styles from './PricePerformance.module.css';
 
 interface CoinData {
@@ -34,7 +35,15 @@ const LOSERS: CoinData[] = [
 
 export default function PricePerformance() {
     const [activeTab, setActiveTab] = useState<'gainers' | 'losers'>('losers');
+    const [xrayOpen, setXrayOpen] = useState(false);
+    const [selectedSymbol, setSelectedSymbol] = useState('BTC');
+
     const data = activeTab === 'gainers' ? GAINERS : LOSERS;
+
+    const handleXRayClick = (symbol: string) => {
+        setSelectedSymbol(symbol);
+        setXrayOpen(true);
+    };
 
     return (
         <div className={styles.widget}>
@@ -67,9 +76,23 @@ export default function PricePerformance() {
                             {coin.change >= 0 ? '+' : ''}{coin.change.toFixed(2)}%
                         </span>
                         <span className={styles.price}>{coin.price}</span>
+                        <button
+                            className={styles.xrayBtn}
+                            onClick={() => handleXRayClick(coin.symbol)}
+                            title="AI X-Ray 분석"
+                        >
+                            🔍
+                        </button>
                     </div>
                 ))}
             </div>
+
+            {/* AI X-Ray Modal */}
+            <AIXRay
+                symbol={selectedSymbol}
+                isOpen={xrayOpen}
+                onClose={() => setXrayOpen(false)}
+            />
         </div>
     );
 }

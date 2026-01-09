@@ -51,7 +51,7 @@
 
 .row {
     display: grid;
-    grid-template-columns: 1fr 70px 90px;
+    grid-template-columns: 1fr 70px 90px 32px;
     gap: var(--spacing-sm);
     align-items: center;
     padding: var(--spacing-sm) var(--spacing-lg);
@@ -61,6 +61,27 @@
 
 .row:hover {
     background: var(--bg-tertiary);
+}
+
+.xrayBtn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all var(--transition-fast);
+}
+
+.xrayBtn:hover {
+    opacity: 1;
+    background: var(--accent-purple-dim);
+    border-color: var(--accent-purple);
 }
 
 .row:last-child {

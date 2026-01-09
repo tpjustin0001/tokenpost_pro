@@ -18,6 +18,18 @@
   gap: var(--spacing-lg);
 }
 
+.xrayHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pageTitle {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 /* Blockworks Style Widget Grid */
 .widgetGrid {
   display: grid;

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createChart, ColorType, IChartApi, CandlestickSeries, CandlestickData, Time, ISeriesApi, SeriesType, CrosshairMode } from 'lightweight-charts';
 import { supabase } from '@/lib/supabase';
+import { useTheme } from '@/context/ThemeContext';
 import styles from './TradingChart.module.css';
 
 interface TradingChartProps {
@@ -20,8 +21,11 @@ interface NewsMarker {
 
 export default function TradingChart({ symbol, interval = '1d' }: TradingChartProps) {
     const chartContainerRef = useRef<HTMLDivElement>(null);
+    const chartWrapperRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
     const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+    const resizeObserver = useRef<ResizeObserver | null>(null);
+    const { theme } = useTheme(); // 'dark' or 'light'
 
     // State
     const [chartData, setChartData] = useState<CandlestickData<Time>[]>([]);
@@ -42,7 +46,10 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
                 // Binance intervals: 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
                 // Our props: '15m', '1h', '4h', '1d', '1w' -> Matches Binance
                 const binanceSymbol = `${symbol}USDT`;
-                const response = await fetch(`/api/klines?symbol=${binanceSymbol}&interval=${interval}&limit=100`);
+
+                // Try Binance.US first (likely Vercel server is in US)
+                let apiUrl = `https://api.binance.us/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=150`;
+                let response = await fetch(`/api/klines?symbol=${binanceSymbol}&interval=${interval}&limit=150`);
 
                 if (!response.ok) {
                     const errText = await response.text();
@@ -66,18 +73,15 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
                         }));
                         setChartData(formattedCandles);
                     } else {
-                        // Don't throw here to avoid full crash, just log
                         console.warn('No candle data available', data);
                         setChartData([]);
                     }
+                    setLoading(false);
                 }
             } catch (err: any) {
                 if (isMounted) {
                     console.error('Chart data error:', err);
                     setError(err.message);
-                }
-            } finally {
-                if (isMounted) {
                     setLoading(false);
                 }
             }
@@ -126,45 +130,57 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
         return () => { isMounted = false; };
     }, [symbol]);
 
-    // Initialize Chart (Run once or when container changes)
-    useEffect(() => {
-        if (!chartContainerRef.current) return;
+    // Chart Options based on Theme
+    const getChartOptions = (currentTheme: string) => {
+        const isDark = currentTheme === 'dark';
 
-        // Initialize Chart
-        const chart = createChart(chartContainerRef.current, {
+        return {
             layout: {
                 background: { type: ColorType.Solid, color: 'transparent' },
-                textColor: '#9ca3af',
+                textColor: isDark ? '#9ca3af' : '#4b5563', // gray-400 : gray-600
                 fontFamily: 'Roboto Mono, monospace',
                 fontSize: 11,
             },
             grid: {
-                vertLines: { color: 'rgba(255, 255, 255, 0.03)' },
-                horzLines: { color: 'rgba(255, 255, 255, 0.03)' },
+                vertLines: { color: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)' },
+                horzLines: { color: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)' },
             },
             crosshair: {
                 mode: CrosshairMode.Normal,
                 vertLine: {
-                    color: 'rgba(96, 165, 250, 0.3)',
+                    color: '#60a5fa',
                     labelBackgroundColor: '#60a5fa',
                 },
                 horzLine: {
-                    color: 'rgba(96, 165, 250, 0.3)',
+                    color: '#60a5fa',
                     labelBackgroundColor: '#60a5fa',
                 },
             },
             rightPriceScale: {
-                borderColor: 'rgba(255, 255, 255, 0.06)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
             },
             timeScale: {
-                borderColor: 'rgba(255, 255, 255, 0.06)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
                 timeVisible: true,
+                rightOffset: 12, // Add some space on the right to prevent clipping
             },
             handleScroll: true,
             handleScale: true,
+        };
+    };
+
+    // Initialize Chart
+    useEffect(() => {
+        if (!chartContainerRef.current) return;
+
+        // Create Chart
+        const chart = createChart(chartContainerRef.current, {
+            ...getChartOptions(theme || 'dark'),
+            width: chartContainerRef.current.clientWidth,
+            height: 350,
         });
 
-        // Initialize Series
+        // Add Series
         const candlestickSeries = chart.addSeries(CandlestickSeries, {
             upColor: '#4ade80',
             downColor: '#f87171',
@@ -177,43 +193,48 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
         chartRef.current = chart;
         seriesRef.current = candlestickSeries;
 
-        // Resize handler
-        const handleResize = () => {
-            if (chartContainerRef.current && chartRef.current) {
-                chartRef.current.applyOptions({
-                    width: chartContainerRef.current.clientWidth,
-                    height: 350,
-                });
-            }
-        };
+        // Resize Observer
+        resizeObserver.current = new ResizeObserver(entries => {
+            if (entries.length === 0 || !entries[0].contentRect) return;
+            const { width, height } = entries[0].contentRect;
+            chart.applyOptions({ width, height });
+            // Optionally fit content on resize if needed
+            // chart.timeScale().fitContent(); 
+        });
 
-        handleResize();
-        window.addEventListener('resize', handleResize);
+        if (chartWrapperRef.current) {
+            resizeObserver.current.observe(chartWrapperRef.current);
+        }
 
-        // Cleanup
         return () => {
-            window.removeEventListener('resize', handleResize);
+            if (resizeObserver.current) {
+                resizeObserver.current.disconnect();
+            }
             if (chartRef.current) {
                 chartRef.current.remove();
                 chartRef.current = null;
                 seriesRef.current = null;
             }
         };
-    }, []); // Only run once on mount (and unmount)
+    }, []); // Run once
+
+    // Update Theme
+    useEffect(() => {
+        if (chartRef.current) {
+            chartRef.current.applyOptions(getChartOptions(theme || 'dark'));
+        }
+    }, [theme]);
 
     // Update Data
     useEffect(() => {
         if (!seriesRef.current || !chartRef.current) return;
 
-        // Update Candle Data
         if (chartData.length > 0) {
             seriesRef.current.setData(chartData);
             chartRef.current.timeScale().fitContent();
         }
 
-        // Update Markers (Needs to happen after data set generally, or lightweight-charts handles it)
         if (seriesRef.current) {
-            // Check if setMarkers exists before calling (it should for CandlestickSeries)
             // @ts-ignore
             if (typeof seriesRef.current.setMarkers === 'function') {
                 // @ts-ignore
@@ -221,10 +242,10 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
             }
         }
 
-    }, [chartData, newsMarkers]); // Run when data changes
+    }, [chartData, newsMarkers]);
 
     return (
-        <div className={styles.chartWrapper}>
+        <div ref={chartWrapperRef} className={styles.chartWrapper}>
             {loading && (
                 <div className={styles.loadingOverlay}>
                     <span>Loading...</span>
@@ -232,7 +253,6 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
             )}
             {error && (
                 <div className={styles.errorOverlay}>
-                    {/* Try to make error more user friendly */}
                     <span>{error?.includes('403') ? 'API Limit/Restricted' : error}</span>
                 </div>
             )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { createChart, ColorType, LineSeries, AreaSeries, Time, LineData } from 'lightweight-charts';
+import { createChart, ColorType, Time, LineData } from 'lightweight-charts';
 import styles from './DataWidgets.module.css';
 
 function generateChartData(days: number, baseValue: number, volatility: number): LineData<Time>[] {
@@ -40,13 +40,14 @@ export function StablecoinInterestChart() {
             height: 180,
         });
 
-        const borrowSeries = chart.addSeries(LineSeries, {
+        // V4: addLineSeries
+        const borrowSeries = chart.addLineSeries({
             color: '#ef4444',
             lineWidth: 2,
         });
         borrowSeries.setData(generateChartData(90, 8, 0.1));
 
-        const supplySeries = chart.addSeries(LineSeries, {
+        const supplySeries = chart.addLineSeries({
             color: '#22c55e',
             lineWidth: 2,
         });
@@ -113,7 +114,8 @@ export function BlockchainRevChart() {
             height: 180,
         });
 
-        const areaSeries = chart.addSeries(AreaSeries, {
+        // V4: addAreaSeries
+        const areaSeries = chart.addAreaSeries({
             topColor: 'rgba(74, 222, 128, 0.4)',
             bottomColor: 'rgba(74, 222, 128, 0.05)',
             lineColor: '#4ade80',
@@ -173,7 +175,8 @@ export function ETFFlowsChart() {
             height: 180,
         });
 
-        const areaSeries = chart.addSeries(AreaSeries, {
+        // V4: addAreaSeries
+        const areaSeries = chart.addAreaSeries({
             topColor: 'rgba(74, 222, 128, 0.4)',
             bottomColor: 'rgba(74, 222, 128, 0.05)',
             lineColor: '#4ade80',

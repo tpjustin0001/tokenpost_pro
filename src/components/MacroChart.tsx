@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { createChart, ColorType, IChartApi, LineSeries, AreaSeries, LineData, Time } from 'lightweight-charts';
+import { createChart, ColorType, IChartApi, LineData, Time } from 'lightweight-charts';
 import styles from './MacroChart.module.css';
 
 function generateBtcData(days: number = 365): LineData<Time>[] {
@@ -65,14 +65,16 @@ export default function MacroChart() {
             timeScale: { borderColor: 'rgba(255, 255, 255, 0.06)' },
         });
 
-        const btcSeries = chart.addSeries(LineSeries, {
+        // V4: addLineSeries
+        const btcSeries = chart.addLineSeries({
             color: '#e1e4e8',
             lineWidth: 2,
             priceScaleId: 'right',
         });
         btcSeries.setData(generateBtcData());
 
-        const m2Series = chart.addSeries(AreaSeries, {
+        // V4: addAreaSeries
+        const m2Series = chart.addAreaSeries({
             topColor: 'rgba(96, 165, 250, 0.3)',
             bottomColor: 'rgba(96, 165, 250, 0.05)',
             lineColor: '#60a5fa',

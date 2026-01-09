@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createChart, ColorType, IChartApi, CandlestickSeries, HistogramSeries, ISeriesApi, CrosshairMode } from 'lightweight-charts';
+import { createChart, ColorType, IChartApi, ISeriesApi, CrosshairMode, Time } from 'lightweight-charts';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/context/ThemeContext';
 import styles from './TradingChart.module.css';
@@ -15,6 +15,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartWrapperRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
+    // V4: Series types are generic, but we use any for simplicity in refs or specific interfaces if imported
     const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
     const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
     const wsRef = useRef<WebSocket | null>(null);
@@ -24,14 +25,14 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
     // State
     const [chartData, setChartData] = useState<any[]>([]);
-    // const [newsMarkers, setNewsMarkers] = useState<any[]>([]); // Temporarily unused
+    const [newsMarkers, setNewsMarkers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isLive, setIsLive] = useState(false);
     const [currentPrice, setCurrentPrice] = useState<number | null>(null);
     const [debugMsg, setDebugMsg] = useState<string>('');
 
-    // Fetch and Initialize
+    // Fetch and Initialize Data
     useEffect(() => {
         let isMounted = true;
 
@@ -153,8 +154,83 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         };
     }, [symbol, interval]);
 
+    // Fetch News Markers
+    useEffect(() => {
+        let isMounted = true;
+        async function fetchNews() {
+            if (!supabase || chartData.length === 0) return;
+            try {
+                setDebugMsg('Fetching News...');
+                const { data, error } = await supabase
+                    .from('news')
+                    .select('*')
+                    .eq('related_coin', symbol)
+                    .eq('show_on_chart', true);
 
-    // Initialize Chart & Apply Data & FORCE TEST MARKER
+                if (error) {
+                    if (isMounted) setDebugMsg(`DB Error: ${error.message}`);
+                    return;
+                }
+
+                if (isMounted) {
+                    if (data && data.length > 0) {
+                        const markers: any[] = [];
+
+                        data.forEach((item: any) => {
+                            const newsTime = new Date(item.published_at).getTime() / 1000;
+                            let closest = chartData[chartData.length - 1];
+                            let minDiff = Number.MAX_VALUE;
+
+                            // Iterate all for matching
+                            for (const c of chartData) {
+                                const diff = Math.abs((c.time as number) - newsTime);
+                                if (diff < minDiff) {
+                                    minDiff = diff;
+                                    closest = c;
+                                }
+                            }
+
+                            // Accept if within 24 hours (generous matching)
+                            if (minDiff < 3600 * 24 && closest) {
+                                markers.push({
+                                    time: closest.time as Time,
+                                    position: 'aboveBar' as const,
+                                    color: (item.sentiment_score || 0) < 0 ? '#ef4444' : '#22c55e',
+                                    shape: 'arrowDown' as const,
+                                    text: 'NEWS',
+                                    size: 2,
+                                    id: item.id // custom field, library ignores it
+                                });
+                            }
+                        });
+
+                        markers.sort((a, b) => (a.time as number) - (b.time as number));
+                        setNewsMarkers(markers);
+
+                        if (markers.length > 0) {
+                            const lastTime = chartData[chartData.length - 1].time;
+                            setDebugMsg(`Markers: ${markers.length} | LastT: ${lastTime}`);
+                        } else {
+                            setDebugMsg(`No markers match (fetched ${data.length})`);
+                        }
+                    } else {
+                        setDebugMsg(`Fetched: 0 news`);
+                    }
+                }
+            } catch (e: any) {
+                console.error(e);
+                if (isMounted) setDebugMsg(`JS Error: ${e.message}`);
+            }
+        }
+
+        if (chartData.length > 0) {
+            fetchNews();
+        }
+
+        return () => { isMounted = false; };
+    }, [symbol, chartData]);
+
+    // Initialize Chart & Apply Data & Markers (V4 Syntax)
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
@@ -200,7 +276,8 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             height: 350,
         });
 
-        const candlestickSeries = chart.addSeries(CandlestickSeries, {
+        // V4: addCandlestickSeries
+        const candlestickSeries = chart.addCandlestickSeries({
             upColor: '#26a69a',
             downColor: '#ef5350',
             borderVisible: false,
@@ -209,8 +286,8 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         });
         candlestickSeriesRef.current = candlestickSeries;
 
-        // Separate Volume Series
-        const volumeSeries = chart.addSeries(HistogramSeries, {
+        // V4: addHistogramSeries
+        const volumeSeries = chart.addHistogramSeries({
             color: '#26a69a',
             priceFormat: { type: 'volume' },
             priceScaleId: 'volume', // Separate Scale
@@ -227,14 +304,14 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         // Apply Data
         if (chartData.length > 0) {
             const candles = chartData.map(d => ({
-                time: d.time,
+                time: d.time as Time,
                 open: d.open,
                 high: d.high,
                 low: d.low,
                 close: d.close,
             }));
             const volumes = chartData.map(d => ({
-                time: d.time,
+                time: d.time as Time,
                 value: d.volume,
                 color: d.close >= d.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)',
             }));
@@ -242,25 +319,11 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             candlestickSeries.setData(candles);
             volumeSeries.setData(volumes);
 
-            // --- TEST MARKER Injection ---
-            try {
-                const lastCandle = candles[candles.length - 1]; // Use last candle
-                const testMarker = {
-                    time: lastCandle.time,
-                    position: 'aboveBar',
-                    color: '#e91e63', // Magenta
-                    shape: 'arrowDown',
-                    text: 'TEST MARKER',
-                    size: 2
-                };
-
-                (candlestickSeries as any).setMarkers([testMarker]);
-                setDebugMsg(`Test Marker injected at ${lastCandle.time}`);
-            } catch (e: any) {
-                setDebugMsg(`Marker Injection Failed: ${e.message}`);
+            // Markers
+            if (newsMarkers.length > 0) {
+                candlestickSeries.setMarkers(newsMarkers);
+                // Temporarily force update debug msg if needed, but handled in fetchNews
             }
-        } else {
-            setDebugMsg('Waiting for data...');
         }
 
         const resizeCallback = (entries: ResizeObserverEntry[]) => {
@@ -290,13 +353,13 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             }
         };
 
-    }, [theme, chartData]); // Re-create chart on data change (Safe approach for debugging)
+    }, [theme, chartData, newsMarkers]); // Re-render when markers ready
 
     return (
         <div ref={chartWrapperRef} className={styles.chartWrapper}>
             {/* Debug Overlay */}
-            <div style={{ position: 'absolute', top: 40, left: 12, color: '#e91e63', fontSize: '12px', fontWeight: 'bold', zIndex: 100, pointerEvents: 'none', background: 'rgba(255,255,255,0.8)', padding: '4px 8px', borderRadius: '4px' }}>
-                [DEBUG MODE] {debugMsg}
+            <div style={{ position: 'absolute', top: 40, left: 12, color: '#fbbf24', fontSize: '11px', zIndex: 100, pointerEvents: 'none', background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: '4px' }}>
+                [NEWS DEBUG] {debugMsg}
             </div>
 
             {isLive && (

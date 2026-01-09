@@ -45,7 +45,7 @@ const CHART_INTERVALS = [
 export default function HomePage() {
   const [globalXRayOpen, setGlobalXRayOpen] = useState(false);
   const [activeSymbol, setActiveSymbol] = useState('BTC');
-  const [activeInterval, setActiveInterval] = useState('1d');
+  const [activeInterval, setActiveInterval] = useState('15m');
 
   return (
     <div className={styles.appLayout}>

@@ -11,7 +11,7 @@ interface TradingChartProps {
     interval?: string;
 }
 
-export default function TradingChart({ symbol, interval = '1d' }: TradingChartProps) {
+export default function TradingChart({ symbol, interval = '15m' }: TradingChartProps) {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartWrapperRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
@@ -27,6 +27,7 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
     const [newsMarkers, setNewsMarkers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isLive, setIsLive] = useState(false);
 
     // Initial Data Fetch
     useEffect(() => {
@@ -94,7 +95,11 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
         wsRef.current = ws;
 
         ws.onopen = () => {
-            // connected
+            setIsLive(true);
+        };
+
+        ws.onclose = () => {
+            setIsLive(false);
         };
 
         ws.onmessage = (event) => {
@@ -163,7 +168,7 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
                                 position: 'aboveBar',
                                 color: (item.sentiment_score || 0) < 0 ? '#ef4444' : '#22c55e',
                                 shape: 'arrowDown',
-                                text: 'News: ' + item.title.substring(0, 15) + '...', // Shorten
+                                text: 'News: ' + item.title.substring(0, 15) + '...',
                                 id: item.id
                             });
                         }
@@ -238,7 +243,7 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
         // Configure Volume Scale
         chart.priceScale('volume').applyOptions({
             scaleMargins: { top: 0.8, bottom: 0 },
-            visible: false, // Hide volume axis labels to keep it clean
+            visible: false, // Hide volume axis labels
         });
 
         volumeSeriesRef.current = volumeSeries;
@@ -314,6 +319,12 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
 
     return (
         <div ref={chartWrapperRef} className={styles.chartWrapper}>
+            {isLive && (
+                <div className={styles.liveStatus}>
+                    <div className={styles.liveDot} />
+                    <span>LIVE</span>
+                </div>
+            )}
             {loading && <div className={styles.loadingOverlay}>Loading...</div>}
             {error && <div className={styles.errorOverlay}>{error}</div>}
             <div ref={chartContainerRef} className={styles.chart} />

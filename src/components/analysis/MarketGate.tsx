@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import useSWR from 'swr';
 import styles from './MarketGate.module.css';
+
+const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 interface GateData {
     score: number;
@@ -19,57 +22,40 @@ interface GateData {
         value: number | string;
         signal: 'Bullish' | 'Bearish' | 'Neutral';
     }>;
+    error?: string;
 }
 
-// Mock data for demo
-const MOCK_GATE: GateData = {
-    score: 72,
-    gate_color: 'GREEN',
-    summary: 'BTC 시장 상태: GREEN (점수: 72/100)',
-    components: {
-        trend: 28,
-        volatility: 14,
-        participation: 12,
-        breadth: 12,
-        leverage: 6,
-    },
-    indicators: [
-        { name: 'BTC 가격', value: 94500, signal: 'Bullish' },
-        { name: 'EMA50', value: 89200, signal: 'Bullish' },
-        { name: 'EMA200', value: 72500, signal: 'Bullish' },
-        { name: 'EMA200 기울기', value: '+2.1%', signal: 'Bullish' },
-        { name: 'ATR%', value: '2.8%', signal: 'Neutral' },
-        { name: '거래량 Z-Score', value: 0.8, signal: 'Neutral' },
-        { name: '공포탐욕지수', value: 68, signal: 'Bullish' },
-        { name: '알트 Breadth', value: '58%', signal: 'Neutral' },
-        { name: '펀딩비', value: '0.012%', signal: 'Neutral' },
-    ],
-};
-
 export default function MarketGate() {
-    const [data, setData] = useState<GateData | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { data, error, isLoading } = useSWR<GateData>(
+        '/api/analysis/market-gate',
+        fetcher,
+        {
+            refreshInterval: 300000, // 5분
+            revalidateOnFocus: false,
+        }
+    );
 
-    useEffect(() => {
-        // Simulate API call
-        setTimeout(() => {
-            setData(MOCK_GATE);
-            setLoading(false);
-        }, 1000);
-    }, []);
-
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="card">
                 <div className="card-header">
                     <span className="card-title">Market Gate</span>
                 </div>
-                <div className={styles.loading}>데이터 로딩 중...</div>
+                <div className={styles.loading}>시장 분석 중...</div>
             </div>
         );
     }
 
-    if (!data) return null;
+    if (error || !data || data.error) {
+        return (
+            <div className="card">
+                <div className="card-header">
+                    <span className="card-title">Market Gate</span>
+                </div>
+                <div className={styles.loading}>데이터 로딩 실패</div>
+            </div>
+        );
+    }
 
     const gateColors = {
         GREEN: '#10b981',

@@ -42,14 +42,13 @@ export default function BubbleChart() {
         const resizeCanvas = () => {
             const rect = containerRef.current?.getBoundingClientRect();
             if (rect) {
-                // High DPI support
                 const dpr = window.devicePixelRatio || 1;
                 canvas.width = rect.width * dpr;
-                canvas.height = Math.max(300, rect.height) * dpr;
+                canvas.height = Math.max(350, rect.height) * dpr;
                 canvas.style.width = `${rect.width}px`;
-                canvas.style.height = `${Math.max(300, rect.height)}px`;
+                canvas.style.height = `${Math.max(350, rect.height)}px`;
                 ctx.scale(dpr, dpr);
-                return { width: rect.width, height: Math.max(300, rect.height) };
+                return { width: rect.width, height: Math.max(350, rect.height) };
             }
             return null;
         };
@@ -64,7 +63,7 @@ export default function BubbleChart() {
         ctx.clearRect(0, 0, width, height);
 
         // Draw axes & background grid
-        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)'; // Slightly more visible grid
         ctx.lineWidth = 1;
 
         // Grid lines
@@ -77,19 +76,19 @@ export default function BubbleChart() {
         }
 
         // Center axes
-        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
         ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(20, height / 2); ctx.lineTo(width - 20, height / 2); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(width / 2, 20); ctx.lineTo(width / 2, height - 20); ctx.stroke();
 
         // Labels
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '10px Inter, system-ui';
-        ctx.fillText('1H Change →', width - 70, height / 2 - 6);
-        ctx.fillText('← 1H Change', 25, height / 2 - 6);
+        ctx.fillStyle = '#cbd5e1'; // Brighter text
+        ctx.font = '11px Inter, system-ui';
+        ctx.fillText('1H Change →', width - 60, height / 2 - 6);
+        ctx.fillText('← 1H Change', 10, height / 2 - 6);
         ctx.textAlign = 'center';
-        ctx.fillText('24H Change ↑', width / 2 + 35, 30);
-        ctx.fillText('24H Change ↓', width / 2 + 35, height - 30);
+        ctx.fillText('24H Change ↑', width / 2 + 40, 20);
+        ctx.fillText('24H Change ↓', width / 2 + 40, height - 20);
 
         // Process Data & Draw Bubbles
         const maxVolume = Math.max(...coins.map(c => c.total_volume));
@@ -100,48 +99,54 @@ export default function BubbleChart() {
             let change24h = coin.price_change_percentage_24h || 0;
             const volume = coin.total_volume;
 
-            const limitX = 8;
-            const limitY = 15;
+            // Widen range to avoid clumping
+            const limitX = 10; // +/- 10%
+            const limitY = 20; // +/- 20%
+
             const clamped1h = Math.max(-limitX, Math.min(limitX, change1h));
             const clamped24h = Math.max(-limitY, Math.min(limitY, change24h));
 
             const x = width / 2 + (clamped1h / limitX) * (width / 2 - 40);
             const y = height / 2 - (clamped24h / limitY) * (height / 2 - 40);
 
-            const minSize = 10;
-            const maxSize = 50;
+            const minSize = 12;
+            const maxSize = 55;
             const size = minSize + Math.sqrt(volume / maxVolume) * (maxSize - minSize);
 
-            // Store for hit test
             newBubbles.push({ x, y, r: size, coin });
 
             const isPositive = change24h >= 0;
             const isHovered = hoveredCoin?.id === coin.id;
-            const color = isPositive ? '#4ade80' : '#f87171';
+            const color = isPositive ? '#4ade80' : '#f87171'; // Green : Red
 
             ctx.beginPath();
             ctx.arc(x, y, size, 0, Math.PI * 2);
 
+            // Stronger Opacity
             const grad = ctx.createRadialGradient(x, y, 0, x, y, size);
-            grad.addColorStop(0, color + (isHovered ? '90' : '60'));
-            grad.addColorStop(1, color + (isHovered ? '40' : '20'));
+            grad.addColorStop(0, color + (isHovered ? '99' : '90')); // More opaque center
+            grad.addColorStop(1, color + (isHovered ? '60' : '40')); // More opaque edge
             ctx.fillStyle = grad;
             ctx.fill();
 
             ctx.strokeStyle = isHovered ? '#ffffff' : color;
-            ctx.lineWidth = isHovered ? 2 : 1.5;
+            ctx.lineWidth = isHovered ? 2 : 1;
             ctx.stroke();
 
+            // Bigger & Bolder Text
             if (size > 14 || isHovered) {
                 ctx.fillStyle = '#ffffff';
-                ctx.font = isHovered ? 'bold 11px Inter' : 'bold 10px Inter';
+                ctx.font = isHovered ? 'bold 12px Inter' : 'bold 11px Inter';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(coin.symbol.toUpperCase(), x, y - 4);
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 4;
+                ctx.fillText(coin.symbol.toUpperCase(), x, y - 5);
+                ctx.shadowBlur = 0; // Reset
 
-                ctx.font = isHovered ? '10px Inter' : '9px Inter';
-                ctx.fillStyle = isPositive ? '#86efac' : '#fca5a5';
-                ctx.fillText(`${change24h.toFixed(1)}%`, x, y + 6);
+                ctx.font = isHovered ? '11px Inter' : '10px Inter';
+                ctx.fillStyle = '#ffffff'; // Always white for readability
+                ctx.fillText(`${change24h.toFixed(1)}%`, x, y + 7);
             }
         });
 
@@ -163,6 +168,11 @@ export default function BubbleChart() {
             const dy = mouseY - b.y;
             return Math.sqrt(dx * dx + dy * dy) <= b.r;
         });
+
+        // Optimize: verify logic for high dpi
+        // Actually the mouse coordinates are in CSS pixels, which match our 'bubblesRef' logic
+        // because we calculated x/y based on 'width/height' derived from rect (CSS pixels).
+        // The context scale handled drawing, but logical coords are CSS pixels. Correct.
 
         if (hit) {
             setHoveredCoin(hit.coin);
@@ -203,15 +213,22 @@ export default function BubbleChart() {
                     <div style={{
                         position: 'absolute',
                         top: 10, left: 10,
-                        background: 'rgba(0,0,0,0.8)',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
+                        background: 'rgba(15, 23, 42, 0.9)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        padding: '6px 10px',
+                        borderRadius: '6px',
                         pointerEvents: 'none',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         color: 'white',
-                        zIndex: 10
+                        zIndex: 10,
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
                     }}>
-                        {hoveredCoin.name}: {hoveredCoin.current_price.toLocaleString()} USD
+                        <span style={{ fontWeight: 'bold', color: '#fbbf24' }}>{hoveredCoin.symbol.toUpperCase()}</span>
+                        <span style={{ margin: '0 6px' }}>|</span>
+                        <span>${hoveredCoin.current_price.toLocaleString()}</span>
+                        <div style={{ marginTop: '2px', fontSize: '11px', opacity: 0.8 }}>
+                            Vol: ${(hoveredCoin.total_volume / 1000000).toFixed(0)}M
+                        </div>
                     </div>
                 )}
             </div>

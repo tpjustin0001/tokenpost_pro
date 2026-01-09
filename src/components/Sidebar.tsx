@@ -8,14 +8,6 @@ import styles from './Sidebar.module.css';
 const NAV_ITEMS = [
     { id: 'home', icon: 'H', label: '홈', href: '/' },
     { id: 'research', icon: 'R', label: '리서치', href: '/research' },
-    { id: 'datasets', icon: 'D', label: '데이터', href: '/datasets' },
-    { divider: true },
-    { id: 'screener', icon: 'SC', label: '스크리너', href: '/screener' },
-    { id: 'watchlist', icon: 'WL', label: '관심목록', href: '/watchlist' },
-    { divider: true },
-    { id: 'news', icon: 'N', label: '뉴스', href: '/news' },
-    { id: 'unlock', icon: 'UL', label: '언락일정', href: '/unlocks' },
-    { id: 'fundraising', icon: 'FR', label: '펀드레이징', href: '/fundraising' },
     { divider: true },
     { id: 'admin', icon: 'AD', label: '관리자', href: '/admin' },
 ];
@@ -54,7 +46,6 @@ export default function Sidebar() {
             </nav>
 
             <div className={styles.footer}>
-                {/* Theme Toggle */}
                 <button
                     className={styles.themeBtn}
                     onClick={toggleTheme}

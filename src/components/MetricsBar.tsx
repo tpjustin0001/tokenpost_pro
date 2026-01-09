@@ -1,53 +1,16 @@
 'use client';
 
+import { useMarketMetrics } from '@/hooks/useMarketMetrics';
+import { useOpenInterest } from '@/hooks/useOpenInterest';
 import { XRayIcon } from './XRayTooltip';
 import styles from './MetricsBar.module.css';
 
-interface Metric {
-    label: string;
-    value: string;
-    change: number;
-    xrayKey: string;
-    sparkline?: number[];
+function formatNumber(num: number): string {
+    if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
+    if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+    return `$${num.toLocaleString()}`;
 }
-
-const METRICS: Metric[] = [
-    {
-        label: '24시간 현물 거래량',
-        value: '$37.34B',
-        change: 41.28,
-        xrayKey: 'spot_volume',
-        sparkline: [20, 35, 28, 45, 38, 52, 48, 60, 55, 70]
-    },
-    {
-        label: '24시간 선물 거래량',
-        value: '$214.35B',
-        change: 65.83,
-        xrayKey: 'perps_volume',
-        sparkline: [30, 25, 40, 35, 50, 45, 60, 55, 75, 80]
-    },
-    {
-        label: '오픈 인터레스트',
-        value: '$102.61B',
-        change: 11.96,
-        xrayKey: 'open_interest',
-        sparkline: [40, 42, 38, 45, 43, 48, 50, 52, 55, 58]
-    },
-    {
-        label: '총 시가총액',
-        value: '$3.17T',
-        change: 4.04,
-        xrayKey: 'market_cap',
-        sparkline: [50, 48, 52, 55, 53, 58, 60, 62, 65, 68]
-    },
-    {
-        label: '24시간 청산',
-        value: '$264.29M',
-        change: 45.02,
-        xrayKey: 'liquidations',
-        sparkline: [10, 25, 15, 40, 20, 55, 30, 45, 35, 60]
-    },
-];
 
 function Sparkline({ data, color }: { data: number[], color: string }) {
     const max = Math.max(...data);
@@ -75,18 +38,69 @@ function Sparkline({ data, color }: { data: number[], color: string }) {
 }
 
 export default function MetricsBar() {
+    const { metrics, isLoading } = useMarketMetrics();
+    const { totalOpenInterest } = useOpenInterest();
+
+    // 임시 스파크라인 데이터 (실제는 히스토리 API 필요)
+    const sparklineUp = [20, 35, 28, 45, 38, 52, 48, 60, 55, 70];
+    const sparklineDown = [70, 55, 60, 48, 52, 38, 45, 28, 35, 20];
+
+    const METRICS = [
+        {
+            label: '24시간 현물 거래량',
+            value: metrics ? formatNumber(metrics.spotVolume) : '---',
+            change: 0, // 변화율은 히스토리 API 필요
+            xrayKey: 'spot_volume',
+            sparkline: sparklineUp,
+            live: true
+
+        },
+        {
+            label: '오픈 인터레스트',
+            value: totalOpenInterest ? formatNumber(totalOpenInterest) : '---',
+            change: 0,
+            xrayKey: 'open_interest',
+            sparkline: sparklineUp,
+            live: true
+        },
+        {
+            label: '총 시가총액',
+            value: metrics ? formatNumber(metrics.marketCap) : '---',
+            change: 0,
+            xrayKey: 'market_cap',
+            sparkline: sparklineUp,
+            live: true
+        },
+        {
+            label: 'BTC 도미넌스',
+            value: metrics ? `${metrics.btcDominance.toFixed(1)}%` : '---',
+            change: 0,
+            xrayKey: 'btc_dominance',
+            sparkline: sparklineDown,
+            live: true
+        },
+        {
+            label: 'ETH 도미넌스',
+            value: metrics ? `${metrics.ethDominance.toFixed(1)}%` : '---',
+            change: 0,
+            xrayKey: 'market_cap',
+            sparkline: sparklineUp,
+            live: true
+        },
+    ];
+
     return (
         <div className={styles.metricsBar}>
             {METRICS.map((metric, index) => (
                 <div key={index} className={styles.metricCard}>
                     <div className={styles.labelRow}>
                         <span className={styles.label}>{metric.label}</span>
+                        {metric.live && <span className={styles.liveDot} />}
                         <XRayIcon dataKey={metric.xrayKey} />
                     </div>
                     <div className={styles.valueRow}>
-                        <span className={styles.value}>{metric.value}</span>
-                        <span className={`${styles.change} ${metric.change >= 0 ? styles.positive : styles.negative}`}>
-                            {metric.change >= 0 ? '+' : ''}{metric.change.toFixed(2)}%
+                        <span className={`${styles.value} ${isLoading ? styles.loading : ''}`}>
+                            {metric.value}
                         </span>
                         {metric.sparkline && (
                             <Sparkline

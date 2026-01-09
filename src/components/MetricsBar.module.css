@@ -26,9 +26,33 @@
     color: var(--text-muted);
 }
 
+.liveDot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}
+
 .info {
     font-size: 10px;
     color: var(--text-muted);
+    opacity: 0.5;
+}
+
+.loading {
     opacity: 0.5;
 }
 

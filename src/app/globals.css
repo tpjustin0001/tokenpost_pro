@@ -59,7 +59,10 @@
   --accent-blue: #60a5fa;
   --accent-blue-dim: rgba(96, 165, 250, 0.12);
   --accent-yellow: #fbbf24;
+  --accent-yellow-dim: rgba(251, 191, 36, 0.12);
+  --accent-orange: #f97316;
   --accent-purple: #a78bfa;
+  --accent-purple-dim: rgba(167, 139, 250, 0.12);
   --accent-cyan: #22d3ee;
 
   /* Heatmap Colors - Pastel gradient */
@@ -104,6 +107,50 @@
   /* Transitions */
   --transition-fast: 80ms ease;
   --transition-base: 120ms ease;
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  /* Background - Clean whites */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+
+  /* Text - Dark grays */
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  /* Accent Colors - Darker for contrast */
+  --accent-green: #16a34a;
+  --accent-green-soft: #22c55e;
+  --accent-green-dim: rgba(22, 163, 74, 0.1);
+  --accent-red: #dc2626;
+  --accent-red-soft: #ef4444;
+  --accent-red-dim: rgba(220, 38, 38, 0.1);
+  --accent-blue: #2563eb;
+  --accent-blue-dim: rgba(37, 99, 235, 0.1);
+  --accent-yellow: #d97706;
+  --accent-yellow-dim: rgba(217, 119, 6, 0.1);
+  --accent-orange: #ea580c;
+  --accent-purple: #7c3aed;
+  --accent-purple-dim: rgba(124, 58, 237, 0.1);
+  --accent-cyan: #0891b2;
+
+  /* Heatmap Colors - Light mode */
+  --heat-5: rgba(22, 163, 74, 0.9);
+  --heat-4: rgba(22, 163, 74, 0.6);
+  --heat-3: rgba(22, 163, 74, 0.3);
+  --heat-0: rgba(148, 163, 184, 0.3);
+  --heat-n3: rgba(220, 38, 38, 0.3);
+  --heat-n4: rgba(220, 38, 38, 0.6);
+  --heat-n5: rgba(220, 38, 38, 0.9);
+
+  /* Border - Visible */
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-color-hover: rgba(0, 0, 0, 0.15);
 }
 
 /* Reset */

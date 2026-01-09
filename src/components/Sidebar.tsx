@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useXRay } from '@/context/XRayContext';
+import { useTheme } from '@/context/ThemeContext';
 import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
 export default function Sidebar() {
     const pathname = usePathname();
     const { isXRayMode, toggleXRayMode } = useXRay();
+    const { theme, toggleTheme } = useTheme();
 
     return (
         <aside className={styles.sidebar}>
@@ -54,6 +56,16 @@ export default function Sidebar() {
             </nav>
 
             <div className={styles.footer}>
+                {/* Theme Toggle */}
+                <button
+                    className={styles.themeBtn}
+                    onClick={toggleTheme}
+                    title={theme === 'dark' ? '라이트 모드' : '다크 모드'}
+                >
+                    <span className={styles.themeIcon}>{theme === 'dark' ? '☀️' : '🌙'}</span>
+                    <span className={styles.themeLabel}>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+                </button>
+
                 {/* X-Ray Mode Button */}
                 <button
                     className={`${styles.xrayBtn} ${isXRayMode ? styles.xrayActive : ''}`}

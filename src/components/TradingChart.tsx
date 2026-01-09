@@ -40,14 +40,10 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 const binanceSymbol = `${symbol}USDT`;
 
                 // Binance Futures API
-                // Note: fapi.binance.com might be blocked in some regions (like US).
-                // If the user is in KR, it should work fine.
                 let response = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${binanceSymbol}&interval=${interval}&limit=500`);
 
-                // Fallback to proxy (needs to be capable of handling futures, but for now reuse existing or fail)
+                // Fallback to Spot if Futures fails (e.g. Geo-blocking)
                 if (!response.ok) {
-                    // Try Spot as fallback if Futures fails (better than nothing, but price will differ)
-                    // Or try internal proxy if implemented
                     console.warn('Futures API failed, trying Spot API as fallback');
                     response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=500`);
                 }
@@ -55,7 +51,6 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 if (!response.ok) throw new Error(await response.text());
 
                 const data = await response.json();
-                // Futures API returns same array format as Spot: [time, open, high, low, close, volume, ...]
                 const candles = Array.isArray(data) ? data : data.candles;
 
                 if (isMounted) {
@@ -99,7 +94,6 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
         const wsSymbol = `${symbol.toLowerCase()}usdt`;
         const wsInterval = interval;
-        // Binance Futures WebSocket URL
         const wsUrl = `wss://fstream.binance.com/ws/${wsSymbol}@kline_${wsInterval}`;
 
         const ws = new WebSocket(wsUrl);
@@ -118,23 +112,35 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             if (message.e === 'kline') {
                 const k = message.k;
                 const closePrice = parseFloat(k.c);
-                setCurrentPrice(closePrice); // Display on UI
+                setCurrentPrice(closePrice);
+
+                const candleTime = k.t / 1000;
+
+                // Safety check: Prevent updating with old data
+                const lastData = candlestickSeriesRef.current?.data().slice(-1)[0] as any;
+                if (lastData && candleTime < (lastData.time as number)) {
+                    return;
+                }
 
                 const candle = {
-                    time: k.t / 1000,
+                    time: candleTime,
                     open: parseFloat(k.o),
                     high: parseFloat(k.h),
                     low: parseFloat(k.l),
                     close: closePrice,
                 };
                 const volume = {
-                    time: k.t / 1000,
+                    time: candleTime,
                     value: parseFloat(k.v),
                     color: parseFloat(k.c) >= parseFloat(k.o) ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)',
                 };
 
-                if (candlestickSeriesRef.current) candlestickSeriesRef.current.update(candle as any);
-                if (volumeSeriesRef.current) volumeSeriesRef.current.update(volume as any);
+                try {
+                    if (candlestickSeriesRef.current) candlestickSeriesRef.current.update(candle as any);
+                    if (volumeSeriesRef.current) volumeSeriesRef.current.update(volume as any);
+                } catch (e) {
+                    console.error('Chart update error', e);
+                }
             }
         };
 
@@ -152,7 +158,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 const { data } = await supabase
                     .from('news')
                     .select('*')
-                    .eq('related_coin', symbol) // 'BTC'
+                    .eq('related_coin', symbol)
                     .eq('show_on_chart', true);
 
                 if (isMounted && data && data.length > 0) {
@@ -232,7 +238,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 horzAlign: 'center',
                 vertAlign: 'center',
                 color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                text: `BINANCE FUTURES: ${symbol}USDT`, // Changed to FUTURES
+                text: `BINANCE FUTURES: ${symbol}USDT`,
             },
             width: chartContainerRef.current.clientWidth,
             height: 350,
@@ -345,7 +351,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 </div>
             )}
             {loading && <div className={styles.loadingOverlay}>Loading...</div>}
-            {error && <div className={styles.errorOverlay}>{error}</div>}
+            {error && (chartData.length === 0) && <div className={styles.errorOverlay}>{error}</div>}
             <div ref={chartContainerRef} className={styles.chart} />
         </div>
     );

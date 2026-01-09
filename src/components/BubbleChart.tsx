@@ -36,7 +36,7 @@ export default function BubbleChart() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const { data: coins } = useSWR<CoinData[]>(
-        'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&sparkline=false&price_change_percentage=1h,24h',
+        '/api/markets',
         fetcher,
         { refreshInterval: 60000 }
     );

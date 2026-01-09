@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import ContentModal from './ContentModal';
 import styles from './ResearchIntel.module.css';
 
 interface IntelItem {
@@ -16,9 +17,8 @@ interface IntelItem {
 }
 
 const INTEL_DATA: IntelItem[] = [
-    // Breaking News
     {
-        id: 'b1',
+        id: '1',
         type: 'BREAKING',
         typeKo: '속보',
         title: 'SEC, 비트코인 현물 ETF 옵션 거래 승인',
@@ -26,27 +26,6 @@ const INTEL_DATA: IntelItem[] = [
         time: '방금',
         isBreaking: true,
         thumbnail: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=120&h=80&fit=crop'
-    },
-    {
-        id: 'b2',
-        type: 'BREAKING',
-        typeKo: '속보',
-        title: '트럼프 암호화폐 특별보좌관 임명설',
-        source: 'Bloomberg',
-        time: '12분',
-        isBreaking: true,
-        thumbnail: 'https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=120&h=80&fit=crop'
-    },
-    // PRO Content
-    {
-        id: '1',
-        type: 'PRO',
-        typeKo: 'PRO',
-        title: 'AI 분석: 비트코인 단기 지지선 $92,000',
-        source: 'TokenPost AI',
-        time: '방금',
-        isPro: true,
-        thumbnail: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=120&h=80&fit=crop'
     },
     {
         id: '2',
@@ -79,50 +58,50 @@ const INTEL_DATA: IntelItem[] = [
     },
     {
         id: '5',
-        type: 'REPORT',
-        typeKo: '리포트',
-        title: '2025년 4분기 DeFi 현황 보고서',
-        source: '토큰포스트 리서치',
-        time: '1일',
-        isPro: true,
-        thumbnail: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=120&h=80&fit=crop'
-    },
-    {
-        id: '6',
         type: 'PRO',
         typeKo: 'PRO',
-        title: 'DeFi 섹터 로테이션 시그널 감지',
+        title: 'AI 분석: 비트코인 단기 지지선 $92,000',
         source: 'TokenPost AI',
         time: '1시간',
         isPro: true,
-        thumbnail: 'https://images.unsplash.com/photo-1620321023374-d1a68fbc720d?w=120&h=80&fit=crop'
+        thumbnail: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=120&h=80&fit=crop'
+    },
+    {
+        id: '6',
+        type: 'NEWS',
+        typeKo: '뉴스',
+        title: '트럼프 암호화폐 특별자문단 임명발표',
+        source: 'Bloomberg',
+        time: '3시간',
+        thumbnail: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=120&h=80&fit=crop'
     },
 ];
 
-type TabType = 'ALL' | 'BREAKING' | 'PRO' | 'NEWS';
+type TabType = 'ALL' | 'PRO' | 'NEWS';
 
 export default function ResearchIntel() {
     const [activeTab, setActiveTab] = useState<TabType>('ALL');
+    const [selectedId, setSelectedId] = useState<string | null>(null);
 
-    const filteredData = INTEL_DATA.filter(item => {
-        if (activeTab === 'ALL') return true;
-        if (activeTab === 'BREAKING') return item.type === 'BREAKING';
-        if (activeTab === 'PRO') return item.isPro;
-        if (activeTab === 'NEWS') return item.type === 'NEWS';
-        return true;
-    });
+    const filteredData = activeTab === 'ALL'
+        ? INTEL_DATA
+        : activeTab === 'PRO'
+            ? INTEL_DATA.filter(item => item.isPro)
+            : INTEL_DATA.filter(item => item.type === 'NEWS' || item.type === 'BREAKING');
 
-    const breakingCount = INTEL_DATA.filter(i => i.type === 'BREAKING').length;
+    const breakingCount = INTEL_DATA.filter(item => item.isBreaking).length;
 
     const getTypeColor = (type: string) => {
         switch (type) {
             case 'BREAKING': return 'var(--accent-red)';
-            case 'KPI': return 'var(--accent-green)';
-            case 'NEWS': return 'var(--accent-blue)';
-            case 'REPORT': return 'var(--accent-purple)';
+            case 'KPI': return 'var(--accent-blue)';
             case 'PRO': return 'var(--accent-yellow)';
             default: return 'var(--text-muted)';
         }
+    };
+
+    const handleItemClick = (id: string) => {
+        setSelectedId(id);
     };
 
     return (
@@ -160,10 +139,10 @@ export default function ResearchIntel() {
             </div>
             <div className={styles.list}>
                 {filteredData.map((item) => (
-                    <a
+                    <div
                         key={item.id}
-                        href={`/content/${item.id}`}
                         className={`${styles.intelItem} ${item.isBreaking ? styles.breaking : ''}`}
+                        onClick={() => handleItemClick(item.id)}
                     >
                         {item.thumbnail && (
                             <div className={styles.thumbnail}>
@@ -186,12 +165,18 @@ export default function ResearchIntel() {
                                 <div className={styles.meta}>{item.source} · {item.time}</div>
                             </div>
                         </div>
-                    </a>
+                    </div>
                 ))}
             </div>
             <div className={styles.footer}>
                 <a href="/research" className={styles.viewAll}>전체 리서치 보기 →</a>
             </div>
+
+            <ContentModal
+                contentId={selectedId}
+                isOpen={!!selectedId}
+                onClose={() => setSelectedId(null)}
+            />
         </div>
     );
 }

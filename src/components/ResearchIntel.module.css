@@ -92,6 +92,8 @@
     border-bottom: 1px solid var(--border-color);
     transition: background var(--transition-fast);
     cursor: pointer;
+    text-decoration: none;
+    color: inherit;
 }
 
 .intelItem:hover {

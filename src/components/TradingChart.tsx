@@ -30,7 +30,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
     const [isLive, setIsLive] = useState(false);
     const [currentPrice, setCurrentPrice] = useState<number | null>(null);
 
-    // Initial Data Fetch
+    // Initial Data Fetch (Futures)
     useEffect(() => {
         let isMounted = true;
         async function fetchCandles() {
@@ -38,19 +38,24 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             setError(null);
             try {
                 const binanceSymbol = `${symbol}USDT`;
-                // Try Binance.US first
-                let response = await fetch(`https://api.binance.us/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=500`);
 
-                if (response.status === 451 || !response.ok) {
+                // Binance Futures API
+                // Note: fapi.binance.com might be blocked in some regions (like US).
+                // If the user is in KR, it should work fine.
+                let response = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${binanceSymbol}&interval=${interval}&limit=500`);
+
+                // Fallback to proxy (needs to be capable of handling futures, but for now reuse existing or fail)
+                if (!response.ok) {
+                    // Try Spot as fallback if Futures fails (better than nothing, but price will differ)
+                    // Or try internal proxy if implemented
+                    console.warn('Futures API failed, trying Spot API as fallback');
                     response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=500`);
-                }
-                if (response.status === 451 || !response.ok) {
-                    response = await fetch(`/api/klines?symbol=${binanceSymbol}&interval=${interval}&limit=200`);
                 }
 
                 if (!response.ok) throw new Error(await response.text());
 
                 const data = await response.json();
+                // Futures API returns same array format as Spot: [time, open, high, low, close, volume, ...]
                 const candles = Array.isArray(data) ? data : data.candles;
 
                 if (isMounted) {
@@ -88,13 +93,14 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         return () => { isMounted = false; };
     }, [symbol, interval]);
 
-    // WebSocket for Real-time Updates
+    // WebSocket for Real-time Updates (Futures)
     useEffect(() => {
         if (!symbol || !interval) return;
 
         const wsSymbol = `${symbol.toLowerCase()}usdt`;
         const wsInterval = interval;
-        const wsUrl = `wss://stream.binance.com:9443/ws/${wsSymbol}@kline_${wsInterval}`;
+        // Binance Futures WebSocket URL
+        const wsUrl = `wss://fstream.binance.com/ws/${wsSymbol}@kline_${wsInterval}`;
 
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
@@ -135,7 +141,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         return () => {
             if (ws.readyState === 1) ws.close();
         };
-    }, [symbol, interval]); // Remove chartData dep to allow reconnects
+    }, [symbol, interval]);
 
     // Fetch News Markers
     useEffect(() => {
@@ -226,7 +232,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 horzAlign: 'center',
                 vertAlign: 'center',
                 color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                text: `BINANCE: ${symbol}USDT`,
+                text: `BINANCE FUTURES: ${symbol}USDT`, // Changed to FUTURES
             },
             width: chartContainerRef.current.clientWidth,
             height: 350,

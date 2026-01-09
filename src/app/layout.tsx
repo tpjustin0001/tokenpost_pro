@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { XRayProvider } from "@/context/XRayContext";
+import XRayOverlay from "@/components/XRayOverlay";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,9 +28,12 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <div className="page-wrapper">
-          {children}
-        </div>
+        <XRayProvider>
+          <div className="page-wrapper">
+            {children}
+          </div>
+          <XRayOverlay />
+        </XRayProvider>
       </body>
     </html>
   );

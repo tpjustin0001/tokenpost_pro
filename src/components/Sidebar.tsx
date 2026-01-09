@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useXRay } from '@/context/XRayContext';
 import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const { isXRayMode, toggleXRayMode } = useXRay();
 
     return (
         <aside className={styles.sidebar}>
@@ -52,6 +54,16 @@ export default function Sidebar() {
             </nav>
 
             <div className={styles.footer}>
+                {/* X-Ray Mode Button */}
+                <button
+                    className={`${styles.xrayBtn} ${isXRayMode ? styles.xrayActive : ''}`}
+                    onClick={toggleXRayMode}
+                    title="X-Ray 학습 모드"
+                >
+                    <span className={styles.xrayIcon}>?</span>
+                    <span className={styles.xrayLabel}>X-Ray</span>
+                </button>
+
                 <div className={styles.userBtn}>
                     <span className={styles.userIcon}>U</span>
                 </div>

@@ -18,7 +18,9 @@ import styles from './page.module.css';
 const CHART_SYMBOLS = [
   { id: 'BTC', name: '비트코인' },
   { id: 'ETH', name: '이더리움' },
+  { id: 'XRP', name: '리플' },
   { id: 'SOL', name: '솔라나' },
+  { id: 'DOGE', name: '도지코인' },
 ];
 
 export default function HomePage() {

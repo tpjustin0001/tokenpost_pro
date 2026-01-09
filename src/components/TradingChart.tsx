@@ -80,30 +80,30 @@ export default function TradingChart({ symbol, data }: TradingChartProps) {
         const chart = createChart(chartContainerRef.current, {
             layout: {
                 background: { type: ColorType.Solid, color: 'transparent' },
-                textColor: '#8b949e',
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: 10,
+                textColor: '#9ca3af',
+                fontFamily: 'Roboto Mono, monospace',
+                fontSize: 11,
             },
             grid: {
-                vertLines: { color: 'rgba(48, 54, 61, 0.5)' },
-                horzLines: { color: 'rgba(48, 54, 61, 0.5)' },
+                vertLines: { color: 'rgba(255, 255, 255, 0.03)' },
+                horzLines: { color: 'rgba(255, 255, 255, 0.03)' },
             },
             crosshair: {
                 mode: 1,
                 vertLine: {
-                    color: 'rgba(88, 166, 255, 0.4)',
-                    labelBackgroundColor: '#58a6ff',
+                    color: 'rgba(96, 165, 250, 0.3)',
+                    labelBackgroundColor: '#60a5fa',
                 },
                 horzLine: {
-                    color: 'rgba(88, 166, 255, 0.4)',
-                    labelBackgroundColor: '#58a6ff',
+                    color: 'rgba(96, 165, 250, 0.3)',
+                    labelBackgroundColor: '#60a5fa',
                 },
             },
             rightPriceScale: {
-                borderColor: '#30363d',
+                borderColor: 'rgba(255, 255, 255, 0.06)',
             },
             timeScale: {
-                borderColor: '#30363d',
+                borderColor: 'rgba(255, 255, 255, 0.06)',
                 timeVisible: true,
             },
             handleScroll: true,
@@ -111,12 +111,12 @@ export default function TradingChart({ symbol, data }: TradingChartProps) {
         });
 
         const candlestickSeries = chart.addSeries(CandlestickSeries, {
-            upColor: '#3fb950',
-            downColor: '#f85149',
-            borderUpColor: '#3fb950',
-            borderDownColor: '#f85149',
-            wickUpColor: '#3fb950',
-            wickDownColor: '#f85149',
+            upColor: '#4ade80',
+            downColor: '#f87171',
+            borderUpColor: '#4ade80',
+            borderDownColor: '#f87171',
+            wickUpColor: '#4ade80',
+            wickDownColor: '#f87171',
         });
 
         const chartData = data || generateMockData();

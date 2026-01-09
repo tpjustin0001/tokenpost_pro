@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { XRayProvider } from "@/context/XRayContext";
 import { ThemeProvider } from "@/context/ThemeContext";
-import XRayOverlay from "@/components/XRayOverlay";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,12 +28,9 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ThemeProvider>
-          <XRayProvider>
-            <div className="page-wrapper">
-              {children}
-            </div>
-            <XRayOverlay />
-          </XRayProvider>
+          <div className="page-wrapper">
+            {children}
+          </div>
         </ThemeProvider>
       </body>
     </html>

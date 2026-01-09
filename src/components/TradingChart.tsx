@@ -45,10 +45,15 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
                 const response = await fetch(`/api/klines?symbol=${binanceSymbol}&interval=${interval}&limit=100`);
 
                 if (!response.ok) {
-                    throw new Error('Failed to fetch chart data');
+                    const errText = await response.text();
+                    throw new Error(errText || `Failed to fetch chart data (${response.status})`);
                 }
 
                 const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
 
                 if (isMounted) {
                     if (data.candles && data.candles.length > 0) {
@@ -87,30 +92,38 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
 
     // Fetch news markers from Supabase
     useEffect(() => {
+        let isMounted = true;
+
         async function fetchNewsMarkers() {
             if (!supabase) return;
 
-            const { data: newsItems } = await supabase
-                .from('news')
-                .select('published_at, title, sentiment_score')
-                .eq('related_coin', symbol)
-                .eq('show_on_chart', true)
-                .order('published_at', { ascending: true });
+            try {
+                const { data: newsItems } = await supabase
+                    .from('news')
+                    .select('published_at, title, sentiment_score')
+                    .eq('related_coin', symbol)
+                    .eq('show_on_chart', true)
+                    .order('published_at', { ascending: true });
 
-            if (newsItems && newsItems.length > 0) {
-                const markers: NewsMarker[] = newsItems.map(item => ({
-                    time: Math.floor(new Date(item.published_at).getTime() / 1000) as Time,
-                    position: 'aboveBar',
-                    color: (item.sentiment_score || 0) < 0 ? '#f87171' : '#4ade80',
-                    shape: 'arrowDown',
-                    text: item.title,
-                }));
-                setNewsMarkers(markers);
-            } else {
-                setNewsMarkers([]);
+                if (isMounted && newsItems && newsItems.length > 0) {
+                    const markers: NewsMarker[] = newsItems.map(item => ({
+                        time: Math.floor(new Date(item.published_at).getTime() / 1000) as Time,
+                        position: 'aboveBar',
+                        color: (item.sentiment_score || 0) < 0 ? '#f87171' : '#4ade80',
+                        shape: 'arrowDown',
+                        text: item.title,
+                    }));
+                    setNewsMarkers(markers);
+                } else if (isMounted) {
+                    setNewsMarkers([]);
+                }
+            } catch (e) {
+                console.error("Failed to load news markers", e);
             }
         }
         fetchNewsMarkers();
+
+        return () => { isMounted = false; };
     }, [symbol]);
 
     // Initialize Chart (Run once or when container changes)
@@ -219,7 +232,8 @@ export default function TradingChart({ symbol, interval = '1d' }: TradingChartPr
             )}
             {error && (
                 <div className={styles.errorOverlay}>
-                    <span>{error}</span>
+                    {/* Try to make error more user friendly */}
+                    <span>{error?.includes('403') ? 'API Limit/Restricted' : error}</span>
                 </div>
             )}
             <div ref={chartContainerRef} className={styles.chart} />

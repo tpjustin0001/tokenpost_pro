@@ -136,26 +136,150 @@ def api_lead_lag():
 
 
 # ============================================================
-# VCP SIGNALS API (Mock for now)
-# ============================================================
-# ============================================================
-# VCP SIGNALS API (Mock for now)
+# VCP SIGNALS API - Real Implementation
 # ============================================================
 @app.route('/api/crypto/vcp-signals')
 def api_vcp_signals():
-    """VCP 시그널 목록 API"""
-    # TODO: Implement actual VCP scanning
-    mock_signals = [
-        {'symbol': 'SOL', 'grade': 'A', 'score': 85, 'signal_type': 'BREAKOUT'},
-        {'symbol': 'AVAX', 'grade': 'A', 'score': 78, 'signal_type': 'APPROACHING'},
-        {'symbol': 'LINK', 'grade': 'B', 'score': 72, 'signal_type': 'RETEST_OK'},
-        {'symbol': 'SUI', 'grade': 'B', 'score': 68, 'signal_type': 'BREAKOUT'},
-        {'symbol': 'XRP', 'grade': 'C', 'score': 55, 'signal_type': 'APPROACHING'},
+    """VCP 시그널 목록 API - 실제 패턴 감지"""
+    import yfinance as yf
+    import numpy as np
+    
+    # Scan these crypto assets
+    SYMBOLS = [
+        'SOL-USD', 'AVAX-USD', 'LINK-USD', 'SUI20947-USD', 'XRP-USD',
+        'DOT-USD', 'ATOM-USD', 'NEAR-USD', 'APT21794-USD', 'ARB11841-USD',
+        'OP-USD', 'INJ-USD', 'TIA22861-USD', 'SEI-USD', 'FET-USD',
+        'RNDR-USD', 'IMX-USD', 'ONDO-USD', 'AAVE-USD', 'UNI-USD'
     ]
     
+    def calculate_vcp(ticker_symbol: str) -> dict:
+        """Calculate VCP metrics for a single asset"""
+        try:
+            ticker = yf.Ticker(ticker_symbol)
+            hist = ticker.history(period="6mo")
+            
+            if len(hist) < 60:
+                return None
+            
+            close = hist['Close'].values
+            high = hist['High'].values
+            low = hist['Low'].values
+            volume = hist['Volume'].values
+            
+            current_price = close[-1]
+            
+            # Find pivot high (highest point in last 3 months)
+            pivot_idx = np.argmax(high[-90:]) if len(high) >= 90 else np.argmax(high[-60:])
+            pivot_high = high[-90:][pivot_idx] if len(high) >= 90 else high[-60:][pivot_idx]
+            
+            # Calculate contractions (volatility ranges)
+            # Divide the period after pivot into 3 segments
+            days_since_pivot = len(close) - (len(close) - 90 + pivot_idx) if len(close) >= 90 else len(close) - pivot_idx
+            if days_since_pivot < 15:
+                return None
+            
+            segment_len = max(5, days_since_pivot // 3)
+            
+            # Calculate range for each contraction
+            c1_range = (np.max(high[-3*segment_len:-2*segment_len]) - np.min(low[-3*segment_len:-2*segment_len])) / np.mean(close[-3*segment_len:-2*segment_len]) * 100 if len(close) > 3*segment_len else 30
+            c2_range = (np.max(high[-2*segment_len:-segment_len]) - np.min(low[-2*segment_len:-segment_len])) / np.mean(close[-2*segment_len:-segment_len]) * 100 if len(close) > 2*segment_len else 20
+            c3_range = (np.max(high[-segment_len:]) - np.min(low[-segment_len:])) / np.mean(close[-segment_len:]) * 100 if len(close) > segment_len else 15
+            
+            # ATR percentage
+            tr = np.maximum(high[1:] - low[1:], 
+                           np.maximum(np.abs(high[1:] - close[:-1]), 
+                                     np.abs(low[1:] - close[:-1])))
+            atr = np.mean(tr[-14:])
+            atr_pct = (atr / current_price) * 100
+            
+            # Volume ratio (current vs 50-day average)
+            vol_ratio = np.mean(volume[-5:]) / np.mean(volume[-50:]) if np.mean(volume[-50:]) > 0 else 1.0
+            
+            # Breakout percentage
+            breakout_pct = ((current_price - pivot_high) / pivot_high) * 100
+            
+            # Determine signal type
+            if breakout_pct > 1:
+                signal_type = 'BREAKOUT'
+            elif breakout_pct > -3:
+                signal_type = 'APPROACHING'
+            elif breakout_pct > -5 and vol_ratio > 1.3:
+                signal_type = 'RETEST_OK'
+            else:
+                return None  # Not a valid VCP pattern
+            
+            # Score calculation
+            score = 50
+            
+            # Contraction pattern check (each should be smaller)
+            if c1_range > c2_range > c3_range:
+                score += 25
+            elif c1_range > c3_range:
+                score += 15
+            elif c2_range > c3_range:
+                score += 10
+            
+            # Volume confirmation
+            if vol_ratio > 1.5:
+                score += 15
+            elif vol_ratio > 1.2:
+                score += 10
+            elif vol_ratio > 1.0:
+                score += 5
+            
+            # Proximity to pivot
+            if -3 < breakout_pct < 3:
+                score += 10
+            
+            # Low ATR bonus
+            if atr_pct < 4:
+                score += 5
+            
+            score = min(100, max(0, score))
+            
+            # Grade assignment
+            if score >= 80:
+                grade = 'A'
+            elif score >= 65:
+                grade = 'B'
+            elif score >= 50:
+                grade = 'C'
+            else:
+                grade = 'D'
+            
+            symbol = ticker_symbol.replace('-USD', '')
+            
+            return {
+                'symbol': symbol,
+                'grade': grade,
+                'score': int(score),
+                'signal_type': signal_type,
+                'pivot_high': round(pivot_high, 2),
+                'current_price': round(current_price, 2),
+                'breakout_pct': round(breakout_pct, 1),
+                'c1': round(c1_range, 1),
+                'c2': round(c2_range, 1),
+                'c3': round(c3_range, 1),
+                'atr_pct': round(atr_pct, 1),
+                'vol_ratio': round(vol_ratio, 1)
+            }
+        except Exception as e:
+            print(f"Error processing {ticker_symbol}: {e}")
+            return None
+    
+    # Process all symbols
+    signals = []
+    for symbol in SYMBOLS:
+        result = calculate_vcp(symbol)
+        if result:
+            signals.append(result)
+    
+    # Sort by score descending
+    signals.sort(key=lambda x: x['score'], reverse=True)
+    
     return jsonify({
-        'signals': mock_signals,
-        'count': len(mock_signals),
+        'signals': signals,
+        'count': len(signals),
         'timestamp': datetime.now().isoformat()
     })
 

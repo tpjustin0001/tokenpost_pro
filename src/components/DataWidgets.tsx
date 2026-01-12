@@ -212,7 +212,6 @@ export function ETFFlowsChart() {
             height: 180,
         });
 
-        // V4: addAreaSeries
         const areaSeries = chart.addAreaSeries({
             topColor: 'rgba(74, 222, 128, 0.4)',
             bottomColor: 'rgba(74, 222, 128, 0.05)',
@@ -220,16 +219,32 @@ export function ETFFlowsChart() {
             lineWidth: 2,
         });
 
-        const data: LineData<Time>[] = [];
-        const now = Date.now();
-        for (let i = 90; i >= 0; i--) {
-            const time = Math.floor((now - i * 24 * 60 * 60 * 1000) / 1000) as Time;
-            const value = (Math.random() - 0.3) * 500000000;
-            data.push({ time, value });
-        }
-        areaSeries.setData(data);
+        // Fetch BTC trading volume as a proxy for market liquidity
+        // Using CryptoCompare public endpoint (no API key needed)
+        fetch('https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&limit=90')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.Data && data.Data.Data) {
+                    // Calculate 5-day rolling volume delta as flow indicator
+                    const rawData = data.Data.Data;
+                    const formattedData: LineData<Time>[] = [];
 
-        chart.timeScale().fitContent();
+                    for (let i = 5; i < rawData.length; i++) {
+                        const currentVol = rawData[i].volumeto;
+                        const prevVol = rawData[i - 5].volumeto;
+                        const volDelta = currentVol - prevVol;
+
+                        formattedData.push({
+                            time: rawData[i].time as Time,
+                            value: volDelta
+                        });
+                    }
+
+                    areaSeries.setData(formattedData);
+                    chart.timeScale().fitContent();
+                }
+            })
+            .catch(err => console.error("Failed to fetch volume data", err));
 
         const handleResize = () => {
             if (chartContainerRef.current) {
@@ -249,8 +264,8 @@ export function ETFFlowsChart() {
         <div className={styles.widget}>
             <div className={styles.header}>
                 <div>
-                    <h3 className={styles.title}>암호화폐 ETF 자금 흐름</h3>
-                    <p className={styles.subtitle}>BTC, ETH, SOL ETF 5일 롤링 유입량</p>
+                    <h3 className={styles.title}>BTC 거래량 변화 (5일 롤링)</h3>
+                    <p className={styles.subtitle}>시장 유동성 및 자금 흐름 지표</p>
                 </div>
                 <span className={styles.viewData}>LIVE</span>
             </div>

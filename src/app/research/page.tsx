@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
-import MarketPulse from '@/components/MarketPulse';
+// import MarketPulse from '@/components/MarketPulse';
 import { flaskApi } from '@/services/flaskApi';
 import styles from './page.module.css';
 
@@ -73,7 +73,7 @@ export default function ResearchPage() {
             <Sidebar />
 
             <div className={styles.mainArea}>
-                <MarketPulse />
+                {/* <MarketPulse /> */}
 
                 <main className={styles.content}>
                     {/* Header */}

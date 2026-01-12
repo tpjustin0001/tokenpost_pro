@@ -289,11 +289,10 @@ def api_vcp_signals():
 # ============================================================
 
 # Target Assets for Screener
+# Target Assets for Screener (Reduced list to prevent timeouts on free tier)
 SCREENER_SYMBOLS = [
-    'BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD',
-    'ADA-USD', 'DOGE-USD', 'AVAX-USD', 'SHIB-USD', 'DOT-USD',
-    'LINK-USD', 'MATIC-USD', 'ATOM-USD', 'LTC-USD', 'UNI-USD',
-    'SUI-USD', 'NEAR-USD', 'APT-USD', 'ARB-USD', 'OP-USD'
+    'BTC-USD', 'ETH-USD', 'SOL-USD', 'XRP-USD',
+    'DOGE-USD', 'ADA-USD', 'AVAX-USD', 'LINK-USD'
 ]
 
 def get_hist_data(symbol, period="1y"):

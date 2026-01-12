@@ -75,7 +75,20 @@ export default function SmartScreener() {
             tab === 'performance' ? '/api/screener/price-performance' :
                 '/api/screener/risk';
 
-    const { data, isLoading } = useSWR(apiUrl, fetcher, { refreshInterval: 60000 });
+    const { data, isLoading, error } = useSWR(apiUrl, fetcher, {
+        refreshInterval: 60000,
+        shouldRetryOnError: true,
+        loadingTimeout: 10000
+    });
+
+    const renderSkeleton = () => (
+        <div className={styles.skeletonContainer}>
+            {[1, 2, 3].map(i => (
+                <div key={i} className={styles.skeletonRow} />
+            ))}
+            <div className={styles.skeletonText}>AI가 시장 데이터를 분석하고 있습니다... (약 5~10초 소요)</div>
+        </div>
+    );
 
     const summaryCards = () => {
         if (!data?.data) return null;
@@ -89,19 +102,19 @@ export default function SmartScreener() {
             return (
                 <>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>📈 Bull Market Coins</span>
+                        <span className={styles.cardTitle}>📈 상승장 코인 (Bull Market)</span>
                         <span className={styles.cardValue}>{bullMarketCount}</span>
-                        <span className={styles.cardDesc}>Above 200 SMA</span>
+                        <span className={styles.cardDesc}>200일 이평선 상회</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>🚀 Today's Breakouts</span>
+                        <span className={styles.cardTitle}>🚀 급등 포착 (Breakout)</span>
                         <span className={styles.cardValue}>{freshBreakouts}</span>
-                        <span className={styles.cardDesc}>Golden Cross / SMA 200 Cross</span>
+                        <span className={styles.cardDesc}>골든크로스 / 돌파 발생</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>🔥 Strongest Trend</span>
+                        <span className={styles.cardTitle}>🔥 최강 모멘텀</span>
                         <span className={styles.cardValue}>{topGainer?.symbol || '-'}</span>
-                        <span className={styles.cardDesc}>+{topGainer?.pct_from_sma200.toFixed(1)}% vs SMA200</span>
+                        <span className={styles.cardDesc}>SMA200 대비 +{topGainer?.pct_from_sma200.toFixed(1)}%</span>
                     </div>
                 </>
             );
@@ -115,19 +128,19 @@ export default function SmartScreener() {
             return (
                 <>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>📉 Oversold Gems</span>
+                        <span className={styles.cardTitle}>📉 과매도 구간 (Oversold)</span>
                         <span className={styles.cardValue}>{oversold}</span>
-                        <span className={styles.cardDesc}>Down &gt; 80% from ATH</span>
+                        <span className={styles.cardDesc}>고점 대비 -80% 이상</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>💎 Deepest Dip</span>
+                        <span className={styles.cardTitle}>💎 저점 매수 기회</span>
                         <span className={styles.cardValue}>{deepDip?.symbol || '-'}</span>
-                        <span className={styles.cardDesc}>{deepDip?.drawdown.toFixed(1)}% Drawdown</span>
+                        <span className={styles.cardDesc}>{deepDip?.drawdown.toFixed(1)}% 하락 (최대)</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>💰 Bottom Fishing</span>
+                        <span className={styles.cardTitle}>💰 분석 대상</span>
                         <span className={styles.cardValue}>{list.length}</span>
-                        <span className={styles.cardDesc}>Assets Analyzed</span>
+                        <span className={styles.cardDesc}>주요 자산 스캔 완료</span>
                     </div>
                 </>
             );
@@ -142,19 +155,19 @@ export default function SmartScreener() {
             return (
                 <>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>🛡 Low Risk Assets</span>
+                        <span className={styles.cardTitle}>🛡 저위험 자산</span>
                         <span className={styles.cardValue}>{lowRisk}</span>
-                        <span className={styles.cardDesc}>Stable relative to BTC</span>
+                        <span className={styles.cardDesc}>BTC 대비 안정적 움직임</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>☢️ Extreme Risk</span>
+                        <span className={styles.cardTitle}>☢️ 고위험 주의</span>
                         <span className={styles.cardValue}>{extremeRisk}</span>
-                        <span className={styles.cardDesc}>High Volatility Warning</span>
+                        <span className={styles.cardDesc}>높은 변동성 경고</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>🌪 Highest Volatility</span>
+                        <span className={styles.cardTitle}>🌪 최고 변동성</span>
                         <span className={styles.cardValue}>{mostVolatile?.symbol || '-'}</span>
-                        <span className={styles.cardDesc}>{mostVolatile?.volatility.toFixed(1)}% Annualized</span>
+                        <span className={styles.cardDesc}>연간 변동성 {mostVolatile?.volatility.toFixed(1)}%</span>
                     </div>
                 </>
             );
@@ -162,8 +175,18 @@ export default function SmartScreener() {
     };
 
     const renderTable = () => {
-        if (isLoading) return <div className={styles.loading}>Analyzing Market Data...</div>;
-        if (!data?.data) return <div className={styles.loading}>No data available</div>;
+        if (isLoading) return renderSkeleton();
+
+        if (error || !data?.data) {
+            return (
+                <div className={styles.loading}>
+                    <p>데이터를 불러올 수 없습니다.</p>
+                    <button onClick={() => window.location.reload()} className={styles.retryBtn}>
+                        다시 시도
+                    </button>
+                </div>
+            );
+        }
 
         if (tab === 'breakout') {
             const list = data.data as BreakoutData[];
@@ -171,11 +194,11 @@ export default function SmartScreener() {
                 <table className={styles.table}>
                     <thead>
                         <tr>
-                            <th>Asset</th>
-                            <th>Price</th>
-                            <th>20 SMA</th>
-                            <th>50 SMA</th>
-                            <th>200 SMA (Key)</th>
+                            <th>자산 (Asset)</th>
+                            <th>현재가</th>
+                            <th>단기 추세 (20 SMA)</th>
+                            <th>중기 추세 (50 SMA)</th>
+                            <th>장기 추세 (200 SMA)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -185,23 +208,23 @@ export default function SmartScreener() {
                                     <div className={styles.assetCell}>
                                         <img src={getCoinIconUrl(item.symbol)} alt="" className={styles.coinIcon} />
                                         <span className={styles.symbol}>{item.symbol}</span>
-                                        {item.is_fresh_breakout && <span className={styles.badge} style={{ backgroundColor: '#f59e0b', color: '#fff' }}>🔥 New</span>}
+                                        {item.is_fresh_breakout && <span className={styles.badge} style={{ backgroundColor: '#f59e0b', color: '#fff' }}>🔥 돌파</span>}
                                     </div>
                                 </td>
                                 <td>${item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                                 <td>
                                     <span className={`${styles.badge} ${item.status_20 === 'Bullish' ? styles.bullish : styles.bearish}`}>
-                                        {item.status_20}
+                                        {item.status_20 === 'Bullish' ? '상승' : '하락'}
                                     </span>
                                 </td>
                                 <td>
                                     <span className={`${styles.badge} ${item.status_50 === 'Bullish' ? styles.bullish : styles.bearish}`}>
-                                        {item.status_50}
+                                        {item.status_50 === 'Bullish' ? '상승' : '하락'}
                                     </span>
                                 </td>
                                 <td>
                                     <span className={`${styles.badge} ${item.status_200 === 'Bull Market' ? styles.bullMarket : styles.bearMarket}`}>
-                                        {item.status_200}
+                                        {item.status_200 === 'Bull Market' ? '강세장' : '약세장'}
                                     </span>
                                 </td>
                             </tr>
@@ -217,11 +240,11 @@ export default function SmartScreener() {
                 <table className={styles.table}>
                     <thead>
                         <tr>
-                            <th>Asset</th>
-                            <th>ATH (Top)</th>
-                            <th>Drawdown (MDD)</th>
-                            <th>From ATL (Bottom)</th>
-                            <th>Cycle Position</th>
+                            <th>자산 (Asset)</th>
+                            <th>전고점 (ATH)</th>
+                            <th>하락률 (MDD)</th>
+                            <th>저점 대비 상승 (From ATL)</th>
+                            <th>사이클 위치</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -250,6 +273,9 @@ export default function SmartScreener() {
                                             style={{ width: `${item.cycle_position * 100}%` }}
                                         />
                                     </div>
+                                    <div style={{ fontSize: '10px', color: '#6b7280', textAlign: 'right', marginTop: '2px' }}>
+                                        {Math.round(item.cycle_position * 100)}%
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -264,11 +290,11 @@ export default function SmartScreener() {
                 <table className={styles.table}>
                     <thead>
                         <tr>
-                            <th>Asset</th>
-                            <th>Price</th>
-                            <th>Volatility (Annual)</th>
-                            <th>Risk Score (vs BTC)</th>
-                            <th>Rating</th>
+                            <th>자산 (Asset)</th>
+                            <th>현재가</th>
+                            <th>변동성 (연간)</th>
+                            <th>리스크 점수 (vs BTC)</th>
+                            <th>등급 (Rating)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -285,10 +311,9 @@ export default function SmartScreener() {
                                 <td>{item.risk_score.toFixed(2)}x</td>
                                 <td>
                                     <span className={styles[`risk${item.rating}`]}>
-                                        {item.rating === 'Low' && '🛡 '}
-                                        {item.rating === 'Medium' && '⚠️ '}
-                                        {item.rating === 'Extreme' && '☢️ '}
-                                        {item.rating}
+                                        {item.rating === 'Low' && '🛡 안정'}
+                                        {item.rating === 'Medium' && '⚠️ 보통'}
+                                        {item.rating === 'Extreme' && '☢️ 위험'}
                                     </span>
                                 </td>
                             </tr>
@@ -304,9 +329,9 @@ export default function SmartScreener() {
             <div className={styles.header}>
                 <div className={styles.titleGroup}>
                     <h2 className={styles.title}>
-                        🔭 Smart Crypto Screener
+                        🔭 스마트 가상자산 스크리너
                     </h2>
-                    <p className={styles.subtitle}>AI-Powered Opportunity & Risk Scanner</p>
+                    <p className={styles.subtitle}>AI 기반 기회 포착 & 리스크 분석 시스템</p>
                 </div>
 
                 <div className={styles.tabs}>
@@ -314,19 +339,19 @@ export default function SmartScreener() {
                         className={`${styles.tab} ${tab === 'breakout' ? styles.active : ''}`}
                         onClick={() => setTab('breakout')}
                     >
-                        🚀 Breakout Hunter
+                        🚀 급등 신호 포착
                     </button>
                     <button
                         className={`${styles.tab} ${tab === 'performance' ? styles.active : ''}`}
                         onClick={() => setTab('performance')}
                     >
-                        💎 Bottom Fisher
+                        💎 저점 매수 기회
                     </button>
                     <button
                         className={`${styles.tab} ${tab === 'risk' ? styles.active : ''}`}
                         onClick={() => setTab('risk')}
                     >
-                        ⚡️ Risk Scanner
+                        ⚡️ 리스크 분석
                     </button>
                 </div>
             </div>

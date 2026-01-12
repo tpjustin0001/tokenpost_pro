@@ -339,6 +339,61 @@ a {
 }
 
 /* ========================================
+   Unified Widget Styles
+   ======================================== */
+
+.widget {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+  min-height: 40px;
+}
+
+.widget-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.3;
+}
+
+.widget-subtitle {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.widget-body {
+  flex: 1;
+  padding: 10px 14px;
+  overflow: hidden;
+}
+
+.widget-body-compact {
+  flex: 1;
+  padding: 8px 12px;
+  overflow: hidden;
+}
+
+.widget-footer {
+  padding: 8px 14px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+/* ========================================
    Treemap / Heatmap
    ======================================== */
 

@@ -14,7 +14,6 @@ import NewsFeed from '@/components/NewsFeed';
 import ResearchIntel from '@/components/ResearchIntel';
 import TokenUnlocks from '@/components/TokenUnlocks';
 import WhaleTracker from '@/components/WhaleTracker';
-import BubbleChart from '@/components/BubbleChart';
 import GlobalXRay, { GlobalXRayButton } from '@/components/GlobalXRay';
 import styles from './page.module.css';
 
@@ -115,9 +114,7 @@ export default function HomePage() {
             <NewsFeed />
           </div>
 
-          {/* Row 3: Bubble Chart + Token Unlocks + Whale Tracker */}
-          <BubbleChart />
-
+          {/* Row 3: Token Unlocks + Whale Tracker */}
           <div className={styles.twoColumnGrid}>
             <TokenUnlocks />
             <WhaleTracker />

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import useSWR from 'swr';
+import { useState } from 'react';
 import styles from './VCPScanner.module.css';
 
 interface VCPSignal {
@@ -18,25 +19,33 @@ interface VCPSignal {
     volRatio: number;
 }
 
-const MOCK_VCP: VCPSignal[] = [
-    { symbol: 'SOL', grade: 'A', score: 85, signalType: 'BREAKOUT', pivotHigh: 195, currentPrice: 198.5, breakoutPct: 1.8, c1: 28, c2: 18, c3: 12, atrPct: 3.2, volRatio: 2.1 },
-    { symbol: 'AVAX', grade: 'A', score: 78, signalType: 'APPROACHING', pivotHigh: 42, currentPrice: 41.2, breakoutPct: -1.9, c1: 32, c2: 22, c3: 15, atrPct: 4.1, volRatio: 1.5 },
-    { symbol: 'LINK', grade: 'B', score: 72, signalType: 'RETEST_OK', pivotHigh: 28, currentPrice: 28.8, breakoutPct: 2.9, c1: 25, c2: 20, c3: 16, atrPct: 3.8, volRatio: 1.8 },
-    { symbol: 'SUI', grade: 'B', score: 68, signalType: 'BREAKOUT', pivotHigh: 4.2, currentPrice: 4.35, breakoutPct: 3.6, c1: 30, c2: 24, c3: 18, atrPct: 5.2, volRatio: 2.4 },
-    { symbol: 'XRP', grade: 'C', score: 55, signalType: 'APPROACHING', pivotHigh: 2.5, currentPrice: 2.48, breakoutPct: -0.8, c1: 22, c2: 20, c3: 18, atrPct: 3.5, volRatio: 1.2 },
-];
+const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export default function VCPScanner() {
-    const [signals, setSignals] = useState<VCPSignal[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data, isLoading } = useSWR(
+        '/api/python/crypto/vcp-signals',
+        fetcher,
+        {
+            refreshInterval: 300000, // 5분
+            revalidateOnFocus: false,
+        }
+    );
     const [filter, setFilter] = useState<'ALL' | 'A' | 'B' | 'C'>('ALL');
 
-    useEffect(() => {
-        setTimeout(() => {
-            setSignals(MOCK_VCP);
-            setLoading(false);
-        }, 1500);
-    }, []);
+    const signals: VCPSignal[] = data?.signals?.map((s: any) => ({
+        symbol: s.symbol,
+        grade: s.grade,
+        score: s.score,
+        signalType: s.signal_type,
+        pivotHigh: s.pivot_high || 0,
+        currentPrice: s.current_price || 0,
+        breakoutPct: s.breakout_pct || 0,
+        c1: s.c1 || 30,
+        c2: s.c2 || 20,
+        c3: s.c3 || 15,
+        atrPct: s.atr_pct || 3.5,
+        volRatio: s.vol_ratio || 1.5,
+    })) || [];
 
     const filteredSignals = filter === 'ALL'
         ? signals
@@ -76,7 +85,7 @@ export default function VCPScanner() {
             </div>
 
             <div className={styles.content}>
-                {loading ? (
+                {isLoading ? (
                     <div className={styles.loading}>VCP 패턴 스캔 중...</div>
                 ) : filteredSignals.length === 0 ? (
                     <div className={styles.empty}>해당 등급의 시그널이 없습니다</div>

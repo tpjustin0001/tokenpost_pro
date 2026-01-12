@@ -3,11 +3,8 @@
 import styles from './EventTicker.module.css';
 import Link from 'next/link';
 
-const EVENTS = [
-    { time: '22:30', title: 'US CPI (YoY)', type: 'Macro', country: '🇺🇸', impact: 'HIGH' },
-    { time: '23:00', title: 'Solana Breakpoint', type: 'Crypto', country: '🌐', impact: 'MED' },
-    { time: '09:00', title: 'China GDP Growth', type: 'Macro', country: '🇨🇳', impact: 'HIGH' },
-    { time: '18:00', title: 'TIA Token Unlock ($140M)', type: 'Unlock', country: '🔓', impact: 'HIGH' },
+const EVENTS: { time: string; title: string; type: string; country: string; impact: string }[] = [
+    // 캘린더 데이터 초기화 요청으로 비움
 ];
 
 export default function EventTicker() {
@@ -19,28 +16,21 @@ export default function EventTicker() {
 
             <div className={styles.tickerWrapper}>
                 <div className={styles.tickerContent}>
-                    {EVENTS.map((event, idx) => (
-                        <div key={`e1-${idx}`} className={styles.tickerItem}>
-                            <span className={styles.time}>{event.time}</span>
-                            <span className={`${styles.badge} ${styles[event.type.toLowerCase()]}`}>{event.country} {event.type}</span>
-                            <span>{event.title}</span>
+                    {EVENTS.length === 0 ? (
+                        <div className={styles.tickerItem}>
+                            <span style={{ color: 'var(--text-muted)' }}>등록된 일정이 없습니다.</span>
                         </div>
-                    ))}
-                    {/* Duplicate for seamless loop */}
-                    {EVENTS.map((event, idx) => (
-                        <div key={`e2-${idx}`} className={styles.tickerItem}>
-                            <span className={styles.time}>{event.time}</span>
-                            <span className={`${styles.badge} ${styles[event.type.toLowerCase()]}`}>{event.country} {event.type}</span>
-                            <span>{event.title}</span>
-                        </div>
-                    ))}
-                    {EVENTS.map((event, idx) => (
-                        <div key={`e3-${idx}`} className={styles.tickerItem}>
-                            <span className={styles.time}>{event.time}</span>
-                            <span className={`${styles.badge} ${styles[event.type.toLowerCase()]}`}>{event.country} {event.type}</span>
-                            <span>{event.title}</span>
-                        </div>
-                    ))}
+                    ) : (
+                        <>
+                            {EVENTS.map((event, idx) => (
+                                <div key={`e1-${idx}`} className={styles.tickerItem}>
+                                    <span className={styles.time}>{event.time}</span>
+                                    <span className={`${styles.badge} ${styles[event.type.toLowerCase()]}`}>{event.country} {event.type}</span>
+                                    <span>{event.title}</span>
+                                </div>
+                            ))}
+                        </>
+                    )}
                 </div>
             </div>
         </div>

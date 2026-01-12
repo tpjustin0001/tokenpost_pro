@@ -40,7 +40,6 @@ export function StablecoinInterestChart() {
             height: 180,
         });
 
-        const borrowSeries = chart.addLineSeries({ color: '#ef4444', lineWidth: 2 });
         const supplySeries = chart.addLineSeries({ color: '#22c55e', lineWidth: 2 });
 
         // Fetch Aave V3 USDT Data
@@ -56,20 +55,8 @@ export function StablecoinInterestChart() {
                     // Sort by time
                     formattedData.sort((a: any, b: any) => a.time - b.time);
 
-                    // Use same data for supply (apy) and mock slightly higher for borrow for visualization if real borrow not available in this endpoint
-                    // Actually this endpoint returns 'apy' (supply). 
-                    // Let's use it for Supply Series.
+                    // Only Show Supply APY
                     supplySeries.setData(formattedData);
-
-                    // For Borrow, we'll simulate it based on Supply APY + Spread (Mocking Borrow based on Supply for visual 2-lines)
-                    // Or ideally fetch another endpoint. But to save requests, let's just show Supply APY.
-                    // Wait, let's keep it simple. Only Show Supply APY for now or mock borrow.
-                    // Let's mock borrow as 1.5x of supply for visual.
-                    const borrowData = formattedData.map((d: any) => ({
-                        time: d.time,
-                        value: d.value * 1.5 + 1 // Mock spread
-                    }));
-                    borrowSeries.setData(borrowData);
 
                     chart.timeScale().fitContent();
                 }
@@ -100,10 +87,6 @@ export function StablecoinInterestChart() {
             </div>
             <div ref={chartContainerRef} className={styles.chart} />
             <div className={styles.legend}>
-                <span className={styles.legendItem}>
-                    <span className={styles.dot} style={{ background: '#ef4444' }}></span>
-                    대출 APY (Est)
-                </span>
                 <span className={styles.legendItem}>
                     <span className={styles.dot} style={{ background: '#22c55e' }}></span>
                     예치 APY (Live)

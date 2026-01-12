@@ -32,11 +32,7 @@ function getCoinIconUrl(symbol: string): string {
 }
 
 const MOCK_DATA: MindshareItem[] = [
-    { symbol: 'BTC', mindshare: 'High', change1M: 'Bullish', isPositive: true },
-    { symbol: 'ETH', mindshare: 'Med', change1M: 'Neutral', isPositive: true },
-    { symbol: 'SOL', mindshare: 'High', change1M: 'Bullish', isPositive: true },
-    { symbol: 'DOGE', mindshare: 'High', change1M: 'Bullish', isPositive: true },
-    { symbol: 'SHIB', mindshare: 'Med', change1M: 'Neutral', isPositive: false },
+    // 소셜 센티멘트 데이터 초기화 (실제 API 연동 대기)
 ];
 
 export default function Mindshare() {
@@ -59,35 +55,41 @@ export default function Mindshare() {
             </div>
 
             <div className={styles.list}>
-                {MOCK_DATA.map((item) => (
-                    <div key={item.symbol} className={styles.row}>
-                        <div className={styles.colAsset}>
-                            <img
-                                src={getCoinIconUrl(item.symbol)}
-                                alt={item.symbol}
-                                className={styles.assetIcon}
-                                onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.src = `https://ui-avatars.com/api/?name=${item.symbol}&background=6366f1&color=fff&size=64&bold=true`;
-                                }}
-                            />
-                            <span className={styles.assetName}>{item.symbol}</span>
-                        </div>
-                        <div className={styles.colCenter}>
-                            <span className={`${styles.badge} ${item.mindshare === 'High' ? styles.badgeHigh : styles.badgeMed}`}>
-                                {item.mindshare}
-                            </span>
-                        </div>
-                        <div className={styles.colCenter}>
-                            <span className={item.isPositive ? styles.textGreen : styles.textRed}>
-                                {item.change1M}
-                            </span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                            <button className={styles.whyBtn}>?</button>
-                        </div>
+                {MOCK_DATA.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        소셜 데이터를 수집하고 있습니다...
                     </div>
-                ))}
+                ) : (
+                    MOCK_DATA.map((item) => (
+                        <div key={item.symbol} className={styles.row}>
+                            <div className={styles.colAsset}>
+                                <img
+                                    src={getCoinIconUrl(item.symbol)}
+                                    alt={item.symbol}
+                                    className={styles.assetIcon}
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = `https://ui-avatars.com/api/?name=${item.symbol}&background=6366f1&color=fff&size=64&bold=true`;
+                                    }}
+                                />
+                                <span className={styles.assetName}>{item.symbol}</span>
+                            </div>
+                            <div className={styles.colCenter}>
+                                <span className={`${styles.badge} ${item.mindshare === 'High' ? styles.badgeHigh : styles.badgeMed}`}>
+                                    {item.mindshare}
+                                </span>
+                            </div>
+                            <div className={styles.colCenter}>
+                                <span className={item.isPositive ? styles.textGreen : styles.textRed}>
+                                    {item.change1M}
+                                </span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                <button className={styles.whyBtn}>?</button>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );

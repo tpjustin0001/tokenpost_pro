@@ -16,36 +16,7 @@ interface UnlockEvent {
 }
 
 const UPCOMING_UNLOCKS: UnlockEvent[] = [
-    {
-        id: '1', symbol: 'ARB', name: '아비트럼',
-        date: '2025.01.16', daysLeft: 8,
-        amount: '92.65M', value: '$148.5M', percentOfSupply: '2.13%',
-        type: 'investor'
-    },
-    {
-        id: '2', symbol: 'OP', name: '옵티미즘',
-        date: '2025.01.31', daysLeft: 23,
-        amount: '31.34M', value: '$89.2M', percentOfSupply: '2.74%',
-        type: 'team'
-    },
-    {
-        id: '3', symbol: 'APT', name: '앱토스',
-        date: '2025.02.11', daysLeft: 34,
-        amount: '11.31M', value: '$102.8M', percentOfSupply: '2.64%',
-        type: 'cliff'
-    },
-    {
-        id: '4', symbol: 'SUI', name: '수이',
-        date: '2025.02.01', daysLeft: 24,
-        amount: '64.19M', value: '$256.7M', percentOfSupply: '2.19%',
-        type: 'investor'
-    },
-    {
-        id: '5', symbol: 'SEI', name: '세이',
-        date: '2025.01.15', daysLeft: 7,
-        amount: '55.56M', value: '$44.4M', percentOfSupply: '1.32%',
-        type: 'linear'
-    },
+    // 토큰 언락 데이터 초기화 (API 연동 대기)
 ];
 
 export default function TokenUnlocks() {
@@ -85,48 +56,54 @@ export default function TokenUnlocks() {
                 <span className={styles.subtitle}>30일 이내</span>
             </div>
             <div className={styles.list}>
-                {UPCOMING_UNLOCKS.map((unlock) => (
-                    <div key={unlock.id} className={styles.unlockItem}>
-                        <div className={styles.tokenInfo}>
-                            <div className={styles.tokenIcon}>{unlock.symbol.slice(0, 2)}</div>
-                            <div>
-                                <div className={styles.tokenName}>{unlock.name}</div>
-                                <div className={styles.tokenSymbol}>{unlock.symbol}</div>
-                            </div>
-                        </div>
-
-                        <div className={styles.unlockDetails}>
-                            <div className={styles.daysLeft} style={{ color: getDaysColor(unlock.daysLeft) }}>
-                                D-{unlock.daysLeft}
-                            </div>
-                            <div className={styles.date}>{unlock.date}</div>
-                        </div>
-
-                        <div className={styles.amountInfo}>
-                            <div className={styles.amount}>{unlock.amount}</div>
-                            <div className={styles.value}>{unlock.value}</div>
-                        </div>
-
-                        <div className={styles.supplyInfo}>
-                            <div className={styles.percent}>{unlock.percentOfSupply}</div>
-                            <span
-                                className={styles.typeBadge}
-                                style={{
-                                    background: `${getTypeColor(unlock.type)}20`,
-                                    color: getTypeColor(unlock.type)
-                                }}
-                            >
-                                <XRayTooltip dataKey={
-                                    unlock.type === 'cliff' ? 'unlock_cliff' :
-                                        unlock.type === 'linear' ? 'unlock_linear' :
-                                            'token_unlocks'
-                                }>
-                                    {getTypeLabel(unlock.type)}
-                                </XRayTooltip>
-                            </span>
-                        </div>
+                {UPCOMING_UNLOCKS.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        언락 일정을 집계하고 있습니다...
                     </div>
-                ))}
+                ) : (
+                    UPCOMING_UNLOCKS.map((unlock) => (
+                        <div key={unlock.id} className={styles.unlockItem}>
+                            <div className={styles.tokenInfo}>
+                                <div className={styles.tokenIcon}>{unlock.symbol.slice(0, 2)}</div>
+                                <div>
+                                    <div className={styles.tokenName}>{unlock.name}</div>
+                                    <div className={styles.tokenSymbol}>{unlock.symbol}</div>
+                                </div>
+                            </div>
+
+                            <div className={styles.unlockDetails}>
+                                <div className={styles.daysLeft} style={{ color: getDaysColor(unlock.daysLeft) }}>
+                                    D-{unlock.daysLeft}
+                                </div>
+                                <div className={styles.date}>{unlock.date}</div>
+                            </div>
+
+                            <div className={styles.amountInfo}>
+                                <div className={styles.amount}>{unlock.amount}</div>
+                                <div className={styles.value}>{unlock.value}</div>
+                            </div>
+
+                            <div className={styles.supplyInfo}>
+                                <div className={styles.percent}>{unlock.percentOfSupply}</div>
+                                <span
+                                    className={styles.typeBadge}
+                                    style={{
+                                        background: `${getTypeColor(unlock.type)}20`,
+                                        color: getTypeColor(unlock.type)
+                                    }}
+                                >
+                                    <XRayTooltip dataKey={
+                                        unlock.type === 'cliff' ? 'unlock_cliff' :
+                                            unlock.type === 'linear' ? 'unlock_linear' :
+                                                'token_unlocks'
+                                    }>
+                                        {getTypeLabel(unlock.type)}
+                                    </XRayTooltip>
+                                </span>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );

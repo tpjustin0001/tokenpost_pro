@@ -15,36 +15,7 @@ interface WhaleActivity {
 }
 
 const WHALE_ACTIVITIES: WhaleActivity[] = [
-    {
-        id: '1', type: 'buy', symbol: 'BTC',
-        amount: '1,250 BTC', value: '$125.8M',
-        from: 'Binance', to: 'Unknown Wallet',
-        time: '12분 전', impact: 'high'
-    },
-    {
-        id: '2', type: 'transfer', symbol: 'ETH',
-        amount: '32,000 ETH', value: '$108.5M',
-        from: 'Whale #847', to: 'Coinbase',
-        time: '28분 전', impact: 'high'
-    },
-    {
-        id: '3', type: 'sell', symbol: 'SOL',
-        amount: '485,000 SOL', value: '$87.3M',
-        from: 'FTX Wallet', to: 'Kraken',
-        time: '45분 전', impact: 'medium'
-    },
-    {
-        id: '4', type: 'buy', symbol: 'ETH',
-        amount: '15,200 ETH', value: '$51.6M',
-        from: 'OKX', to: 'Unknown Wallet',
-        time: '1시간 전', impact: 'medium'
-    },
-    {
-        id: '5', type: 'transfer', symbol: 'BTC',
-        amount: '500 BTC', value: '$50.4M',
-        from: 'Mt.Gox', to: 'BitstampC',
-        time: '2시간 전', impact: 'high'
-    },
+    // 고래 추적 데이터 초기화 (API 연동 대기)
 ];
 
 export default function WhaleTracker() {
@@ -80,40 +51,46 @@ export default function WhaleTracker() {
                 <span className={styles.live}>LIVE</span>
             </div>
             <div className={styles.list}>
-                {WHALE_ACTIVITIES.map((activity) => (
-                    <div key={activity.id} className={styles.activityItem}>
-                        <div className={styles.activityType}>
-                            <span
-                                className={styles.typeBadge}
-                                style={{
-                                    background: `${getTypeColor(activity.type)}20`,
-                                    color: getTypeColor(activity.type)
-                                }}
-                            >
-                                {getTypeLabel(activity.type)}
-                            </span>
-                            <span className={styles.symbol}>{activity.symbol}</span>
-                        </div>
-
-                        <div className={styles.amountSection}>
-                            <div className={styles.amount}>{activity.amount}</div>
-                            <div className={styles.value}>{activity.value}</div>
-                        </div>
-
-                        <div className={styles.flowSection}>
-                            <span className={styles.address}>{activity.from}</span>
-                            <span className={styles.arrow}>→</span>
-                            <span className={styles.address}>{activity.to}</span>
-                        </div>
-
-                        <div className={styles.metaSection}>
-                            <span className={styles.time}>{activity.time}</span>
-                            {activity.impact === 'high' && (
-                                <span className={styles.highImpact}>주의</span>
-                            )}
-                        </div>
+                {WHALE_ACTIVITIES.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        실시간 고래 활동을 모니터링하고 있습니다...
                     </div>
-                ))}
+                ) : (
+                    WHALE_ACTIVITIES.map((activity) => (
+                        <div key={activity.id} className={styles.activityItem}>
+                            <div className={styles.activityType}>
+                                <span
+                                    className={styles.typeBadge}
+                                    style={{
+                                        background: `${getTypeColor(activity.type)}20`,
+                                        color: getTypeColor(activity.type)
+                                    }}
+                                >
+                                    {getTypeLabel(activity.type)}
+                                </span>
+                                <span className={styles.symbol}>{activity.symbol}</span>
+                            </div>
+
+                            <div className={styles.amountSection}>
+                                <div className={styles.amount}>{activity.amount}</div>
+                                <div className={styles.value}>{activity.value}</div>
+                            </div>
+
+                            <div className={styles.flowSection}>
+                                <span className={styles.address}>{activity.from}</span>
+                                <span className={styles.arrow}>→</span>
+                                <span className={styles.address}>{activity.to}</span>
+                            </div>
+
+                            <div className={styles.metaSection}>
+                                <span className={styles.time}>{activity.time}</span>
+                                {activity.impact === 'high' && (
+                                    <span className={styles.highImpact}>주의</span>
+                                )}
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
             <div className={styles.footer}>
                 <span className={styles.hint}>$50M 이상 거래만 표시</span>

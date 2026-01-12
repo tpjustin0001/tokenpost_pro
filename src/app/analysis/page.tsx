@@ -2,7 +2,7 @@
 
 import Sidebar from '@/components/Sidebar';
 import MarketGate from '@/components/analysis/MarketGate';
-import LeadLag from '@/components/analysis/LeadLag';
+
 import VCPScanner from '@/components/analysis/VCPScanner';
 import styles from './page.module.css';
 
@@ -20,7 +20,6 @@ export default function AnalysisPage() {
 
                     <div className={styles.grid}>
                         <MarketGate />
-                        <LeadLag />
                     </div>
 
                     <VCPScanner />

@@ -9,6 +9,16 @@ interface MindshareItem {
     isPositive: boolean;
 }
 
+// CoinGecko image IDs for major coins
+function getCoinId(symbol: string): number {
+    const ids: Record<string, number> = {
+        'BTC': 1, 'ETH': 279, 'SOL': 4128, 'BNB': 825, 'XRP': 44,
+        'ADA': 975, 'DOGE': 5, 'AVAX': 12559, 'SHIB': 11939, 'DOT': 12171,
+        'LINK': 877, 'MATIC': 4713, 'ATOM': 1481, 'LTC': 2, 'UNI': 12504,
+    };
+    return ids[symbol.toUpperCase()] || 1;
+}
+
 const MOCK_DATA: MindshareItem[] = [
     { symbol: 'BTC', mindshare: 'High', change1M: 'Bullish', isPositive: true },
     { symbol: 'ETH', mindshare: 'Med', change1M: 'Neutral', isPositive: true },
@@ -40,7 +50,15 @@ export default function Mindshare() {
                 {MOCK_DATA.map((item) => (
                     <div key={item.symbol} className={styles.row}>
                         <div className={styles.colAsset}>
-                            <div className={styles.assetIcon}>{item.symbol.substring(0, 1)}</div>
+                            <img
+                                src={`https://assets.coingecko.com/coins/images/${getCoinId(item.symbol)}/small/${item.symbol.toLowerCase()}.png`}
+                                alt={item.symbol}
+                                className={styles.assetIcon}
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = `https://www.cryptocompare.com/media/37746251/${item.symbol.toLowerCase()}.png`;
+                                }}
+                            />
                             <span className={styles.assetName}>{item.symbol}</span>
                         </div>
                         <div className={styles.colCenter}>

@@ -28,6 +28,16 @@ const MOCK_DATA: Asset[] = [
     { id: 'avax', rank: 8, name: 'Avalanche', symbol: 'AVAX', price: 35.5, change24h: 2.3, change7d: 6.8, marketCap: 13000000000, volume24h: 650000000, fdv: 25000000000, tvl: 1200000000 },
 ];
 
+// CoinGecko image IDs for major coins
+function getCoinId(symbol: string): number {
+    const ids: Record<string, number> = {
+        'BTC': 1, 'ETH': 279, 'SOL': 4128, 'BNB': 825, 'XRP': 44,
+        'ADA': 975, 'DOGE': 5, 'AVAX': 12559, 'SHIB': 11939, 'DOT': 12171,
+        'LINK': 877, 'MATIC': 4713, 'ATOM': 1481, 'LTC': 2, 'UNI': 12504,
+    };
+    return ids[symbol.toUpperCase()] || 1;
+}
+
 function formatCurrency(value: number, compact = false) {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -79,7 +89,15 @@ export default function AssetScreener() {
                                 <td>{asset.rank}</td>
                                 <td>
                                     <div className={styles.assetName}>
-                                        <div className={styles.assetIcon} /> {/* Placeholder for icon */}
+                                        <img
+                                            src={`https://assets.coingecko.com/coins/images/${getCoinId(asset.symbol)}/small/${asset.symbol.toLowerCase()}.png`}
+                                            alt={asset.symbol}
+                                            className={styles.assetIcon}
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                target.src = `https://www.cryptocompare.com/media/37746251/${asset.symbol.toLowerCase()}.png`;
+                                            }}
+                                        />
                                         {asset.name}
                                         <span className={styles.symbol}>{asset.symbol}</span>
                                     </div>

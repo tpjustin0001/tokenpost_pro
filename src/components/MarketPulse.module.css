@@ -1,1 +1,112 @@
-/* MarketPulse module styles */
+.wrapper {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 16px 24px;
+    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.metrics {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+}
+
+.metric {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-feature-settings: "tnum";
+}
+
+.change {
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 6px;
+}
+
+.positive {
+    color: var(--accent-green);
+}
+
+.negative {
+    color: var(--accent-red);
+}
+
+.neutral {
+    color: var(--text-muted);
+}
+
+.fearGreed {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fgValue {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.fgLabel {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg-tertiary);
+}
+
+.fgLabel.greed {
+    color: var(--accent-green);
+    background: rgba(74, 222, 128, 0.1);
+}
+
+.fgLabel.fear {
+    color: var(--accent-red);
+    background: rgba(248, 113, 113, 0.1);
+}
+
+.rightSide {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    background: var(--bg-tertiary);
+    padding: 8px 16px;
+    border-radius: 20px;
+}
+
+@media (max-width: 768px) {
+    .wrapper {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    .metrics {
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+}

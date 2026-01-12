@@ -1,0 +1,143 @@
+.screenerContainer {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-secondary);
+}
+
+.title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.titleIcon {
+    color: var(--accent-blue);
+}
+
+.controls {
+    display: flex;
+    gap: 8px;
+}
+
+.filterBtn {
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filterBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.tableContainer {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.table th {
+    text-align: right;
+    padding: 12px 16px;
+    color: var(--text-muted);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+}
+
+.table th:hover {
+    color: var(--text-primary);
+}
+
+.table th:first-child,
+.table td:first-child {
+    text-align: left;
+    padding-left: 24px;
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+    text-align: left;
+}
+
+
+.table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-feature-settings: "tnum";
+}
+
+.row:hover {
+    background: var(--bg-hover);
+}
+
+.assetName {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.assetIcon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+}
+
+.symbol {
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-left: 4px;
+}
+
+.positive {
+    color: var(--accent-green);
+}
+
+.negative {
+    color: var(--accent-red);
+}
+
+.barContainer {
+    width: 60px;
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-left: auto;
+}
+
+.barFill {
+    height: 100%;
+    background: var(--accent-blue);
+    border-radius: 2px;
+}

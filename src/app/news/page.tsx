@@ -4,39 +4,10 @@ import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import ContentModal from '@/components/ContentModal';
 import { supabase, News } from '@/lib/supabase';
+import { flaskApi } from '@/services/flaskApi';
 import styles from './page.module.css';
 
 // Fallback mock data (Supabase 연결 전)
-const MOCK_NEWS = [
-    {
-        id: 1,
-        category: '규제',
-        title: 'SEC, 비트코인 현물 ETF 옵션 거래 최종 승인',
-        summary: 'SEC가 BlackRock, Fidelity 등 주요 자산운용사의 비트코인 현물 ETF에 대한 옵션 거래를 승인했습니다.',
-        source: 'Reuters',
-        published_at: new Date().toISOString(),
-        image_url: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=250&fit=crop',
-    },
-    {
-        id: 2,
-        category: '시장',
-        title: '비트코인 $95,000 돌파, 사상 최고치 경신',
-        summary: 'ETF 승인 기대감과 기관 수요 증가로 비트코인이 $95,000를 돌파하며 사상 최고치를 경신했습니다.',
-        source: 'CoinDesk',
-        published_at: new Date(Date.now() - 3600000).toISOString(),
-        image_url: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=400&h=250&fit=crop',
-    },
-    {
-        id: 3,
-        category: 'DeFi',
-        title: 'Uniswap V4, 메인넷 출시 임박',
-        summary: '후크(Hooks) 기능을 도입한 Uniswap V4가 테스트넷 완료 후 메인넷 출시를 앞두고 있습니다.',
-        source: 'The Block',
-        published_at: new Date(Date.now() - 7200000).toISOString(),
-        image_url: 'https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=400&h=250&fit=crop',
-    },
-];
-
 const CATEGORIES = ['전체', '규제', '시장', 'DeFi', '정책', 'Layer2', 'NFT'];
 
 function getTimeAgo(dateString: string): string {
@@ -57,25 +28,10 @@ export default function NewsPage() {
     useEffect(() => {
         async function fetchNews() {
             try {
-                if (!supabase) {
-                    setNews(MOCK_NEWS);
-                    setLoading(false);
-                    return;
-                }
-
-                const { data, error } = await supabase
-                    .from('news')
-                    .select('*')
-                    .order('published_at', { ascending: false })
-                    .limit(20);
-
-                if (error || !data || data.length === 0) {
-                    setNews(MOCK_NEWS);
-                } else {
-                    setNews(data);
-                }
-            } catch {
-                setNews(MOCK_NEWS);
+                const data = await flaskApi.getContent('news');
+                setNews(data);
+            } catch (error) {
+                console.error('Failed to fetch news', error);
             } finally {
                 setLoading(false);
             }
@@ -113,25 +69,25 @@ export default function NewsPage() {
                     {loading ? (
                         <div className={styles.loading}>뉴스 로딩 중...</div>
                     ) : (
-                        <div className={styles.newsGrid}>
-                            {filteredNews.map(item => (
+                        <div className={styles.timelineFeed}>
+                            {filteredNews.map((item, index) => (
                                 <article
                                     key={item.id}
-                                    className={styles.newsCard}
+                                    className={styles.newsItem}
                                     onClick={() => setSelectedId(String(item.id))}
                                 >
-                                    <div className={styles.thumbnailWrapper}>
-                                        <img src={item.image_url || 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=250&fit=crop'} alt="" className={styles.thumbnail} />
+                                    <div className={styles.itemHeader}>
+                                        <span className={styles.time}>{item.published_at ? new Date(item.published_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : getTimeAgo(item.created_at || new Date().toISOString())}</span>
+                                        <span className={styles.sourceBadge}>{item.source || 'TokenPost'}</span>
                                     </div>
-                                    <div className={styles.cardContent}>
-                                        <span className={styles.category}>{item.category || '뉴스'}</span>
-                                        <h3 className={styles.title}>{item.title}</h3>
-                                        <p className={styles.summary}>{item.summary}</p>
-                                        <div className={styles.meta}>
-                                            <span>{item.source || 'TokenPost'}</span>
-                                            <span>·</span>
-                                            <span>{item.published_at ? getTimeAgo(item.published_at) : '최근'}</span>
-                                        </div>
+
+                                    <h3 className={styles.title}>{item.title}</h3>
+                                    <p className={styles.summary}>{item.summary || item.content?.substring(0, 100) + '...'}</p>
+
+                                    <div className={styles.tags}>
+                                        {item.category && <span className={styles.tag}>{item.category}</span>}
+                                        {item.sentiment_score > 0 && <span className={styles.tag} style={{ color: 'var(--accent-green)' }}>Positive</span>}
+                                        {item.sentiment_score < 0 && <span className={styles.tag} style={{ color: 'var(--accent-red)' }}>Negative</span>}
                                     </div>
                                 </article>
                             ))}

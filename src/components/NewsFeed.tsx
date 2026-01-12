@@ -1,5 +1,5 @@
-'use client';
-
+import { useEffect, useState } from 'react';
+import { supabase, News } from '@/lib/supabase';
 import styles from './NewsFeed.module.css';
 
 interface NewsItem {
@@ -7,64 +7,106 @@ interface NewsItem {
     time: string;
     source: string;
     title: string;
+    sentiment?: 'positive' | 'negative' | 'neutral';
+    summary?: string;
     tags?: string[];
 }
 
-const MOCK_NEWS: NewsItem[] = [
-    {
-        id: '1',
-        time: '37m',
-        source: 'CoinDesk',
-        title: 'Bitcoin, ether ease after early January pop as markets price fed cuts',
-        tags: ['BTC', 'ETH'],
-    },
-    {
-        id: '2',
-        time: '60m',
-        source: 'CoinDesk',
-        title: "XRP slips 5% as CNBC terms it 'hottest trade' of 2026 over bitcoin and ether",
-        tags: ['XRP'],
-    },
-    {
-        id: '3',
-        time: '1h',
-        source: 'The Block',
-        title: 'Kalshi CEO endorses bill banning insider trading on prediction markets',
-    },
-    {
-        id: '4',
-        time: '1h',
-        source: 'CoinDesk',
-        title: 'Ethereum bumps blob capacity as it gears for Fusaka upgrade',
-        tags: ['ETH'],
-    },
-    {
-        id: '5',
-        time: '2h',
-        source: 'Decrypt',
-        title: 'World Liberty Financial Applies for OCC Trust Bank Charter',
-    },
-    {
-        id: '6',
-        time: '3h',
-        source: 'The Block',
-        title: 'Sei warns USDC token holders to swap for native stablecoin ahead of planned upgrade',
-        tags: ['SEI'],
-    },
-];
-
 export default function NewsFeed() {
+    const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchNews();
+
+        // Subscribe to changes
+        const channel = supabase
+            ? supabase.channel('public:news')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news' }, (payload) => {
+                    const newRow = payload.new as News;
+                    setNewsItems(prev => [mapNewsToItem(newRow), ...prev].slice(0, 20));
+                })
+                .subscribe()
+            : null;
+
+        return () => {
+            if (channel) supabase?.removeChannel(channel);
+        };
+    }, []);
+
+    async function fetchNews() {
+        if (!supabase) return;
+
+        const { data, error } = await supabase
+            .from('news')
+            .select('*')
+            .order('published_at', { ascending: false })
+            .limit(20);
+
+        if (error) {
+            console.error('Error fetching news:', error);
+            return;
+        }
+
+        if (data) {
+            setNewsItems(data.map(mapNewsToItem));
+        }
+        setLoading(false);
+    }
+
+    function mapNewsToItem(row: News): NewsItem {
+        const date = new Date(row.published_at || new Date().toISOString());
+        // Simple time formatting (e.g., 10:30 AM)
+        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Determine sentiment based on score (mock logic if score is null)
+        let sentiment: 'positive' | 'negative' | 'neutral' = 'neutral';
+        if (row.sentiment_score !== null) {
+            if (row.sentiment_score > 0.3) sentiment = 'positive';
+            else if (row.sentiment_score < -0.3) sentiment = 'negative';
+        }
+
+        return {
+            id: row.id.toString(),
+            time: timeStr,
+            source: row.source || 'TokenPost',
+            title: row.title,
+            sentiment: sentiment,
+            summary: row.summary || undefined,
+            tags: [], // Tags not yet in DB schema for news, strictly
+        };
+    }
+
+    if (loading) {
+        return <div className={styles.feedContainer} style={{ padding: '20px', color: 'var(--text-muted)' }}>Loading news...</div>;
+    }
+
     return (
-        <div className="news-list">
-            {MOCK_NEWS.map((news) => (
-                <article key={news.id} className="news-item">
-                    <div className="news-meta">
-                        <span className="news-time">{news.time}</span>
-                        <span className="news-source">{news.source}</span>
-                    </div>
-                    <h3 className="news-title">{news.title}</h3>
-                </article>
-            ))}
+        <div className={styles.feedContainer}>
+            <div className={styles.timeline}>
+                {newsItems.length === 0 ? (
+                    <div style={{ padding: '0 20px', color: 'var(--text-muted)' }}>No recent news.</div>
+                ) : (
+                    newsItems.map((news, index) => (
+                        <article key={news.id} className={`${styles.item} ${styles[news.sentiment || 'neutral']}`}>
+                            {index === 0 && <div className={styles.liveIndicator} />}
+                            <span className={styles.time}>{news.time}</span>
+
+                            <div className={styles.header}>
+                                {news.sentiment && (
+                                    <span className={`${styles.sentimentBadge} ${styles[news.sentiment]}`}>
+                                        {news.sentiment === 'positive' ? 'Bullish' : news.sentiment === 'negative' ? 'Bearish' : 'Neutral'}
+                                    </span>
+                                )}
+                                <span className={styles.source}>{news.source}</span>
+                            </div>
+
+                            <h3 className={styles.title}>{news.title}</h3>
+                            {news.summary && <p className={styles.summary}>{news.summary}</p>}
+                        </article>
+                    ))
+                )}
+            </div>
         </div>
     );
 }

@@ -4,11 +4,13 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Sidebar from '@/components/Sidebar';
 import MetricsBar from '@/components/MetricsBar';
+import EventTicker from '@/components/EventTicker';
+import Mindshare from '@/components/Mindshare';
 import KimchiPremium from '@/components/KimchiPremium';
 import PricePerformance from '@/components/PricePerformance';
 
 import { StablecoinInterestChart, BlockchainRevChart, ETFFlowsChart } from '@/components/DataWidgets';
-import AIInsights from '@/components/AIInsights';
+import NewsFeed from '@/components/NewsFeed';
 import ResearchIntel from '@/components/ResearchIntel';
 import TokenUnlocks from '@/components/TokenUnlocks';
 import WhaleTracker from '@/components/WhaleTracker';
@@ -53,6 +55,7 @@ export default function HomePage() {
 
       <div className={styles.mainArea}>
         <MetricsBar />
+        <EventTicker />
 
         <main className={styles.content}>
           <div className={styles.xrayHeader}>
@@ -106,10 +109,10 @@ export default function HomePage() {
             <ETFFlowsChart />
           </div>
 
-          {/* Row 2: AI Insights + Research Intel */}
+          {/* Row 2: Social Sentiment + News Feed */}
           <div className={styles.twoColumnGrid}>
-            <AIInsights />
-            <ResearchIntel />
+            <Mindshare />
+            <NewsFeed />
           </div>
 
           {/* Row 3: Bubble Chart + Token Unlocks + Whale Tracker */}

@@ -26,6 +26,232 @@
     left: 12px;
     z-index: 20;
     pointer-events: none;
+    background: var(--bg-card);
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.loadingOverlay,
+.errorOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    background: rgba(13, 17, 23, 0.5);
+    backdrop-filter: blur(2px);
+    border-radius: var(--radius-sm);
+}
+
+.loadingOverlay span {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    font-family: var(--font-mono);
+}
+
+.errorOverlay span {
+    color: var(--accent-red);
+    font-size: var(--text-sm);
+    font-family: var(--font-mono);
+}
+
+.liveStatus {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 20;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--accent-green);
+    font-weight: 600;
+    background: var(--accent-green-dim);
+    padding: 4px 8px;
+    border-radius: 9999px;
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    backdrop-filter: blur(4px);
+}
+
+.liveDot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--accent-green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+    animation: pulse 2s infinite;
+}
+
+.livePrice {
+    margin-right: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    font-family: var(--font-sans);
+    letter-spacing: 0.5px;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.4;
+        transform: scale(1.2);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -46%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+/* News Modal & Markers */
+.newsModal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 340px;
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    border-radius: 16px;
+    padding: 20px;
+    z-index: 1000;
+    font-family: var(--font-sans);
+    animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+}
+
+.modalBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 999;
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.modalBadge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badgeBull {
+    background: var(--accent-green-dim);
+    color: var(--accent-green);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.badgeBear {
+    background: var(--accent-red-dim);
+    color: var(--accent-red);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.modalDate {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.modalTitle {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    color: var(--text-primary);
+}
+
+.modalContent {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    max-height: 200px;
+    overflow-y: auto;
+    /* Custom scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.closeButton {
+    width: 100%;
+    padding: 10px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.closeButton:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    border-color: var(--border-color-hover);
+}
+
+.chart {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: var(--spacing-md);
+}
+
+/* Ensure chart fills container properly */
+.chart>div {
+    border-radius: var(--radius-sm);
+}
+
+.tooltip {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 20;
+    pointer-events: none;
     background: rgba(13, 17, 23, 0.7);
     /* translucent dark */
     padding: 6px 10px;

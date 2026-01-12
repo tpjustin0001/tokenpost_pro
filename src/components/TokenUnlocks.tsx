@@ -1,6 +1,7 @@
 'use client';
 
 import styles from './TokenUnlocks.module.css';
+import XRayTooltip from './XRayTooltip';
 
 interface UnlockEvent {
     id: string;
@@ -76,7 +77,11 @@ export default function TokenUnlocks() {
     return (
         <div className="card">
             <div className="card-header">
-                <span className="card-title">토큰 언락 일정</span>
+                <span className="card-title">
+                    <XRayTooltip dataKey="token_unlocks">
+                        토큰 언락 일정
+                    </XRayTooltip>
+                </span>
                 <span className={styles.subtitle}>30일 이내</span>
             </div>
             <div className={styles.list}>
@@ -111,7 +116,13 @@ export default function TokenUnlocks() {
                                     color: getTypeColor(unlock.type)
                                 }}
                             >
-                                {getTypeLabel(unlock.type)}
+                                <XRayTooltip dataKey={
+                                    unlock.type === 'cliff' ? 'unlock_cliff' :
+                                        unlock.type === 'linear' ? 'unlock_linear' :
+                                            'token_unlocks'
+                                }>
+                                    {getTypeLabel(unlock.type)}
+                                </XRayTooltip>
                             </span>
                         </div>
                     </div>

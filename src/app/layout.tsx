@@ -23,6 +23,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { XRayProvider } from '@/context/XRayContext';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,9 +34,11 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ThemeProvider>
-          <div className="page-wrapper">
-            {children}
-          </div>
+          <XRayProvider>
+            <div className="page-wrapper">
+              {children}
+            </div>
+          </XRayProvider>
         </ThemeProvider>
       </body>
     </html>

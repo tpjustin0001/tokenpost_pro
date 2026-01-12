@@ -11,6 +11,7 @@
     align-items: center;
     padding: var(--spacing-md) var(--spacing-lg);
     border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .titleRow {
@@ -72,9 +73,11 @@
     color: var(--text-primary);
 }
 
+
 .list {
-    max-height: 280px;
+    flex: 1;
     overflow-y: auto;
+    /* Remove max-height to allow filling container */
 }
 
 .row {

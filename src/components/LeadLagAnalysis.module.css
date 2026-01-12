@@ -1,0 +1,109 @@
+.leadLagContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    transition: transform var(--transition-fast);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-blue);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.lagCircle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+.titleSection {
+    flex: 1;
+}
+
+.variable {
+    font-weight: 600;
+    font-size: var(--text-base);
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.subtitle {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.stats {
+    margin-bottom: var(--spacing-md);
+}
+
+.statRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--text-xs);
+    margin-bottom: var(--spacing-xs);
+}
+
+.correlationBar {
+    height: 6px;
+    background: var(--bg-card);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.barFill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.interpretation {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-sm);
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.positive {
+    color: var(--accent-green);
+}
+
+.negative {
+    color: var(--accent-red);
+}
+
+.loading {
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--text-muted);
+}

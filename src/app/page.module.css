@@ -111,7 +111,8 @@
   color: var(--text-muted);
 }
 
-/* Blockworks Style Widget Grid */
+
+/* Legacy Grids (Keep for components reusing them if any, or safely remove if confirmed unused) */
 .widgetGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -134,10 +135,6 @@
   .widgetGrid {
     grid-template-columns: repeat(2, 1fr);
   }
-
-  .threeColumnGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 @media (max-width: 1200px) {
@@ -148,48 +145,4 @@
   .twoColumnGrid {
     grid-template-columns: 1fr;
   }
-
-  .threeColumnGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Quick Links */
-.quickLinks {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-}
-
-.quickLink {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: var(--text-sm);
-  transition: all var(--transition-fast);
-}
-
-.quickLink:hover {
-  background: var(--bg-card-hover);
-  color: var(--text-primary);
-}
-
-.linkIcon {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-card);
-  border-radius: var(--radius-sm);
-  font-size: 10px;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  color: var(--accent-blue);
 }

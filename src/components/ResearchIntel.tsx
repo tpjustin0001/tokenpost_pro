@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import ContentModal from './ContentModal';
 import { supabase } from '@/lib/supabase';
 import styles from './ResearchIntel.module.css';
+import XRayTooltip from './XRayTooltip';
 
 interface IntelItem {
     id: string;
@@ -17,49 +18,6 @@ interface IntelItem {
     thumbnail?: string;
 }
 
-// Fallback mock data
-const MOCK_DATA: IntelItem[] = [
-    {
-        id: '1',
-        type: 'BREAKING',
-        typeKo: '속보',
-        title: 'SEC, 비트코인 현물 ETF 옵션 거래 승인',
-        source: 'Reuters',
-        time: '방금',
-        isBreaking: true,
-        thumbnail: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=120&h=80&fit=crop'
-    },
-    {
-        id: '2',
-        type: 'PRO',
-        typeKo: 'PRO',
-        title: 'AI 분석: 비트코인 단기 지지선 $92,000',
-        source: 'TokenPost AI',
-        time: '1시간',
-        isPro: true,
-        thumbnail: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=120&h=80&fit=crop'
-    },
-    {
-        id: '3',
-        type: 'NEWS',
-        typeKo: '뉴스',
-        title: '트럼프 암호화폐 특별자문단 임명발표',
-        source: 'Bloomberg',
-        time: '3시간',
-        thumbnail: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=120&h=80&fit=crop'
-    },
-    {
-        id: '4',
-        type: 'KPI',
-        typeKo: '지표',
-        title: '트랜잭션 수 전월 대비 +20%',
-        source: '온체인',
-        time: '2시간',
-        isPro: true,
-        thumbnail: 'https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=120&h=80&fit=crop'
-    },
-];
-
 type TabType = 'ALL' | 'PRO' | 'NEWS';
 
 function getTimeAgo(dateString: string): string {
@@ -72,52 +30,86 @@ function getTimeAgo(dateString: string): string {
 }
 
 export default function ResearchIntel() {
-    const [data, setData] = useState<IntelItem[]>(MOCK_DATA);
+    const [data, setData] = useState<IntelItem[]>([]);
     const [activeTab, setActiveTab] = useState<TabType>('ALL');
     const [selectedId, setSelectedId] = useState<string | null>(null);
 
     useEffect(() => {
-        async function fetchResearch() {
-            try {
-                if (!supabase) {
-                    return; // Keep mock data
-                }
-
-                const { data: researchData, error } = await supabase
-                    .from('research')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(10);
-
-                if (error || !researchData || researchData.length === 0) {
-                    return; // Keep mock data
-                }
-
-                // Transform to IntelItem format
-                const transformed: IntelItem[] = researchData.map((r: any) => ({
-                    id: String(r.id),
-                    type: r.is_premium ? 'PRO' : 'REPORT',
-                    typeKo: r.is_premium ? 'PRO' : '리서치',
-                    title: r.title,
-                    source: r.author || 'TokenPost',
-                    time: getTimeAgo(r.created_at),
-                    isPro: r.is_premium,
-                    thumbnail: r.thumbnail_url,
-                }));
-
-                setData(transformed);
-            } catch {
-                // Keep mock data on error
-            }
-        }
         fetchResearch();
+
+        // Real-time subscription
+        const channel = supabase
+            ? supabase.channel('public:research')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'research' }, (payload) => {
+                    const newRow = payload.new;
+                    setData(prev => [mapRowToIntel(newRow), ...prev].slice(0, 10));
+                })
+                .subscribe()
+            : null;
+
+        return () => {
+            if (channel) supabase?.removeChannel(channel);
+        }
     }, []);
+
+    async function fetchResearch() {
+        if (!supabase) return;
+
+        try {
+            const { data: rows, error } = await supabase
+                .from('research')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            if (error) {
+                console.error('Error fetching research:', error);
+                return;
+            }
+
+            if (rows) {
+                setData(rows.map(mapRowToIntel));
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    function mapRowToIntel(row: any): IntelItem {
+        const isPro = row.is_premium || false;
+        // Basic mapping logic
+        let type: IntelItem['type'] = 'REPORT';
+        let typeKo = '리서치';
+
+        if (isPro) {
+            type = 'PRO';
+            typeKo = 'PRO';
+        } else if (row.category === 'KPI') {
+            type = 'KPI';
+            typeKo = '지표';
+        } else if (row.category === 'BREAKING') {
+            type = 'BREAKING';
+            typeKo = '속보';
+        }
+
+        return {
+            id: String(row.id),
+            type,
+            typeKo,
+            title: row.title,
+            source: row.author || 'TokenPost',
+            time: getTimeAgo(row.created_at),
+            isPro,
+            isBreaking: type === 'BREAKING',
+            thumbnail: row.image_url || undefined
+        };
+    }
 
     const filteredData = activeTab === 'ALL'
         ? data
         : activeTab === 'PRO'
             ? data.filter(item => item.isPro)
-            : data.filter(item => item.type === 'NEWS' || item.type === 'BREAKING');
+            : data.filter(item => item.type === 'NEWS' || item.type === 'BREAKING'); // Assuming NEWS category exists or logic needs tweak
 
     const breakingCount = data.filter(item => item.isBreaking).length;
 
@@ -134,7 +126,11 @@ export default function ResearchIntel() {
         <div className="card">
             <div className="card-header">
                 <div className={styles.headerLeft}>
-                    <span className="card-title">리서치 & 인텔리전스</span>
+                    <span className="card-title">
+                        <XRayTooltip dataKey="ai_analysis">
+                            리서치 & 인텔리전스
+                        </XRayTooltip>
+                    </span>
                     <span className={styles.badge}>핵심 강점</span>
                     {breakingCount > 0 && (
                         <span className={styles.breakingBadge}>
@@ -164,35 +160,41 @@ export default function ResearchIntel() {
                 </div>
             </div>
             <div className={styles.list}>
-                {filteredData.map((item) => (
-                    <div
-                        key={item.id}
-                        className={`${styles.intelItem} ${item.isBreaking ? styles.breaking : ''}`}
-                        onClick={() => setSelectedId(item.id)}
-                    >
-                        {item.thumbnail && (
-                            <div className={styles.thumbnail}>
-                                <img src={item.thumbnail} alt="" />
-                            </div>
-                        )}
-                        <div className={styles.contentWrapper}>
-                            <span
-                                className={styles.typeBadge}
-                                style={{ color: getTypeColor(item.type), borderLeft: `2px solid ${getTypeColor(item.type)}` }}
-                            >
-                                {item.typeKo}
-                            </span>
-                            <div className={styles.content}>
-                                <div className={styles.titleRow}>
-                                    <span className={styles.title}>{item.title}</span>
-                                    {item.isPro && <span className={styles.proTag}>PRO</span>}
-                                    {item.isBreaking && <span className={styles.liveTag}>LIVE</span>}
+                {filteredData.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        데이터를 불러오는 중이거나 게시물이 없습니다.
+                    </div>
+                ) : (
+                    filteredData.map((item) => (
+                        <div
+                            key={item.id}
+                            className={`${styles.intelItem} ${item.isBreaking ? styles.breaking : ''}`}
+                            onClick={() => setSelectedId(item.id)}
+                        >
+                            {item.thumbnail && (
+                                <div className={styles.thumbnail}>
+                                    <img src={item.thumbnail} alt="" />
                                 </div>
-                                <div className={styles.meta}>{item.source} · {item.time}</div>
+                            )}
+                            <div className={styles.contentWrapper}>
+                                <span
+                                    className={styles.typeBadge}
+                                    style={{ color: getTypeColor(item.type), borderLeft: `2px solid ${getTypeColor(item.type)}` }}
+                                >
+                                    {item.typeKo}
+                                </span>
+                                <div className={styles.content}>
+                                    <div className={styles.titleRow}>
+                                        <span className={styles.title}>{item.title}</span>
+                                        {item.isPro && <span className={styles.proTag}>PRO</span>}
+                                        {item.isBreaking && <span className={styles.liveTag}>LIVE</span>}
+                                    </div>
+                                    <div className={styles.meta}>{item.source} · {item.time}</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
             <div className={styles.footer}>
                 <a href="/research" className={styles.viewAll}>전체 리서치 보기 →</a>

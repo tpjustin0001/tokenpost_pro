@@ -42,42 +42,48 @@ export default function MarketPulse({ data = DEFAULT_DATA }: { data?: MarketData
     };
 
     return (
-        <header className="market-pulse">
-            <div className="pulse-metrics">
-                <div className="pulse-metric">
-                    <span className="pulse-label">총 시가총액</span>
-                    <span className="pulse-value">{data.totalMarketCap}</span>
-                    <span className={`pulse-change ${data.marketCapChange >= 0 ? 'text-green' : 'text-red'}`}>
-                        {data.marketCapChange >= 0 ? '+' : ''}{data.marketCapChange}%
-                    </span>
+        <header className={styles.wrapper}>
+            <div className={styles.metrics}>
+                <div className={styles.metric}>
+                    <span className={styles.label}>총 시가총액</span>
+                    <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                        <span className={styles.value}>{data.totalMarketCap}</span>
+                        <span className={`${styles.change} ${data.marketCapChange >= 0 ? styles.positive : styles.negative}`}>
+                            {data.marketCapChange >= 0 ? '+' : ''}{data.marketCapChange}%
+                        </span>
+                    </div>
                 </div>
 
-                <div className="pulse-metric">
-                    <span className="pulse-label">BTC 도미넌스</span>
-                    <span className="pulse-value">{data.btcDominance}</span>
-                    <span className={`pulse-change ${data.btcDomChange >= 0 ? 'text-green' : 'text-red'}`}>
-                        {data.btcDomChange >= 0 ? '+' : ''}{data.btcDomChange}%
-                    </span>
+                <div className={styles.metric}>
+                    <span className={styles.label}>BTC 도미넌스</span>
+                    <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                        <span className={styles.value}>{data.btcDominance}</span>
+                        <span className={`${styles.change} ${data.btcDomChange >= 0 ? styles.positive : styles.negative}`}>
+                            {data.btcDomChange >= 0 ? '+' : ''}{data.btcDomChange}%
+                        </span>
+                    </div>
                 </div>
 
-                <div className="pulse-metric">
-                    <span className="pulse-label">ETH 가스</span>
-                    <span className="pulse-value">{data.ethGas}</span>
+                <div className={styles.metric}>
+                    <span className={styles.label}>ETH 가스</span>
+                    <span className={styles.value}>{data.ethGas}</span>
                 </div>
 
-                <div className="pulse-metric">
-                    <span className="pulse-label">공포·탐욕 지수</span>
-                    <div className="fear-greed">
-                        <span className="fear-greed-value">{data.fearGreed}</span>
-                        <span className={`fear-greed-label ${getFearGreedClass(data.fearGreed)}`}>
+                <div className={styles.metric}>
+                    <span className={styles.label}>공포·탐욕 지수</span>
+                    <div className={styles.fearGreed}>
+                        <span className={styles.fgValue}>{data.fearGreed}</span>
+                        <span className={`${styles.fgLabel} ${styles[getFearGreedClass(data.fearGreed)]}`}>
                             {getFearGreedKo(data.fearGreed)}
                         </span>
                     </div>
                 </div>
             </div>
 
-            <div className="pulse-subtle">
-                환율 {data.usdKrw}원 · 김프 {data.kimchi}
+            <div className={styles.rightSide}>
+                <span>환율 {data.usdKrw}원</span>
+                <span style={{ color: 'var(--border-color)' }}>|</span>
+                <span>김프 {data.kimchi}</span>
             </div>
         </header>
     );

@@ -24,6 +24,95 @@
     gap: var(--spacing-md);
 }
 
+/* User Profile Snippet (Optional - feels premium) */
+.userProfile {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 8px;
+    margin-bottom: var(--spacing-md);
+}
+
+.loginWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--bg-primary);
+    padding: var(--spacing-lg);
+}
+
+.loginCard {
+    background: var(--bg-card);
+    padding: var(--spacing-2xl);
+    border-radius: var(--radius-2xl);
+    border: 1px solid var(--border-color);
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    /* Glassmorphism */
+    background: rgba(var(--bg-card-rgb), 0.8);
+    backdrop-filter: blur(12px);
+}
+
+.loginHeader {
+    text-align: center;
+}
+
+.loginHeader h1 {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    margin-bottom: var(--spacing-xs);
+    background: linear-gradient(135deg, #fff 0%, #aaa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.loginHeader p {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+.loginForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.inputField {
+    padding: var(--spacing-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--text-base);
+    transition: all 0.2s;
+}
+
+.inputField:focus {
+    border-color: var(--accent-blue);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.systemBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: var(--spacing-md);
+    align-self: center;
+}
+
 @media (max-width: 1024px) {
     .statsGrid {
         grid-template-columns: repeat(2, 1fr);
@@ -83,4 +172,95 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--spacing-md);
+}
+
+/* Admin Tabs */
+.adminNav {
+    display: flex;
+    gap: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-xs);
+}
+
+.navTab {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.navTab:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+}
+
+.navTab.active {
+    color: var(--accent-blue);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+/* Forms */
+.formCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    max-width: 800px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-lg);
+}
+
+.formLabel {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.textArea {
+    padding: var(--spacing-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--text-base);
+    min-height: 120px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.textArea:focus {
+    border-color: var(--accent-blue);
+    outline: none;
+}
+
+.select {
+    padding: var(--spacing-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--text-base);
+    width: 100%;
+}
+
+.checkboxGroup {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+    cursor: pointer;
 }

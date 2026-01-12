@@ -13,7 +13,23 @@
 .content {
     flex: 1;
     padding: var(--spacing-xl);
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
 }
+
+.twoColumnGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-xl);
+}
+
+@media (max-width: 1024px) {
+    .twoColumnGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
 
 .header {
     margin-bottom: var(--spacing-xl);
@@ -41,6 +57,21 @@
     color: var(--text-primary);
     margin-bottom: var(--spacing-lg);
 }
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.sectionDesc {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    margin-bottom: var(--spacing-lg);
+    max-width: 800px;
+}
+
 
 .metricsGrid {
     display: grid;

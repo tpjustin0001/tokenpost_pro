@@ -5,6 +5,7 @@ import { createChart, ColorType, IChartApi, ISeriesApi, Time, MouseEventParams }
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/context/ThemeContext';
 import styles from './TradingChart.module.css';
+import XRayTooltip from './XRayTooltip';
 
 interface TradingChartProps {
     symbol: string;
@@ -229,8 +230,8 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
         // Resize
         const resizeCallback = (ent: ResizeObserverEntry[]) => {
-            if (ent[0]?.contentRect && chart) {
-                chart.applyOptions({ width: ent[0].contentRect.width, height: ent[0].contentRect.height });
+            if (ent[0]?.contentRect && chartRef.current) {
+                chartRef.current.applyOptions({ width: ent[0].contentRect.width, height: ent[0].contentRect.height });
             }
         };
         const ro = new ResizeObserver(resizeCallback);
@@ -238,9 +239,16 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         resizeObserver.current = ro;
 
         return () => {
-            chart.remove();
-            chartRef.current = null;
-            ro.disconnect();
+            if (resizeObserver.current) {
+                resizeObserver.current.disconnect();
+                resizeObserver.current = null;
+            }
+            if (chartRef.current) {
+                chartRef.current.remove();
+                chartRef.current = null;
+            }
+            candlestickSeriesRef.current = null;
+            volumeSeriesRef.current = null;
         };
     }, [theme]); // Empty dependency -> Run once
 
@@ -322,13 +330,17 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
             {isLive && (
                 <div className={styles.liveStatus}>
-                    {currentPrice && (
-                        <span className={styles.livePrice}>
-                            ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </span>
-                    )}
-                    <div className={styles.liveDot} />
-                    <span>LIVE</span>
+                    <XRayTooltip dataKey="live_feed">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {currentPrice && (
+                                <span className={styles.livePrice}>
+                                    ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </span>
+                            )}
+                            <div className={styles.liveDot} />
+                            <span>LIVE</span>
+                        </div>
+                    </XRayTooltip>
                 </div>
             )}
             {loading && <div className={styles.loadingOverlay}><span>Loading Chart...</span></div>}

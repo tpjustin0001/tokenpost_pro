@@ -128,9 +128,6 @@ export default function TokenUnlocks() {
                     </div>
                 ))}
             </div>
-            <div className={styles.footer}>
-                <a href="/unlocks" className={styles.viewAll}>전체 보기 →</a>
-            </div>
         </div>
     );
 }

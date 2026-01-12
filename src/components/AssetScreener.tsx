@@ -28,14 +28,26 @@ const MOCK_DATA: Asset[] = [
     { id: 'avax', rank: 8, name: 'Avalanche', symbol: 'AVAX', price: 35.5, change24h: 2.3, change7d: 6.8, marketCap: 13000000000, volume24h: 650000000, fdv: 25000000000, tvl: 1200000000 },
 ];
 
-// CoinGecko image IDs for major coins
-function getCoinId(symbol: string): number {
-    const ids: Record<string, number> = {
-        'BTC': 1, 'ETH': 279, 'SOL': 4128, 'BNB': 825, 'XRP': 44,
-        'ADA': 975, 'DOGE': 5, 'AVAX': 12559, 'SHIB': 11939, 'DOT': 12171,
-        'LINK': 877, 'MATIC': 4713, 'ATOM': 1481, 'LTC': 2, 'UNI': 12504,
+// Direct CoinGecko image URLs for major coins
+function getCoinIconUrl(symbol: string): string {
+    const urls: Record<string, string> = {
+        'BTC': 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
+        'ETH': 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+        'SOL': 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
+        'BNB': 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
+        'XRP': 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
+        'ADA': 'https://assets.coingecko.com/coins/images/975/small/cardano.png',
+        'DOGE': 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png',
+        'AVAX': 'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png',
+        'SHIB': 'https://assets.coingecko.com/coins/images/11939/small/shiba.png',
+        'DOT': 'https://assets.coingecko.com/coins/images/12171/small/polkadot.png',
+        'LINK': 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
+        'MATIC': 'https://assets.coingecko.com/coins/images/4713/small/polygon.png',
+        'ATOM': 'https://assets.coingecko.com/coins/images/1481/small/cosmos_hub.png',
+        'LTC': 'https://assets.coingecko.com/coins/images/2/small/litecoin.png',
+        'UNI': 'https://assets.coingecko.com/coins/images/12504/small/uniswap.png',
     };
-    return ids[symbol.toUpperCase()] || 1;
+    return urls[symbol.toUpperCase()] || `https://ui-avatars.com/api/?name=${symbol}&background=6366f1&color=fff&size=64&bold=true`;
 }
 
 function formatCurrency(value: number, compact = false) {
@@ -90,12 +102,12 @@ export default function AssetScreener() {
                                 <td>
                                     <div className={styles.assetName}>
                                         <img
-                                            src={`https://assets.coingecko.com/coins/images/${getCoinId(asset.symbol)}/small/${asset.symbol.toLowerCase()}.png`}
+                                            src={getCoinIconUrl(asset.symbol)}
                                             alt={asset.symbol}
                                             className={styles.assetIcon}
                                             onError={(e) => {
                                                 const target = e.target as HTMLImageElement;
-                                                target.src = `https://www.cryptocompare.com/media/37746251/${asset.symbol.toLowerCase()}.png`;
+                                                target.src = `https://ui-avatars.com/api/?name=${asset.symbol}&background=6366f1&color=fff&size=64&bold=true`;
                                             }}
                                         />
                                         {asset.name}

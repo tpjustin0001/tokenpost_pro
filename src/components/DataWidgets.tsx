@@ -96,7 +96,7 @@ export function StablecoinInterestChart() {
                 <div>
                     <h3 className={styles.title}>스테이블코인 이자율 (USDT/Aave)</h3>
                 </div>
-                <a href="#" className={styles.viewData}>LIVE</a>
+                <span className={styles.viewData}>LIVE</span>
             </div>
             <div ref={chartContainerRef} className={styles.chart} />
             <div className={styles.legend}>
@@ -183,7 +183,7 @@ export function BlockchainRevChart() {
                     <h3 className={styles.title}>블록체인 수수료 수익 (Ethereum)</h3>
                     <p className={styles.subtitle}>Daily Fees (USD)</p>
                 </div>
-                <a href="#" className={styles.viewData}>LIVE</a>
+                <span className={styles.viewData}>LIVE</span>
             </div>
             <div ref={chartContainerRef} className={styles.chart} />
         </div>
@@ -252,7 +252,7 @@ export function ETFFlowsChart() {
                     <h3 className={styles.title}>암호화폐 ETF 자금 흐름</h3>
                     <p className={styles.subtitle}>BTC, ETH, SOL ETF 5일 롤링 유입량</p>
                 </div>
-                <a href="#" className={styles.viewData}>상세 보기 →</a>
+                <span className={styles.viewData}>LIVE</span>
             </div>
             <div ref={chartContainerRef} className={styles.chart} />
         </div>

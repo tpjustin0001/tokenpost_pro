@@ -285,6 +285,208 @@ def api_vcp_signals():
 
 
 # ============================================================
+# SMART CRYPTO SCREENER API
+# ============================================================
+
+# Target Assets for Screener
+SCREENER_SYMBOLS = [
+    'BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD',
+    'ADA-USD', 'DOGE-USD', 'AVAX-USD', 'SHIB-USD', 'DOT-USD',
+    'LINK-USD', 'MATIC-USD', 'ATOM-USD', 'LTC-USD', 'UNI-USD',
+    'SUI-USD', 'NEAR-USD', 'APT-USD', 'ARB-USD', 'OP-USD'
+]
+
+def get_hist_data(symbol, period="1y"):
+    """Helper to fetch historical data"""
+    import yfinance as yf
+    try:
+        ticker = yf.Ticker(symbol)
+        hist = ticker.history(period=period)
+        return hist, ticker.info
+    except:
+        return None, None
+
+@app.route('/api/screener/breakout')
+def api_screener_breakout():
+    """Tab 1: Breakout Hunter - SMA Trends"""
+    import yfinance as yf
+    import pandas as pd
+    
+    results = []
+    
+    for symbol in SCREENER_SYMBOLS:
+        try:
+            hist, info = get_hist_data(symbol)
+            if hist is None or len(hist) < 200:
+                continue
+                
+            close = hist['Close']
+            current_price = close.iloc[-1]
+            
+            # Calculate SMAs
+            sma20 = close.rolling(window=20).mean().iloc[-1]
+            sma50 = close.rolling(window=50).mean().iloc[-1]
+            sma200 = close.rolling(window=200).mean().iloc[-1]
+            
+            # Breakout Signals
+            # 1. Price > SMA (Basic Breakout)
+            # 2. Golden Cross (50 crossing 200) - Simplified check if 50 > 200
+            
+            # Status determination
+            status_20 = 'Bullish' if current_price > sma20 else 'Bearish'
+            status_50 = 'Bullish' if current_price > sma50 else 'Bearish'
+            status_200 = 'Bull Market' if current_price > sma200 else 'Bear Market'
+            
+            # Check for recent crossover (approximate)
+            prev_close = close.iloc[-2]
+            prev_sma200 = close.rolling(window=200).mean().iloc[-2]
+            
+            is_fresh_breakout = (prev_close < prev_sma200) and (current_price > sma200)
+            
+            results.append({
+                'symbol': symbol.replace('-USD', ''),
+                'price': float(current_price),
+                'sma20': float(sma20),
+                'sma50': float(sma50),
+                'sma200': float(sma200),
+                'status_20': status_20,
+                'status_50': status_50,
+                'status_200': status_200,
+                'is_fresh_breakout': bool(is_fresh_breakout),
+                'pct_from_sma200': float(((current_price - sma200) / sma200) * 100)
+            })
+            
+        except Exception as e:
+            print(f"Error processing {symbol}: {e}")
+            continue
+            
+    # Sort by 'fresh breakout' first, then distance from SMA 200 desc
+    results.sort(key=lambda x: (x['is_fresh_breakout'], x['pct_from_sma200']), reverse=True)
+    
+    return jsonify({
+        'data': results,
+        'count': len(results),
+        'timestamp': datetime.now().isoformat()
+    })
+
+@app.route('/api/screener/price-performance')
+def api_screener_performance():
+    """Tab 2: Bottom Fisher - ATH/ATL Drawdown"""
+    import yfinance as yf
+    
+    results = []
+    
+    for symbol in SCREENER_SYMBOLS:
+        try:
+            hist, info = get_hist_data(symbol, period="max") # Need extensive history
+            if hist is None or len(hist) < 30:
+                continue
+                
+            close = hist['Close']
+            current_price = close.iloc[-1]
+            
+            # Calculate ATH / ATL
+            ath = close.max()
+            atl = close.min()
+            ath_date = close.idxmax().strftime('%Y-%m-%d')
+            atl_date = close.idxmin().strftime('%Y-%m-%d')
+            
+            # Drawdown %
+            drawdown = ((current_price - ath) / ath) * 100
+            
+            # From ATL %
+            from_atl = ((current_price - atl) / atl) * 100
+            
+            # Cycle Position (0 to 1 scale)
+            # 0 = ATL, 1 = ATH
+            position = (current_price - atl) / (ath - atl) if (ath - atl) > 0 else 0
+            
+            results.append({
+                'symbol': symbol.replace('-USD', ''),
+                'price': float(current_price),
+                'ath': float(ath),
+                'ath_date': ath_date,
+                'atl': float(atl),
+                'atl_date': atl_date,
+                'drawdown': float(drawdown),
+                'from_atl': float(from_atl),
+                'cycle_position': float(position)
+            })
+            
+        except Exception as e:
+             print(f"Error processing {symbol}: {e}")
+             continue
+
+    # Sort by biggest drawdown (deepest dip first)
+    results.sort(key=lambda x: x['drawdown'])
+    
+    return jsonify({
+        'data': results,
+        'count': len(results),
+        'timestamp': datetime.now().isoformat()
+    })
+
+@app.route('/api/screener/risk')
+def api_screener_risk():
+    """Tab 3: Risk Scanner - Volatility Analysis"""
+    import yfinance as yf
+    import numpy as np
+    
+    results = []
+    
+    # Pre-fetch BTC to calculate relative risk
+    btc_hist, _ = get_hist_data('BTC-USD', period="1y")
+    if btc_hist is None:
+        return jsonify({'error': 'Failed to fetch BTC base data'}), 500
+        
+    btc_returns = btc_hist['Close'].pct_change().dropna()
+    btc_volatility = btc_returns.std() * np.sqrt(365) # Annualized Vol
+    
+    for symbol in SCREENER_SYMBOLS:
+        try:
+            hist, info = get_hist_data(symbol, period="1y")
+            if hist is None or len(hist) < 30:
+                continue
+            
+            returns = hist['Close'].pct_change().dropna()
+            
+            # Annualized Volatility
+            volatility = returns.std() * np.sqrt(365)
+            
+            # Relative Risk Score (BTC = 1.0)
+            risk_score = volatility / btc_volatility if btc_volatility > 0 else 0
+            
+            # Determine Risk Rating
+            if risk_score < 1.5:
+                rating = 'Low'
+            elif risk_score < 3.0:
+                rating = 'Medium'
+            else:
+                rating = 'Extreme'
+                
+            results.append({
+                'symbol': symbol.replace('-USD', ''),
+                'price': float(hist['Close'].iloc[-1]),
+                'volatility': float(volatility * 100), # as percentage
+                'risk_score': float(risk_score),
+                'rating': rating
+            })
+            
+        except Exception as e:
+            print(f"Error processing {symbol}: {e}")
+            continue
+            
+    # Sort by Risk Score descending (Riskiest first)
+    results.sort(key=lambda x: x['risk_score'], reverse=True)
+    
+    return jsonify({
+        'data': results,
+        'count': len(results),
+        'timestamp': datetime.now().isoformat()
+    })
+
+
+# ============================================================
 # CONTENT API (News & Research) - Simple In-Memory DB
 # ============================================================
 # In a real production app, use SQLite/PostgreSQL

@@ -2,8 +2,8 @@
 
 import Sidebar from '@/components/Sidebar';
 import LeadLagAnalysis from '@/components/LeadLagAnalysis';
-import { usePricePerformance } from '@/hooks/usePricePerformance';
 import { useMarketMetrics } from '@/hooks/useMarketMetrics';
+import SmartScreener from '@/components/data/SmartScreener';
 import styles from './page.module.css';
 
 function formatNumber(num: number): string {
@@ -14,10 +14,7 @@ function formatNumber(num: number): string {
 }
 
 export default function DataPage() {
-    const { gainers, losers, isLoading: priceLoading } = usePricePerformance();
     const { metrics, isLoading: metricsLoading } = useMarketMetrics();
-
-    const allCoins = [...gainers, ...losers].slice(0, 20);
 
     return (
         <div className={styles.appLayout}>
@@ -74,44 +71,9 @@ export default function DataPage() {
                             </div>
                         </section>
 
-                        {/* 3. Price Table */}
+                        {/* 3. Smart Crypto Screener */}
                         <section className={styles.section}>
-                            <h2 className={styles.sectionTitle}>실시간 시세</h2>
-                            <div className={styles.tableWrapper}>
-                                <table className={styles.table}>
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>이름</th>
-                                            <th>가격</th>
-                                            <th>변동률</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {priceLoading ? (
-                                            <tr><td colSpan={4} className={styles.loading}>로딩 중...</td></tr>
-                                        ) : (
-                                            allCoins.slice(0, 5).map((coin, index) => ( // Show only top 5 for layout balance
-                                                <tr key={`${coin.symbol}-${index}`}>
-                                                    <td>{index + 1}</td>
-                                                    <td>
-                                                        <div className={styles.coinCell}>
-                                                            {coin.icon && <img src={coin.icon} alt="" className={styles.coinIcon} />}
-                                                            <span className={styles.coinName}>{coin.name}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className={styles.price}>
-                                                        ${coin.price >= 1 ? coin.price.toLocaleString(undefined, { maximumFractionDigits: 2 }) : coin.price.toFixed(6)}
-                                                    </td>
-                                                    <td className={coin.change >= 0 ? styles.positive : styles.negative}>
-                                                        {coin.change >= 0 ? '+' : ''}{coin.change.toFixed(2)}%
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <SmartScreener />
                         </section>
                     </div>
                 </main>

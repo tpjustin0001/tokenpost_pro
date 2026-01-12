@@ -71,9 +71,9 @@ export default function SmartScreener() {
     const [tab, setTab] = useState<'breakout' | 'performance' | 'risk'>('breakout');
 
     const apiUrl =
-        tab === 'breakout' ? '/api/screener/breakout' :
-            tab === 'performance' ? '/api/screener/price-performance' :
-                '/api/screener/risk';
+        tab === 'breakout' ? '/api/python/screener/breakout' :
+            tab === 'performance' ? '/api/python/screener/price-performance' :
+                '/api/python/screener/risk';
 
     const { data, isLoading, error } = useSWR(apiUrl, fetcher, {
         refreshInterval: 60000,

@@ -19,6 +19,41 @@ interface VCPSignal {
     volRatio: number;
 }
 
+// Direct CoinGecko image URLs for major coins
+function getCoinIconUrl(symbol: string): string {
+    const urls: Record<string, string> = {
+        'BTC': 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
+        'ETH': 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+        'SOL': 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
+        'BNB': 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
+        'XRP': 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
+        'ADA': 'https://assets.coingecko.com/coins/images/975/small/cardano.png',
+        'DOGE': 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png',
+        'AVAX': 'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png',
+        'SHIB': 'https://assets.coingecko.com/coins/images/11939/small/shiba.png',
+        'DOT': 'https://assets.coingecko.com/coins/images/12171/small/polkadot.png',
+        'LINK': 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
+        'MATIC': 'https://assets.coingecko.com/coins/images/4713/small/polygon.png',
+        'ATOM': 'https://assets.coingecko.com/coins/images/1481/small/cosmos_hub.png',
+        'LTC': 'https://assets.coingecko.com/coins/images/2/small/litecoin.png',
+        'UNI': 'https://assets.coingecko.com/coins/images/12504/small/uniswap.png',
+        'SUI': 'https://assets.coingecko.com/coins/images/28464/small/sui-ocean-square.png',
+        'NEAR': 'https://assets.coingecko.com/coins/images/10365/small/near_icon.png',
+        'APT': 'https://assets.coingecko.com/coins/images/26455/small/aptos_round.png',
+        'ARB': 'https://assets.coingecko.com/coins/images/16547/small/arbitrum.png',
+        'OP': 'https://assets.coingecko.com/coins/images/25244/small/Optimism.png',
+        'INJ': 'https://assets.coingecko.com/coins/images/12882/small/secondary-symbol.png',
+        'TIA': 'https://assets.coingecko.com/coins/images/31967/small/tia.png',
+        'SEI': 'https://assets.coingecko.com/coins/images/28205/small/Sei_Logo_Background_White.png',
+        'FET': 'https://assets.coingecko.com/coins/images/5624/small/fet.png',
+        'RNDR': 'https://assets.coingecko.com/coins/images/11636/small/rndr.png',
+        'IMX': 'https://assets.coingecko.com/coins/images/17233/small/imx.png',
+        'ONDO': 'https://assets.coingecko.com/coins/images/32532/small/ondo.png',
+        'AAVE': 'https://assets.coingecko.com/coins/images/12645/small/AAVE.png',
+    };
+    return urls[symbol.toUpperCase()] || `https://ui-avatars.com/api/?name=${symbol}&background=6366f1&color=fff&size=64&bold=true`;
+}
+
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 // Fallback data when API is unavailable
@@ -42,7 +77,7 @@ export default function VCPScanner() {
     const [filter, setFilter] = useState<'ALL' | 'A' | 'B' | 'C'>('ALL');
 
     // Use API data if available, otherwise use fallback
-    const rawSignals = data?.signals || FALLBACK_SIGNALS;
+    const rawSignals = data?.signals && data.signals.length > 0 ? data.signals : FALLBACK_SIGNALS;
 
     const signals: VCPSignal[] = rawSignals.map((s: any) => ({
         symbol: s.symbol,
@@ -114,7 +149,18 @@ export default function VCPScanner() {
                         </div>
                         {filteredSignals.map((signal) => (
                             <div key={signal.symbol} className={styles.tableRow}>
-                                <span className={styles.symbol}>{signal.symbol}</span>
+                                <div className={styles.symbolCell}>
+                                    <img
+                                        src={getCoinIconUrl(signal.symbol)}
+                                        alt={signal.symbol}
+                                        className={styles.coinIcon}
+                                        onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.src = `https://ui-avatars.com/api/?name=${signal.symbol}&background=6366f1&color=fff&size=64&bold=true`;
+                                        }}
+                                    />
+                                    <span className={styles.symbolText}>{signal.symbol}</span>
+                                </div>
                                 <span
                                     className={styles.grade}
                                     style={{

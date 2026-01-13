@@ -5,7 +5,6 @@ import requests
 import pandas as pd
 from datetime import datetime
 
-class MarketDataService:
     def __init__(self):
         # 1. Binance (CCXT) - Public/Free/Fast
         self.binance = ccxt.binance({
@@ -13,41 +12,86 @@ class MarketDataService:
             'options': {'defaultType': 'spot'}
         })
         
-        # 2. CoinMarketCap (Requires Key)
+        # 2. Upbit (CCXT) - For KRW Pairs (Critical for Korean Context)
+        self.upbit = ccxt.upbit({
+            'enableRateLimit': True
+        })
+        
+        # 3. CoinMarketCap (Requires Key)
         self.cmc_api_key = os.getenv('COINMARKETCAP_API_KEY')
         self.cmc_base_url = "https://pro-api.coinmarketcap.com"
 
     def get_asset_data(self, symbol):
         """
-        Orchestrator: Tries Binance first, then CMC.
+        Orchestrator: Tries Upbit (KRW) -> Binance (USDT) -> CMC.
         Returns: { 'df': DataFrame, 'source':Str, 'current_price':Float, ... }
         """
-        symbol = symbol.upper()
+        symbol = symbol.toUpperCase() if hasattr(symbol, 'toUpperCase') else symbol.upper()
         
-        # 1. Try Binance
+        # 0. Clean Symbol (e.g. "BTC" -> "BTC")
+        base_symbol = symbol.replace('-USD', '').replace('/USD', '').replace('KRW-', '').replace('USDT-', '')
+
+        # 1. Try Upbit (KRW) FIRST for Korean Context
         try:
-            return self._fetch_binance(symbol)
+            return self._fetch_upbit(base_symbol)
+        except Exception:
+            pass # Fallback to Binance
+            
+        # 2. Try Binance (USDT)
+        try:
+            return self._fetch_binance(base_symbol)
         except Exception as e:
-            print(f"Binance fetch failed for {symbol}: {e}")
+            # print(f"Binance fetch failed for {symbol}: {e}")
             pass # Fall through to CMC
 
-        # 2. Try CoinMarketCap
+        # 3. Try CoinMarketCap
         if self.cmc_api_key:
             try:
-                print(f"Attempting CMC fetch for {symbol}...")
-                return self._fetch_cmc_quote(symbol) # Start with Quote (Price) + Metadata
+                # print(f"Attempting CMC fetch for {symbol}...")
+                return self._fetch_cmc_quote(base_symbol) 
             except Exception as e:
-                print(f"CMC fetch failed: {e}")
-                raise ValueError(f"Failed to fetch data from Binance AND CoinMarketCap for {symbol}")
+                # print(f"CMC fetch failed: {e}")
+                pass
         
-        raise ValueError(f"Symbol {symbol} not found on Binance and no CMC Key provided.")
+        raise ValueError(f"Failed to fetch data from Upbit, Binance, AND CoinMarketCap for {symbol}")
+
+    def _fetch_upbit(self, symbol):
+        """Fetch from Upbit (KRW Pair)"""
+        target_pair = f"{symbol}/KRW"
+        
+        # Fetch Candles (Day)
+        ohlcv = self.upbit.fetch_ohlcv(target_pair, timeframe='1d', limit=200)
+        if not ohlcv:
+            raise ValueError(f"No OHLCV data for {target_pair}")
+            
+        columns = ['timestamp', 'Open', 'High', 'Low', 'Close', 'Volume']
+        df = pd.DataFrame(ohlcv, columns=columns)
+        
+        # Calculate Metrics
+        current = df['Close'].iloc[-1]
+        prev = df['Close'].iloc[-2]
+        change_24h = ((current - prev) / prev) * 100
+        ma_20 = df['Close'].tail(20).mean()
+        vol_avg = df['Volume'].tail(20).mean()
+        
+        return {
+            "symbol": symbol,
+            "source": "Upbit (KRW)",
+            "currency": "KRW",
+            "current_price": current,
+            "change_24h": change_24h,
+            "ma_20": ma_20,
+            "trend": "Bullish" if current > ma_20 else "Bearish",
+            "volume_status": "High" if df['Volume'].iloc[-1] > vol_avg else "Normal",
+            "raw_df": df
+        }
 
     def _fetch_binance(self, symbol):
+        """Fetch from Binance (USDT Pair)"""
         target_pair = f"{symbol}/USDT"
-        if symbol == 'BTC-USD': target_pair = "BTC/USDT"
         
         # Fetch Candles
-        ohlcv = self.binance.fetch_ohlcv(target_pair, timeframe='1d', limit=50)
+        ohlcv = self.binance.fetch_ohlcv(target_pair, timeframe='1d', limit=200)
         if not ohlcv:
             raise ValueError(f"No OHLCV data for {target_pair}")
             
@@ -64,6 +108,7 @@ class MarketDataService:
         return {
             "symbol": symbol,
             "source": "Binance",
+            "currency": "USD",
             "current_price": current,
             "change_24h": change_24h,
             "ma_20": ma_20,

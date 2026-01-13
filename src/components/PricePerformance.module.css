@@ -12,11 +12,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 60px;
-    flex: 0 0 60px;
+    height: 52px;
+    flex: 0 0 52px;
     /* Force fixed height */
-    padding: 0 var(--spacing-lg);
+    padding: 0 16px;
     border-bottom: 1px solid var(--border-color);
+    box-sizing: border-box;
 }
 
 .titleRow {

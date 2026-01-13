@@ -33,7 +33,7 @@ export async function GET() {
         const normalizedData = rawData.map((coin: any) => ({
             symbol: coin.symbol?.toUpperCase() || 'UNKNOWN',
             price: coin.current_price || 0,
-            change: coin.price_change_percentage_24h || 0,
+            change: coin.price_change_percentage_1h_in_currency || coin.price_change_percentage_24h || 0,
             volume: coin.total_volume || 0,
             market_cap: coin.market_cap || 0,
         }));

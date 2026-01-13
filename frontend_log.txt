@@ -4885,3 +4885,109 @@
 [0] ✓ Compiled in 0ms
 [0]  GET /api/kimchi/upbit 500 in 958ms (compile: 622ms, render: 336ms)
 [0]  GET /api/markets 500 in 693ms (compile: 384ms, render: 309ms)
+[0]  GET /api/kimchi/upbit 500 in 363ms (compile: 191ms, render: 172ms)
+[0]  GET /api/global 500 in 251ms (compile: 142ms, render: 108ms)
+[0]  GET /api/kimchi/upbit 500 in 610ms (compile: 492ms, render: 118ms)
+[0]  GET /api/markets 500 in 475ms (compile: 289ms, render: 185ms)
+[0]  GET /api/global 500 in 75ms (compile: 63ms, render: 12ms)
+[0]  GET /api/markets 500 in 1023ms (compile: 511ms, render: 513ms)
+[0]  GET /api/global 500 in 672ms (compile: 549ms, render: 123ms)
+[0]  GET /api/kimchi/upbit 500 in 182ms (compile: 105ms, render: 76ms)
+[0] Failed to proxy https://tokenpost-pro.onrender.com/api/crypto/vcp-signals Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0] Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0]  GET /api/global 500 in 2.2s (compile: 982ms, render: 1190ms)
+[0]  GET /api/markets 500 in 2.1s (compile: 1089ms, render: 1022ms)
+[0]  GET /api/markets 500 in 1359ms (compile: 1265ms, render: 94ms)
+[0]  GET /api/global 500 in 172ms (compile: 25ms, render: 147ms)
+[0]  GET /api/global 500 in 167ms (compile: 107ms, render: 60ms)
+[0]  GET /api/markets 500 in 150ms (compile: 26ms, render: 124ms)
+[0]  GET /api/global 500 in 800ms (compile: 610ms, render: 190ms)
+[0]  GET /api/markets 500 in 464ms (compile: 415ms, render: 49ms)
+[0]  GET /api/kimchi/upbit 500 in 286ms (compile: 212ms, render: 74ms)
+[0]  GET /api/global 500 in 955ms (compile: 770ms, render: 185ms)
+[0]  GET /api/kimchi/upbit 500 in 2.1s (compile: 1249ms, render: 855ms)
+[0]  GET /api/global 500 in 253ms (compile: 233ms, render: 19ms)
+[0]  GET /api/markets 500 in 327ms (compile: 230ms, render: 97ms)
+[0]  GET /api/kimchi/upbit 500 in 1871ms (compile: 1445ms, render: 425ms)
+[0]  GET /api/markets 500 in 1385ms (compile: 507ms, render: 877ms)
+[0] ⨯ ./src/components/NewsFeed.module.css:68:10
+[0] Parsing CSS source code failed
+[0] [0m [90m 66 |[39m }
+[0]  [90m 67 |[39m
+[0] [31m[1m>[22m[39m[90m 68 |[39m display[33m:[39m flex[33m;[39m
+[0]  [90m    |[39m          [31m[1m^[22m[39m
+[0]  [90m 69 |[39m gap[33m:[39m [35m12[39mpx[33m;[39m
+[0]  [90m 70 |[39m padding[33m:[39m [35m12[39mpx[33m;[39m
+[0]  [90m 71 |[39m margin[33m-[39mbottom[33m:[39m [35m8[39mpx[33m;[39m[0m
+[0] 
+[0] Invalid token in pseudo element: WhiteSpace(" ")
+[0] 
+[0] Import traces:
+[0]   Client Component Browser:
+[0]     ./src/components/NewsFeed.module.css [Client Component Browser]
+[0]     ./src/components/NewsFeed.tsx [Client Component Browser]
+[0]     ./src/app/page.tsx [Client Component Browser]
+[0]     ./src/app/page.tsx [Server Component]
+[0] 
+[0]   Client Component SSR:
+[0]     ./src/components/NewsFeed.module.css [Client Component SSR]
+[0]     ./src/components/NewsFeed.tsx [Client Component SSR]
+[0]     ./src/app/page.tsx [Client Component SSR]
+[0]     ./src/app/page.tsx [Server Component]
+[0] 
+[0] 
+[0]  GET / 500 in 677ms (compile: 520ms, render: 157ms)
+[0]  GET /api/global 500 in 3.3s (compile: 3.1s, render: 200ms)
+[0]  GET /api/markets 500 in 1024ms (compile: 742ms, render: 282ms)
+[0] ⨯ ./src/components/NewsFeed.module.css:68:10
+[0] Parsing CSS source code failed
+[0] [0m [90m 66 |[39m }
+[0]  [90m 67 |[39m
+[0] [31m[1m>[22m[39m[90m 68 |[39m display[33m:[39m flex[33m;[39m
+[0]  [90m    |[39m          [31m[1m^[22m[39m
+[0]  [90m 69 |[39m gap[33m:[39m [35m12[39mpx[33m;[39m
+[0]  [90m 70 |[39m padding[33m:[39m [35m12[39mpx[33m;[39m
+[0]  [90m 71 |[39m margin[33m-[39mbottom[33m:[39m [35m8[39mpx[33m;[39m[0m
+[0] 
+[0] Invalid token in pseudo element: WhiteSpace(" ")
+[0] 
+[0] Import traces:
+[0]   Client Component Browser:
+[0]     ./src/components/NewsFeed.module.css [Client Component Browser]
+[0]     ./src/components/NewsFeed.tsx [Client Component Browser]
+[0]     ./src/app/page.tsx [Client Component Browser]
+[0]     ./src/app/page.tsx [Server Component]
+[0] 
+[0]   Client Component SSR:
+[0]     ./src/components/NewsFeed.module.css [Client Component SSR]
+[0]     ./src/components/NewsFeed.tsx [Client Component SSR]
+[0]     ./src/app/page.tsx [Client Component SSR]
+[0]     ./src/app/page.tsx [Server Component]
+[0] 
+[0] 
+[0]  GET / 500 in 225ms (compile: 102ms, render: 123ms)
+[0]  GET /api/markets 500 in 781ms (compile: 535ms, render: 246ms)
+[0] Failed to proxy https://tokenpost-pro.onrender.com/api/crypto/vcp-signals Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0] Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0]  GET /api/kimchi/upbit 500 in 344ms (compile: 153ms, render: 191ms)
+[0]  GET /api/global 500 in 131ms (compile: 109ms, render: 22ms)
+[0]  GET /api/kimchi/upbit 500 in 348ms (compile: 285ms, render: 63ms)
+[0]  GET /api/markets 500 in 522ms (compile: 439ms, render: 84ms)
+[0]  GET /api/global 500 in 577ms (compile: 520ms, render: 57ms)
+[0]  GET /api/kimchi/upbit 500 in 441ms (compile: 73ms, render: 368ms)
+[0]  GET /api/markets 500 in 1185ms (compile: 926ms, render: 259ms)
+[0] ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[0] ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[0]  GET / 200 in 4.3s (compile: 1351ms, render: 2.9s)

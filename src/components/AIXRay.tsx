@@ -101,8 +101,26 @@ export default function AIXRay({ symbol, isOpen, onClose }: AIXRayProps) {
                         </div>
                         <button className={styles.closeBtn} onClick={onClose}>×</button>
                     </div>
-                    {/* Skeleton Body */}
-                    <div className={styles.body}>
+                    {/* Skeleton Body with Overlay */}
+                    <div className={styles.body} style={{ position: 'relative' }}>
+                        {/* Loading Overlay */}
+                        <div style={{
+                            position: 'absolute',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 10,
+                            background: 'rgba(13, 17, 23, 0.7)',
+                            backdropFilter: 'blur(2px)',
+                            color: '#fff'
+                        }}>
+                            <div className={styles.spinner} style={{ marginBottom: '16px', width: '30px', height: '30px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                            <div style={{ fontSize: '15px', fontWeight: '500', color: '#e2e8f0' }}>AI가 {symbol} 데이터를 분석 중입니다...</div>
+                            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>실시간 뉴스 및 펀더멘탈 지표 수집 중</div>
+                        </div>
+
                         <div className={styles.leftCol}>
                             {/* Radar Skeleton */}
                             <div className={`${styles.skeleton} ${styles.skeletonCircle}`} />

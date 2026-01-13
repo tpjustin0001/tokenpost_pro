@@ -80,11 +80,23 @@ from datetime import datetime
             "currency": "KRW",
             "current_price": current,
             "change_24h": change_24h,
+            "change_1h": self._get_1h_change(self.upbit, target_pair),
             "ma_20": ma_20,
             "trend": "Bullish" if current > ma_20 else "Bearish",
             "volume_status": "High" if df['Volume'].iloc[-1] > vol_avg else "Normal",
             "raw_df": df
         }
+
+    def _get_1h_change(self, exchange, pair):
+        try:
+            ohlcv = exchange.fetch_ohlcv(pair, timeframe='1h', limit=2)
+            if ohlcv and len(ohlcv) >= 2:
+                prev = ohlcv[-2][4]
+                curr = ohlcv[-1][4]
+                return ((curr - prev) / prev) * 100
+        except:
+            return 0
+        return 0
 
     def _fetch_binance(self, symbol):
         """Fetch from Binance (USDT Pair)"""
@@ -111,6 +123,7 @@ from datetime import datetime
             "currency": "USD",
             "current_price": current,
             "change_24h": change_24h,
+            "change_1h": self._get_1h_change(self.binance, target_pair),
             "ma_20": ma_20,
             "trend": "Bullish" if current > ma_20 else "Bearish",
             "volume_status": "High" if df['Volume'].iloc[-1] > vol_avg else "Normal",
@@ -120,11 +133,8 @@ from datetime import datetime
     def _fetch_cmc_quote(self, symbol):
         """
         Fetches latest quote from CMC.
-        Note: Standard Free Tier does NOT provide historical OHLCV. 
-        We rely on the quote for price and mock the technicals if needed, 
-        OR use the 'quotes/latest' endpoint which gives 24h change.
         """
-        url = f"{self.base_url}/v1/cryptocurrency/quotes/latest"
+        url = f"{self.cmc_base_url}/v1/cryptocurrency/quotes/latest"
         parameters = {
             'symbol': symbol,
             'convert': 'USD'
@@ -146,7 +156,7 @@ from datetime import datetime
         
         current = quote['price']
         change_24h = quote['percent_change_24h']
-        volume_24h = quote['volume_24h']
+        change_1h = quote['percent_change_1h']
         
         # Since we have no candles from Quotes endpoint, we estimate/mock technicals 
         # based on the 24h/7d change provided by CMC
@@ -155,6 +165,14 @@ from datetime import datetime
         # Create a single-row DF just to satisfy contract if needed, or return simplified obj
         # For AI compatibility, we return standardized keys
         return {
+            "symbol": symbol,
+            "source": "CMC",
+            "currency": "USD",
+            "current_price": current,
+            "change_24h": change_24h,
+            "change_1h": change_1h,
+            "ma_20": current, # Mock
+            "trend": trend,
             "volume_status": "N/A",
             "raw_df": None # Signal to AI that technicals are limited
         }

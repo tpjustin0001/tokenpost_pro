@@ -153,10 +153,10 @@ export default function SmartScreener() {
     const renderTable = () => {
         if (isLoading) return renderSkeleton();
 
-        if (error || !data?.data) {
+        if (error || !data || data.status === 'error' || !Array.isArray(data.data)) {
             return (
                 <div className={styles.loading}>
-                    <p>데이터를 불러올 수 없습니다.</p>
+                    <p>데이터를 불러올 수 없습니다. (서버 연결 확인 필요)</p>
                     <button onClick={() => window.location.reload()} className={styles.retryBtn}>
                         다시 시도
                     </button>

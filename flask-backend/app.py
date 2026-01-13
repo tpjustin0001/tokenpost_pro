@@ -278,7 +278,11 @@ def api_screener_breakout():
             results.append({
                 'symbol': data['symbol'],
                 'price': current_price,
+                'symbol': data['symbol'],
+                'price': current_price,
                 'change_24h': data['change_24h'],
+                'change_1h': data.get('change_1h', 0),
+                'volume': df['Volume'].iloc[-1],
                 'volume': df['Volume'].iloc[-1],
                 'sma20': sma20,
                 'sma50': sma50,
@@ -326,7 +330,11 @@ def api_screener_performance():
             results.append({
                 'symbol': data['symbol'],
                 'price': current_price,
+                'symbol': data['symbol'],
+                'price': current_price,
                 'change_24h': data['change_24h'],
+                'change_1h': data.get('change_1h', 0),
+                'volume': df['Volume'].iloc[-1],
                 'volume': df['Volume'].iloc[-1],
                 'ath': ath,
                 'atl': atl,
@@ -373,7 +381,11 @@ def api_screener_risk():
             results.append({
                 'symbol': data['symbol'],
                 'price': current_price,
+                'symbol': data['symbol'],
+                'price': current_price,
                 'change_24h': data['change_24h'],
+                'change_1h': data.get('change_1h', 0),
+                'volatility': volatility,
                 'volatility': volatility,
                 'risk_score': risk_score,
                 'rating': rating

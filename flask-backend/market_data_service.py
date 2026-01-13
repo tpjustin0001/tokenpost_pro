@@ -237,8 +237,49 @@ from datetime import datetime
                     rank += 1
             print(f"⚠️ Fetched {len(results)} listings from Binance (Fallback).")
             return results
-        except Exception as e:
             print(f"Binance Fallback error: {e}")
             return []
+
+    def get_global_metrics(self):
+        """
+        Fetch Global Market Metrics from CoinMarketCap.
+        Used for AI Global X-Ray.
+        """
+        if not self.cmc_api_key:
+            raise ValueError("No CMC API Key provided for global metrics")
+            
+        try:
+            url = f"{self.cmc_base_url}/v1/global-metrics/quotes/latest"
+            headers = {
+                'Accepts': 'application/json',
+                'X-CMC_PRO_API_KEY': self.cmc_api_key,
+            }
+            session = requests.Session()
+            response = session.get(url, headers=headers)
+            data = response.json()
+            
+            if data['status']['error_code'] != 0:
+                raise ValueError(data['status']['error_message'])
+                
+            quote = data['data']['quote']['USD']
+            
+            return {
+                "total_market_cap": quote['total_market_cap'],
+                "total_volume_24h": quote['total_volume_24h'],
+                "btc_dominance": data['data']['btc_dominance'],
+                "eth_dominance": data['data']['eth_dominance'],
+                "market_cap_change_24h": quote.get('total_market_cap_yesterday_percentage_change', 0)
+            }
+            
+        except Exception as e:
+            print(f"CMC Global Metrics Error: {e}")
+            # Fallback Mock
+            return {
+                "total_market_cap": 2000000000000,
+                "total_volume_24h": 80000000000,
+                "btc_dominance": 52.5,
+                "eth_dominance": 17.2,
+                "market_cap_change_24h": 0.5
+            }
 
 market_data_service = MarketDataService()

@@ -334,7 +334,7 @@ def api_screener_breakout():
     })
 
 @app.route('/api/screener/price-performance')
-def api_screener_performance():
+def api_screener_real():
     """Tab 2: Price Performance"""
     from market_provider import market_data_service
     

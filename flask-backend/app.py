@@ -590,7 +590,7 @@ def api_xray_global():
         news_list = news_service.get_crypto_news("Bitcoin")
 
         # 1. Fetch Global Metrics from CMC (via MarketDataService)
-        from market_data_service import market_data_service
+    from market_provider import market_data_service
         global_metrics = market_data_service.get_global_metrics()
         
         # 2. Fetch Key Asset Prices (BTC, ETH) - Upbit/Binance Hybrid

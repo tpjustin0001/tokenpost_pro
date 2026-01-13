@@ -9,6 +9,7 @@ interface TickerData {
     symbol: string;
     price: number;
     change_24h?: number;
+    change_1h?: number;
     volume?: number;
     is_breakout?: boolean;
     volatility?: number;
@@ -173,7 +174,7 @@ export default function SmartScreener() {
                         <tr>
                             <th>자산</th>
                             <th>현재가</th>
-                            <th>변동률 (24시간)</th>
+                            <th>변동률 (1시간)</th>
                             <th>거래량 (24시간)</th>
                             <th>상태</th>
                         </tr>
@@ -189,13 +190,13 @@ export default function SmartScreener() {
                                     </div>
                                 </td>
                                 <td>${item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-                                <td style={{ color: (item.change_24h || 0) >= 0 ? '#10b981' : '#ef4444' }}>
-                                    {(item.change_24h || 0) >= 0 ? '+' : ''}{(item.change_24h || 0).toFixed(2)}%
+                                <td style={{ color: (item.change_1h || 0) >= 0 ? '#10b981' : '#ef4444' }}>
+                                    {(item.change_1h || 0) >= 0 ? '+' : ''}{(item.change_1h || 0).toFixed(2)}%
                                 </td>
                                 <td>{(item.volume || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                                 <td>
-                                    <span className={`${styles.badge} ${(item.change_24h || 0) >= 0 ? styles.bullish : styles.bearish}`}>
-                                        {(item.change_24h || 0) >= 0 ? '상승' : '하락'}
+                                    <span className={`${styles.badge} ${(item.change_1h || 0) >= 0 ? styles.bullish : styles.bearish}`}>
+                                        {(item.change_1h || 0) >= 0 ? '상승' : '하락'}
                                     </span>
                                 </td>
                             </tr>

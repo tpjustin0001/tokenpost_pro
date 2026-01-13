@@ -259,7 +259,7 @@ SCREENER_SYMBOLS = [
 @app.route('/api/screener/breakout')
 def api_screener_breakout():
     """Tab 1: Breakout Hunter - SMA Trends via MarketDataService"""
-    from market_data_service import market_data_service
+    from market_provider import market_data_service
     
     results = []
     
@@ -324,7 +324,7 @@ def api_screener_breakout():
 @app.route('/api/screener/price-performance')
 def api_screener_performance():
     """Tab 2: Price Performance"""
-    from market_data_service import market_data_service
+    from market_provider import market_data_service
     
     results = []
     
@@ -370,7 +370,7 @@ def api_screener_performance():
 @app.route('/api/screener/risk')
 def api_screener_risk():
     """Tab 3: Risk Scanner"""
-    from market_data_service import market_data_service
+    from market_provider import market_data_service
     import numpy as np
     
     results = []
@@ -537,7 +537,7 @@ def ingest_external_content():
 def api_xray_asset(symbol):
     """Specific Asset AI X-Ray Analysis using MarketDataService (Binance -> CMC)"""
     from news_service import news_service
-    from market_data_service import market_data_service
+    from market_provider import market_data_service
     from ai_service import ai_service
     
     symbol = symbol.upper()

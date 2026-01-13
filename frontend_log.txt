@@ -4553,3 +4553,94 @@
 [0]  GET /api/kimchi/upbit 500 in 297ms (compile: 214ms, render: 83ms)
 [0]  GET /api/kimchi/upbit 500 in 297ms (compile: 263ms, render: 34ms)
 [0]  GET /api/kimchi/upbit 500 in 371ms (compile: 274ms, render: 97ms)
+[0]  GET /api/global 500 in 563ms (compile: 430ms, render: 133ms)
+[0]  GET /api/markets 500 in 367ms (compile: 276ms, render: 91ms)
+[0]  GET /api/kimchi/upbit 500 in 242ms (compile: 117ms, render: 125ms)
+[0] ✓ Finished filesystem cache database compaction in 15.3s
+[0] ✓ Finished writing to filesystem cache in 11.2s
+[0]  GET /api/global 500 in 753ms (compile: 513ms, render: 240ms)
+[0]  GET /api/global 500 in 754ms (compile: 650ms, render: 104ms)
+[0]  GET /api/kimchi/upbit 500 in 344ms (compile: 286ms, render: 58ms)
+[0]  GET /api/markets 500 in 33ms (compile: 21ms, render: 13ms)
+[0]  GET /api/kimchi/upbit 500 in 210ms (compile: 148ms, render: 62ms)
+[0]  GET /api/kimchi/upbit 500 in 161ms (compile: 106ms, render: 54ms)
+[0]  GET /api/markets 500 in 86ms (compile: 36ms, render: 49ms)
+[0]  GET /api/global 500 in 127ms (compile: 116ms, render: 11ms)
+[0]  GET /api/kimchi/upbit 500 in 232ms (compile: 166ms, render: 66ms)
+[0]  GET /api/markets 500 in 43ms (compile: 14ms, render: 29ms)
+[0]  GET /api/global 500 in 456ms (compile: 350ms, render: 106ms)
+[0]  GET /api/kimchi/upbit 500 in 480ms (compile: 394ms, render: 86ms)
+[0] ⨯ ./src/components/Mindshare.module.css:11:10
+[0] Parsing CSS source code failed
+[0] [0m [90m  9 |[39m }
+[0]  [90m 10 |[39m
+[0] [31m[1m>[22m[39m[90m 11 |[39m display[33m:[39m flex[33m;[39m
+[0]  [90m    |[39m          [31m[1m^[22m[39m
+[0]  [90m 12 |[39m justify[33m-[39mcontent[33m:[39m space[33m-[39mbetween[33m;[39m
+[0]  [90m 13 |[39m align[33m-[39mitems[33m:[39m center[33m;[39m
+[0]  [90m 14 |[39m height[33m:[39m [35m52[39mpx[33m;[39m[0m
+[0] 
+[0] Invalid token in pseudo element: WhiteSpace(" ")
+[0] 
+[0] Import traces:
+[0]   Client Component Browser:
+[0]     ./src/components/Mindshare.module.css [Client Component Browser]
+[0]     ./src/components/Mindshare.tsx [Client Component Browser]
+[0]     ./src/app/page.tsx [Client Component Browser]
+[0]     ./src/app/page.tsx [Server Component]
+[0] 
+[0]   Client Component SSR:
+[0]     ./src/components/Mindshare.module.css [Client Component SSR]
+[0]     ./src/components/Mindshare.tsx [Client Component SSR]
+[0]     ./src/app/page.tsx [Client Component SSR]
+[0]     ./src/app/page.tsx [Server Component]
+[0] 
+[0] 
+[0] 
+[0] ./src/components/NewsFeed.module.css:11:10
+[0] Parsing CSS source code failed
+[0] [0m [90m  9 |[39m }
+[0]  [90m 10 |[39m
+[0] [31m[1m>[22m[39m[90m 11 |[39m display[33m:[39m flex[33m;[39m
+[0]  [90m    |[39m          [31m[1m^[22m[39m
+[0]  [90m 12 |[39m justify[33m-[39mcontent[33m:[39m space[33m-[39mbetween[33m;[39m
+[0]  [90m 13 |[39m align[33m-[39mitems[33m:[39m center[33m;[39m
+[0]  [90m 14 |[39m height[33m:[39m [35m52[39mpx[33m;[39m[0m
+[0] 
+[0] Invalid token in pseudo element: WhiteSpace(" ")
+[0] 
+[0] Import traces:
+[0]   Client Component Browser:
+[0]     ./src/components/NewsFeed.module.css [Client Component Browser]
+[0]     ./src/components/NewsFeed.tsx [Client Component Browser]
+[0]     ./src/app/page.tsx [Client Component Browser]
+[0]     ./src/app/page.tsx [Server Component]
+[0] 
+[0]   Client Component SSR:
+[0]     ./src/components/NewsFeed.module.css [Client Component SSR]
+[0]     ./src/components/NewsFeed.tsx [Client Component SSR]
+[0]     ./src/app/page.tsx [Client Component SSR]
+[0]     ./src/app/page.tsx [Server Component]
+[0] 
+[0] 
+[0]  GET / 500 in 258ms (compile: 242ms, render: 16ms)
+[0]  GET /api/kimchi/upbit 500 in 175ms (compile: 128ms, render: 48ms)
+[0]  GET /api/markets 500 in 243ms (compile: 107ms, render: 136ms)
+[0]  GET /api/markets 500 in 759ms (compile: 418ms, render: 341ms)
+[0]  GET /api/global 500 in 265ms (compile: 174ms, render: 91ms)
+[0]  GET /api/kimchi/upbit 500 in 374ms (compile: 295ms, render: 79ms)
+[0]  GET /api/kimchi/upbit 500 in 581ms (compile: 398ms, render: 182ms)
+[0]  GET /api/markets 500 in 389ms (compile: 209ms, render: 180ms)
+[0]  GET /api/kimchi/upbit 500 in 228ms (compile: 179ms, render: 49ms)
+[0]  GET /api/global 500 in 1010ms (compile: 680ms, render: 331ms)
+[0]  GET /api/markets 500 in 328ms (compile: 168ms, render: 160ms)
+[0]  GET /api/global 500 in 60ms (compile: 11ms, render: 49ms)
+[0]  GET /api/kimchi/upbit 500 in 247ms (compile: 152ms, render: 94ms)
+[0]  GET /api/kimchi/upbit 500 in 293ms (compile: 137ms, render: 156ms)
+[0] ✓ Compiled in 242ms
+[0]  GET /api/kimchi/upbit 500 in 117ms (compile: 43ms, render: 75ms)
+[0]  GET /api/kimchi/upbit 500 in 442ms (compile: 353ms, render: 89ms)
+[0]  GET /api/global 500 in 212ms (compile: 156ms, render: 56ms)
+[0] ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[0] ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[0]  GET / 200 in 2.1s (compile: 468ms, render: 1608ms)

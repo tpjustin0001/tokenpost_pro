@@ -3,9 +3,11 @@
     justify-content: space-between;
     align-items: center;
     height: 52px;
+    flex: 0 0 52px;
+    box-sizing: border-box;
     padding: 0 16px;
     border-bottom: 1px solid var(--border-color);
-    background: rgba(255, 255, 255, 0.01);
+    background: transparent;
 }
 
 .headerLeft {

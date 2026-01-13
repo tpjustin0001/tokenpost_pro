@@ -42,7 +42,13 @@ class AIService:
             'overallScore': 0,
             'marketPhase': 'AI 연결 실패',
             'summary': '⚠️ AI 분석 서버에 연결할 수 없거나 API 키가 유효하지 않습니다. .env 설정을 확인해주세요.',
-            'marketHealth': [],
+            'marketHealth': [
+                {'label': '펀더멘탈', 'value': 50},
+                {'label': '기술적', 'value': 50},
+                {'label': '온체인', 'value': 50},
+                {'label': '센티멘트', 'value': 50},
+                {'label': '혁신성', 'value': 50}
+            ],
             'sectorAnalysis': [],
             'keyMetrics': [],
             'risks': ['AI Service Unavailable'],

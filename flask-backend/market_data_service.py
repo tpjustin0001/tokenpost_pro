@@ -1,11 +1,11 @@
-
 import ccxt
 import os
 import requests
 import pandas as pd
 from datetime import datetime
 
-# Force Update: Fix Indentation Error via Re-deploy
+print("DEBUG: Loaded MarketDataService Module")
+
 class MarketDataService:
     def __init__(self):
         # 1. Binance (CCXT) - Public/Free/Fast
@@ -28,7 +28,7 @@ class MarketDataService:
         Orchestrator: Tries Upbit (KRW) -> Binance (USDT) -> CMC.
         Returns: { 'df': DataFrame, 'source':Str, 'current_price':Float, ... }
         """
-        symbol = symbol.toUpperCase() if hasattr(symbol, 'toUpperCase') else symbol.upper()
+        symbol = symbol.upper()
         
         # 0. Clean Symbol (e.g. "BTC" -> "BTC")
         base_symbol = symbol.replace('-USD', '').replace('/USD', '').replace('KRW-', '').replace('USDT-', '')
@@ -257,6 +257,7 @@ class MarketDataService:
                     rank += 1
             print(f"⚠️ Fetched {len(results)} listings from Binance (Fallback).")
             return results
+        except Exception as e:
             print(f"Binance Fallback error: {e}")
             return []
 

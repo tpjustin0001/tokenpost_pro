@@ -10,13 +10,13 @@ import { LayoutDashboard, Newspaper, Search, BarChart3, Radio, Bot, GraduationCa
 
 // Using Lucide icons
 const NAV_ITEMS = [
-    { id: 'home', icon: <LayoutDashboard size={20} />, label: '대시보드', href: '/' },
-    { id: 'news', icon: <Newspaper size={20} />, label: '뉴스', href: '/news' },
-    { id: 'research', icon: <Search size={20} />, label: '리서치', href: '/research' },
-    { id: 'data', icon: <BarChart3 size={20} />, label: '데이터', href: '/data' },
-    { id: 'calendar', icon: <CalendarDays size={20} />, label: '캘린더', href: '/calendar' },
-    { id: 'analysis', icon: <Bot size={20} />, label: 'AI 분석', href: '/analysis' },
-    { id: 'academy', icon: <GraduationCap size={20} />, label: '아카데미', href: 'https://academy.tokenpost.kr/', external: true },
+    { id: 'home', icon: <LayoutDashboard size={20} />, label: '터미널 (Terminal)', href: '/' },
+    { id: 'data', icon: <BarChart3 size={20} />, label: '마켓 데이터 (Data)', href: '/data' },
+    { id: 'analysis', icon: <Bot size={20} />, label: 'AI 전략 (Strategy)', href: '/analysis' },
+    { id: 'news', icon: <Newspaper size={20} />, label: '뉴스피드 (News)', href: '/news' },
+    { id: 'research', icon: <Search size={20} />, label: '인사이트 (Insights)', href: '/research' },
+    { id: 'calendar', icon: <CalendarDays size={20} />, label: '일정 (Calendar)', href: '/calendar' },
+    { id: 'academy', icon: <GraduationCap size={20} />, label: '아카데미 (Academy)', href: 'https://academy.tokenpost.kr/', external: true },
 ];
 
 export default function Sidebar() {

@@ -49,9 +49,9 @@ export default function SmartScreener() {
     const [tab, setTab] = useState<'breakout' | 'performance' | 'risk'>('breakout');
 
     const apiUrl =
-        tab === 'breakout' ? '/api/screener/breakout' :
-            tab === 'performance' ? '/api/screener/price-performance' :
-                '/api/screener/risk';
+        tab === 'breakout' ? '/api/python/screener/breakout' :
+            tab === 'performance' ? '/api/python/screener/price-performance' :
+                '/api/python/screener/risk';
 
     const { data, isLoading, error } = useSWR(apiUrl, fetcher, {
         refreshInterval: 60000,
@@ -249,9 +249,9 @@ export default function SmartScreener() {
             <div className={styles.header}>
                 <div className={styles.titleGroup}>
                     <h2 className={styles.title}>
-                        🔭 스마트 가상자산 스크리너
+                        스마트 가상자산 스크리너
                     </h2>
-                    <p className={styles.subtitle}>AI 기반 기회 포착 & 리스크 분석 시스템 <span style={{ fontSize: '11px', color: '#6b7280', marginLeft: '8px' }}>(업데이트: 1분)</span></p>
+                    <p className={styles.subtitle}>실시간 분석 · 1분 갱신</p>
                 </div>
 
                 <div className={styles.tabs}>
@@ -271,7 +271,7 @@ export default function SmartScreener() {
                         className={`${styles.tab} ${tab === 'risk' ? styles.active : ''}`}
                         onClick={() => setTab('risk')}
                     >
-                        ⚡️ 리스크 분석
+                        리스크 분석
                     </button>
                 </div>
             </div>

@@ -12,13 +12,14 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
+    height: 60px;
+    padding: 0 var(--spacing-lg);
     border-bottom: 1px solid var(--border-color);
-    min-height: 36px;
+    flex-shrink: 0;
 }
 
 .title {
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-weight: 600;
     color: var(--text-primary);
 }

@@ -24,8 +24,8 @@ export default function PricePerformance() {
     };
 
     return (
-        <div className={styles.widget}>
-            <div className={styles.header}>
+        <div className={styles.widget} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div className={styles.header} style={{ height: '60px', minHeight: '60px', flex: '0 0 60px' }}>
                 <div className={styles.titleRow}>
                     <h3 className={styles.title}>실시간 가격 등락 (Live Performance)</h3>
                     <span className={styles.liveBadge}>실시간</span>
@@ -45,7 +45,7 @@ export default function PricePerformance() {
                     </button>
                 </div>
             </div>
-            <div className={styles.list}>
+            <div className={styles.list} style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
                 {isLoading ? (
                     <div className={styles.loading}>로딩 중...</div>
                 ) : data.length === 0 ? (

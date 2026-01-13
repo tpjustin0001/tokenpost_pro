@@ -1,17 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import GlobalXRay, { GlobalXRayButton } from '@/components/GlobalXRay';
 
 import Sidebar from '@/components/Sidebar';
 import MarketGate from '@/components/analysis/MarketGate';
-import LeadLag from '@/components/analysis/LeadLag';
 import VCPScanner from '@/components/analysis/VCPScanner';
+import { ETFFlowsChart, BlockchainRevChart } from '@/components/DataWidgets';
 import styles from './page.module.css';
 
 export default function AnalysisPage() {
-    const [globalXRayOpen, setGlobalXRayOpen] = useState(false);
-
     return (
         <div className={styles.appLayout}>
             <Sidebar />
@@ -20,19 +17,21 @@ export default function AnalysisPage() {
                 <main className={styles.content}>
                     <div className={styles.header}>
                         <div className={styles.headerLeft}>
-                            <h1 className={styles.pageTitle}>AI 시장 분석 (Market Intelligence)</h1>
-                            <p className={styles.subtitle}>AI 기반 시장 국면 진단 및 패턴 분석 솔루션</p>
-                        </div>
-                        <div className={styles.headerRight}>
-                            <GlobalXRayButton onClick={() => setGlobalXRayOpen(true)} />
+                            <h1 className={styles.pageTitle}>AI 트레이딩 전략 (AI Trading Strategy)</h1>
+                            <p className={styles.subtitle}>시장 국면 진단 및 기관 수급 분석</p>
                         </div>
                     </div>
 
                     <div className={styles.section}>
-                        <h2 className={styles.sectionTitle}>시장 구조 분석 (Macro & Market Structure)</h2>
+                        <h2 className={styles.sectionTitle}>시장 신호등 (Market Regime)</h2>
+                        <MarketGate />
+                    </div>
+
+                    <div className={styles.section}>
+                        <h2 className={styles.sectionTitle}>기관 수급 & 프로토콜 매출 (Institutional Flows)</h2>
                         <div className={styles.grid}>
-                            <MarketGate />
-                            <LeadLag />
+                            <ETFFlowsChart />
+                            <BlockchainRevChart />
                         </div>
                     </div>
 
@@ -42,10 +41,6 @@ export default function AnalysisPage() {
                     </div>
                 </main>
             </div>
-            <GlobalXRay
-                isOpen={globalXRayOpen}
-                onClose={() => setGlobalXRayOpen(false)}
-            />
         </div>
     );
 }

@@ -27,10 +27,19 @@ export async function GET() {
             throw new Error(`CoinGecko API error: ${res.status}`);
         }
 
-        const data = await res.json();
-        cache = { data, timestamp: now };
+        const rawData = await res.json();
 
-        return NextResponse.json(data);
+        // Normalize data for usePricePerformance hook
+        const normalizedData = rawData.map((coin: any) => ({
+            symbol: coin.symbol?.toUpperCase() || 'UNKNOWN',
+            price: coin.current_price || 0,
+            change: coin.price_change_percentage_24h || 0,
+            volume: coin.total_volume || 0,
+            market_cap: coin.market_cap || 0,
+        }));
+
+        cache = { data: normalizedData, timestamp: now };
+        return NextResponse.json(normalizedData);
     } catch (error) {
         // 캐시된 데이터가 있으면 반환
         if (cache) {

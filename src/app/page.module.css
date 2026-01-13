@@ -22,16 +22,16 @@
 }
 
 .dashboardSection {
-  margin-top: 32px;
+  margin-top: 24px;
   margin-bottom: 8px;
 }
 
 .sectionHeading {
-  font-size: 18px;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 12px;
-  padding-left: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  padding-left: 10px;
   border-left: 3px solid var(--accent-blue);
   line-height: 1.2;
 }
@@ -40,20 +40,31 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 20px;
+  padding-bottom: 16px;
 }
 
 .pageTitle {
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pageTitle::before {
+  content: '';
+  width: 3px;
+  height: 16px;
+  background: var(--accent-blue);
+  border-radius: 1px;
 }
 
 .headerRight {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: 12px;
 }
 
 /* Main Chart Section */
@@ -144,16 +155,18 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  grid-auto-rows: 420px;
-  /* Uniform height for Sentiment/News */
+  /* No fixed row height - let content determine */
+}
+
+.twoColumnGrid>* {
+  min-height: 280px;
+  max-height: 400px;
 }
 
 .threeColumnGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  grid-auto-rows: 320px;
-  /* Uniform height for Charts */
 }
 
 @media (max-width: 1600px) {

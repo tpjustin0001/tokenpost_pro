@@ -3,21 +3,30 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-md) var(--spacing-lg);
+    height: 60px;
+    flex: 0 0 60px;
+    /* Force fixed height */
+    padding: 0 var(--spacing-lg);
     border-bottom: 1px solid var(--border-color);
-    flex-shrink: 0;
 }
 
 .titleRow {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
+    flex: 1;
+    /* Push tabs to the right */
+    justify-content: flex-start;
+    /* Ensure left alignment */
 }
 
 .title {
@@ -76,8 +85,9 @@
 
 .list {
     flex: 1;
+    min-height: 0;
+    /* Critical for nested flex scrolling */
     overflow-y: auto;
-    /* Remove max-height to allow filling container */
 }
 
 .row {

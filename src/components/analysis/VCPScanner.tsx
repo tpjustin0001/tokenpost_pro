@@ -67,7 +67,7 @@ const FALLBACK_SIGNALS = [
 
 export default function VCPScanner() {
     const { data, isLoading } = useSWR(
-        '/api/crypto/vcp-signals',
+        '/api/python/crypto/vcp-signals',
         fetcher,
         {
             refreshInterval: 300000, // 5분

@@ -97,7 +97,10 @@ export default function HomePage() {
             <h2 className={styles.pageTitle}>대시보드</h2>
             <div className={styles.headerRight}>
               <KimchiPremium />
-              <GlobalXRayButton onClick={() => setGlobalXRayOpen(true)} />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                <GlobalXRayButton onClick={() => setGlobalXRayOpen(true)} />
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>AI 거시경제 분석</span>
+              </div>
             </div>
           </MotionDiv>
 
@@ -136,32 +139,21 @@ export default function HomePage() {
             <TradingChart symbol={activeSymbol} interval={activeInterval} />
           </MotionDiv>
 
-          {/* Section: Market Intelligence (Sentiment & News) */}
+          {/* Section: Market Pulse (Sentiment & Volatility) */}
           <MotionSection className={styles.dashboardSection} variants={itemVariants}>
-            <h2 className={styles.sectionHeading}>🔊 시장 심리 & 트렌드 (Sentiment & Trends)</h2>
+            <h2 className={styles.sectionHeading}>마켓 펄스 (Market Pulse)</h2>
             <div className={styles.twoColumnGrid}>
               <Mindshare />
-              <NewsFeed />
-            </div>
-          </MotionSection>
-
-          {/* Section: Macro & On-Chain */}
-          <MotionSection className={styles.dashboardSection} variants={itemVariants}>
-            <h2 className={styles.sectionHeading}>📊 시장 펀더멘탈 (Market Fundamentals)</h2>
-            <div className={styles.threeColumnGrid}>
-              <StablecoinInterestChart />
-              <BlockchainRevChart />
-              <ETFFlowsChart />
-            </div>
-          </MotionSection>
-
-          {/* Section: Market Movers */}
-          <MotionSection className={styles.dashboardSection} variants={itemVariants}>
-            <h2 className={styles.sectionHeading}>⚡️ 변동성 & 수급 (Volatility & Supply)</h2>
-            <div className={styles.threeColumnGrid}>
               <PricePerformance />
-              <TokenUnlocks />
-              <WhaleTracker />
+            </div>
+          </MotionSection>
+
+          {/* Section: Breaking & Insights */}
+          <MotionSection className={styles.dashboardSection} variants={itemVariants}>
+            <h2 className={styles.sectionHeading}>속보 및 인사이트 (Breaking & Insights)</h2>
+            <div className={styles.twoColumnGrid}>
+              <NewsFeed />
+              <ResearchIntel />
             </div>
           </MotionSection>
         </MotionMain>

@@ -1,0 +1,199 @@
+
+import ccxt
+import os
+import requests
+import pandas as pd
+from datetime import datetime
+
+class MarketDataService:
+    def __init__(self):
+        # 1. Binance (CCXT) - Public/Free/Fast
+        self.binance = ccxt.binance({
+            'enableRateLimit': True,
+            'options': {'defaultType': 'spot'}
+        })
+        
+        # 2. CoinMarketCap (Requires Key)
+        self.cmc_api_key = os.getenv('COINMARKETCAP_API_KEY')
+        self.cmc_base_url = "https://pro-api.coinmarketcap.com"
+
+    def get_asset_data(self, symbol):
+        """
+        Orchestrator: Tries Binance first, then CMC.
+        Returns: { 'df': DataFrame, 'source':Str, 'current_price':Float, ... }
+        """
+        symbol = symbol.upper()
+        
+        # 1. Try Binance
+        try:
+            return self._fetch_binance(symbol)
+        except Exception as e:
+            print(f"Binance fetch failed for {symbol}: {e}")
+            pass # Fall through to CMC
+
+        # 2. Try CoinMarketCap
+        if self.cmc_api_key:
+            try:
+                print(f"Attempting CMC fetch for {symbol}...")
+                return self._fetch_cmc_quote(symbol) # Start with Quote (Price) + Metadata
+            except Exception as e:
+                print(f"CMC fetch failed: {e}")
+                raise ValueError(f"Failed to fetch data from Binance AND CoinMarketCap for {symbol}")
+        
+        raise ValueError(f"Symbol {symbol} not found on Binance and no CMC Key provided.")
+
+    def _fetch_binance(self, symbol):
+        target_pair = f"{symbol}/USDT"
+        if symbol == 'BTC-USD': target_pair = "BTC/USDT"
+        
+        # Fetch Candles
+        ohlcv = self.binance.fetch_ohlcv(target_pair, timeframe='1d', limit=50)
+        if not ohlcv:
+            raise ValueError(f"No OHLCV data for {target_pair}")
+            
+        columns = ['timestamp', 'Open', 'High', 'Low', 'Close', 'Volume']
+        df = pd.DataFrame(ohlcv, columns=columns)
+        
+        # Calculate Metrics
+        current = df['Close'].iloc[-1]
+        prev = df['Close'].iloc[-2]
+        change_24h = ((current - prev) / prev) * 100
+        ma_20 = df['Close'].tail(20).mean()
+        vol_avg = df['Volume'].tail(20).mean()
+        
+        return {
+            "symbol": symbol,
+            "source": "Binance",
+            "current_price": current,
+            "change_24h": change_24h,
+            "ma_20": ma_20,
+            "trend": "Bullish" if current > ma_20 else "Bearish",
+            "volume_status": "High" if df['Volume'].iloc[-1] > vol_avg else "Normal",
+            "raw_df": df
+        }
+
+    def _fetch_cmc_quote(self, symbol):
+        """
+        Fetches latest quote from CMC.
+        Note: Standard Free Tier does NOT provide historical OHLCV. 
+        We rely on the quote for price and mock the technicals if needed, 
+        OR use the 'quotes/latest' endpoint which gives 24h change.
+        """
+        url = f"{self.base_url}/v1/cryptocurrency/quotes/latest"
+        parameters = {
+            'symbol': symbol,
+            'convert': 'USD'
+        }
+        headers = {
+            'Accepts': 'application/json',
+            'X-CMC_PRO_API_KEY': self.cmc_api_key,
+        }
+        
+        session = requests.Session()
+        response = session.get(url, headers=headers, params=parameters)
+        data = response.json()
+        
+        if data['status']['error_code'] != 0:
+            raise ValueError(data['status']['error_message'])
+            
+        coin_data = data['data'][symbol]
+        quote = coin_data['quote']['USD']
+        
+        current = quote['price']
+        change_24h = quote['percent_change_24h']
+        volume_24h = quote['volume_24h']
+        
+        # Since we have no candles from Quotes endpoint, we estimate/mock technicals 
+        # based on the 24h/7d change provided by CMC
+        trend = "Bullish" if change_24h > 0 else "Bearish"
+        
+        # Create a single-row DF just to satisfy contract if needed, or return simplified obj
+        # For AI compatibility, we return standardized keys
+        return {
+            "volume_status": "N/A",
+            "raw_df": None # Signal to AI that technicals are limited
+        }
+
+    def get_crypto_listings(self, limit=30):
+        """
+        Fetches top N cryptocurrencies.
+        Source: CoinMarketCap (listings/latest) -> Binance (fallback ticker list)
+        """
+        # 1. Try CoinMarketCap
+        if self.cmc_api_key:
+            try:
+                url = f"{self.cmc_base_url}/v1/cryptocurrency/listings/latest"
+                parameters = {
+                    'start': '1',
+                    'limit': str(limit),
+                    'convert': 'USD',
+                    'sort': 'market_cap'
+                }
+                headers = {
+                    'Accepts': 'application/json',
+                    'X-CMC_PRO_API_KEY': self.cmc_api_key,
+                }
+                session = requests.Session()
+                response = session.get(url, headers=headers, params=parameters)
+                data = response.json()
+                
+                if data['status']['error_code'] == 0:
+                    results = []
+                    for item in data['data']:
+                        quote = item['quote']['USD']
+                        results.append({
+                            'id': item['slug'],
+                            'rank': item['cmc_rank'],
+                            'name': item['name'],
+                            'symbol': item['symbol'],
+                            'price': quote['price'],
+                            'change24h': quote['percent_change_24h'],
+                            'change7d': quote['percent_change_7d'],
+                            'marketCap': quote['market_cap'],
+                            'volume24h': quote['volume_24h'],
+                            'fdv': quote.get('fully_diluted_market_cap', 0)
+                        })
+                    print(f"✅ Fetched {len(results)} listings from CMC.")
+                    return results
+            except Exception as e:
+                print(f"CMC Listings error: {e}")
+
+        # 2. Fallback to Binance (CCXT)
+        try:
+            # Defined major symbols to look for
+            target_symbols = [
+                'BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'AVAX', 
+                'TRX', 'DOT', 'LINK', 'MATIC', 'SHIB', 'LTC', 'BCH', 
+                'ATOM', 'UNI', 'ETC', 'FIL', 'NEAR', 'APT', 'INJ', 
+                'RNDR', 'STX', 'IMX', 'ARB', 'OP', 'SUI', 'SEI', 'TIA'
+            ]
+            
+            # Fetch all tickers is efficient
+            tickers = self.binance.fetch_tickers([f"{s}/USDT" for s in target_symbols])
+            
+            results = []
+            rank = 1
+            for sym in target_symbols:
+                pair = f"{sym}/USDT"
+                if pair in tickers:
+                    t = tickers[pair]
+                    results.append({
+                        'id': sym.lower(),
+                        'rank': rank, # Fake rank based on our list order
+                        'name': sym,
+                        'symbol': sym,
+                        'price': t['last'],
+                        'change24h': t['percentage'],
+                        'change7d': 0, # Not available from simple ticker
+                        'marketCap': 0, # Not available
+                        'volume24h': t['quoteVolume'],
+                        'fdv': 0
+                    })
+                    rank += 1
+            print(f"⚠️ Fetched {len(results)} listings from Binance (Fallback).")
+            return results
+        except Exception as e:
+            print(f"Binance Fallback error: {e}")
+            return []
+
+market_data_service = MarketDataService()

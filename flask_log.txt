@@ -1,0 +1,311 @@
+🚀 TokenPost PRO API starting on port 5001...
+ * Serving Flask app 'app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.123.106:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 135-489-820
+127.0.0.1 - - [12/Jan/2026 20:22:44] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:22:44] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:22:46] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:22:46] "GET /api/content/news HTTP/1.1" 200 -
+/Users/youngbeen/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:89: FutureWarning: 'M' is deprecated and will be removed in a future version, please use 'ME' instead.
+  combined = combined.resample('M').last()
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:99: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_MoM'] = combined[col].pct_change(1) * 100
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:100: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_YoY'] = combined[col].pct_change(12) * 100
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:101: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_3M'] = combined[col].pct_change(3) * 100
+127.0.0.1 - - [12/Jan/2026 20:23:02] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:23:02] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:23:02] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:23:02] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:23:02] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:23:02] "GET /api/content/research HTTP/1.1" 200 -
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:89: FutureWarning: 'M' is deprecated and will be removed in a future version, please use 'ME' instead.
+  combined = combined.resample('M').last()
+127.0.0.1 - - [12/Jan/2026 20:23:02] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:23:02] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+ERROR:yfinance:$SUI-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:$IMX-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:$RNDR-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:
+3 Failed downloads:
+ERROR:yfinance:['SUI-USD', 'IMX-USD', 'RNDR-USD']: possibly delisted; no price data found  (period=1y)
+127.0.0.1 - - [12/Jan/2026 20:23:03] "GET /api/screener/breakout HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:23:03] "GET /api/screener/breakout HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:24:54] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:24:54] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:24:54] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:24:54] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:25:31] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:25:31] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:25:31] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:25:31] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:25:53] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:25:53] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:25:53] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:25:53] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:28:38] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:28:38] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:28:38] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:28:38] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:29:49] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:29:49] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:31:24] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:31:24] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:31:26] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:31:26] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:31:26] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:31:26] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:31:39] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:31:39] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:31:39] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:31:39] "GET /api/content/research HTTP/1.1" 200 -
+ERROR:crypto_market.lead_lag.data_fetcher:yfinance fetch error: Length mismatch: Expected axis has 11 elements, new values have 10 elements
+127.0.0.1 - - [12/Jan/2026 20:34:14] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:34:14] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+ERROR:yfinance:$SUI-USD: possibly delisted; no price data found  (period=1y)
+127.0.0.1 - - [12/Jan/2026 20:34:14] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:34:14] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:34:14] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:34:14] "GET /api/content/news HTTP/1.1" 200 -
+ERROR:yfinance:
+1 Failed download:
+ERROR:yfinance:['SUI-USD']: possibly delisted; no price data found  (period=1y)
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:89: FutureWarning: 'M' is deprecated and will be removed in a future version, please use 'ME' instead.
+  combined = combined.resample('M').last()
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:99: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_MoM'] = combined[col].pct_change(1) * 100
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:100: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_YoY'] = combined[col].pct_change(12) * 100
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:101: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_3M'] = combined[col].pct_change(3) * 100
+127.0.0.1 - - [12/Jan/2026 20:34:14] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:34:14] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+ERROR:yfinance:$IMX-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:$RNDR-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:
+3 Failed downloads:
+ERROR:yfinance:['SUI-USD', 'IMX-USD', 'RNDR-USD']: possibly delisted; no price data found  (period=1y)
+127.0.0.1 - - [12/Jan/2026 20:34:15] "GET /api/screener/breakout HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:34:15] "GET /api/screener/breakout HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:34:16] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:34:16] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:34:16] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:34:16] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:34:17] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:34:17] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:34:17] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:34:17] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:34:21] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:34:21] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:34:21] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:34:21] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:35:14] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:35:14] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:35:14] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:35:14] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:35:23] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:35:23] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:39:08] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:39:08] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:39:08] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:39:08] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:39:09] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:39:09] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:39:09] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:39:09] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:39:14] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:39:14] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:39:14] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:39:14] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:40:37] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:40:37] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:40:37] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:40:37] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:40:38] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:40:38] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:40:38] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:40:38] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:40:45] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:40:45] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:40:45] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:40:45] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:40:56] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:40:56] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:40:56] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:40:56] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:40:58] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:40:58] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:40:58] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:40:58] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:41:00] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:41:00] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:41:00] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:41:00] "GET /api/content/research HTTP/1.1" 200 -
+ERROR:yfinance:$IMX-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:
+1 Failed download:
+ERROR:yfinance:['IMX-USD']: possibly delisted; no price data found  (period=1y)
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:89: FutureWarning: 'M' is deprecated and will be removed in a future version, please use 'ME' instead.
+  combined = combined.resample('M').last()
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:99: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_MoM'] = combined[col].pct_change(1) * 100
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:100: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_YoY'] = combined[col].pct_change(12) * 100
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:101: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_3M'] = combined[col].pct_change(3) * 100
+127.0.0.1 - - [12/Jan/2026 20:41:01] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:41:01] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+ERROR:yfinance:$SUI-USD: possibly delisted; no price data found  (period=1y)
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:89: FutureWarning: 'M' is deprecated and will be removed in a future version, please use 'ME' instead.
+  combined = combined.resample('M').last()
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:99: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_MoM'] = combined[col].pct_change(1) * 100
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:100: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_YoY'] = combined[col].pct_change(12) * 100
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:101: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_3M'] = combined[col].pct_change(3) * 100
+127.0.0.1 - - [12/Jan/2026 20:41:01] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:41:01] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+ERROR:yfinance:$RNDR-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:
+2 Failed downloads:
+ERROR:yfinance:['SUI-USD', 'RNDR-USD']: possibly delisted; no price data found  (period=1y)
+127.0.0.1 - - [12/Jan/2026 20:41:02] "GET /api/screener/breakout HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:41:02] "GET /api/screener/breakout HTTP/1.1" 200 -
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:89: FutureWarning: 'M' is deprecated and will be removed in a future version, please use 'ME' instead.
+  combined = combined.resample('M').last()
+127.0.0.1 - - [12/Jan/2026 20:41:02] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:41:02] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+ERROR:yfinance:$RNDR-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:$IMX-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:$SUI-USD: possibly delisted; no price data found  (period=1y)
+127.0.0.1 - - [12/Jan/2026 20:41:07] "GET /api/crypto/vcp-signals HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:41:07] "GET /api/crypto/vcp-signals HTTP/1.1" 200 -
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:89: FutureWarning: 'M' is deprecated and will be removed in a future version, please use 'ME' instead.
+  combined = combined.resample('M').last()
+127.0.0.1 - - [12/Jan/2026 20:43:39] "GET /api/screener/breakout HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:43:39] "GET /api/screener/breakout HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:43:39] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:43:39] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:89: FutureWarning: 'M' is deprecated and will be removed in a future version, please use 'ME' instead.
+  combined = combined.resample('M').last()
+127.0.0.1 - - [12/Jan/2026 20:43:39] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:43:39] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:43:40] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:43:40] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:43:40] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:43:40] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:43:42] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:43:42] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:43:42] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:43:42] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:43:43] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:43:43] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:43:43] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:43:43] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:43:44] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:43:44] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 20:43:44] "GET /api/content/news HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 20:43:44] "GET /api/content/news HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 21:24:30] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 21:24:30] "GET /api/content/research HTTP/1.1" 200 -
+127.0.0.1 - - [12/Jan/2026 21:24:30] "GET /api/content/research HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 21:24:30] "GET /api/content/research HTTP/1.1" 200 -
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:89: FutureWarning: 'M' is deprecated and will be removed in a future version, please use 'ME' instead.
+  combined = combined.resample('M').last()
+127.0.0.1 - - [12/Jan/2026 21:24:32] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 21:24:32] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+ERROR:yfinance:$SUI-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:
+1 Failed download:
+ERROR:yfinance:['SUI-USD']: possibly delisted; no price data found  (period=1y)
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:89: FutureWarning: 'M' is deprecated and will be removed in a future version, please use 'ME' instead.
+  combined = combined.resample('M').last()
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:99: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_MoM'] = combined[col].pct_change(1) * 100
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:100: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_YoY'] = combined[col].pct_change(12) * 100
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:101: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  derivative_cols[f'{col}_3M'] = combined[col].pct_change(3) * 100
+127.0.0.1 - - [12/Jan/2026 21:24:33] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 21:24:33] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+ERROR:yfinance:$IMX-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:$RNDR-USD: possibly delisted; no price data found  (period=1y)
+ERROR:crypto_market.lead_lag.data_fetcher:yfinance fetch error: Length mismatch: Expected axis has 11 elements, new values have 10 elements
+127.0.0.1 - - [12/Jan/2026 21:24:33] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 21:24:33] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+ERROR:yfinance:$RNDR-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:$IMX-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:$SUI-USD: possibly delisted; no price data found  (period=1y)
+127.0.0.1 - - [12/Jan/2026 21:24:41] "GET /api/crypto/vcp-signals HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 21:24:41] "GET /api/crypto/vcp-signals HTTP/1.1" 200 -
+ * Detected change in '/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/market_data_service.py', reloading
+INFO:werkzeug: * Detected change in '/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/market_data_service.py', reloading
+🚀 TokenPost PRO API starting on port 5001...
+📥 Fetching bulk data for period=1y...
+📥 Fetching bulk data for period=1y...
+Lead-Lag API Error: Data fetch failed or empty
+Lead-Lag API Error: Data fetch failed or empty
+📥 Fetching bulk data for period=1y...
+Lead-Lag API Error: Data fetch failed or empty
+📥 Fetching bulk data for period=1y...
+Lead-Lag API Error: Data fetch failed or empty
+Lead-Lag API Error: Data fetch failed or empty
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 135-489-820
+ * Detected change in '/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/market_data_service.py', reloading
+🚀 TokenPost PRO API starting on port 5001...
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 135-489-820
+ * Detected change in '/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/app.py', reloading
+🚀 TokenPost PRO API starting on port 5001...
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 135-489-820
+/Users/youngbeen/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+$RNDR-USD: possibly delisted; no price data found  (period=1y)
+$IMX-USD: possibly delisted; no price data found  (period=1y)
+$SUI-USD: possibly delisted; no price data found  (period=1y)
+127.0.0.1 - - [12/Jan/2026 21:29:39] "GET /api/crypto/vcp-signals HTTP/1.1" 200 -
+ * Detected change in '/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/app.py', reloading
+🚀 TokenPost PRO API starting on port 5001...
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 135-489-820
+/Users/youngbeen/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/crypto_market/lead_lag/data_fetcher.py:89: FutureWarning: 'M' is deprecated and will be removed in a future version, please use 'ME' instead.
+  combined = combined.resample('M').last()
+127.0.0.1 - - [12/Jan/2026 21:34:37] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 21:34:37] "GET /api/crypto/lead-lag HTTP/1.1" 200 -
+ERROR:yfinance:$RNDR-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:$IMX-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:$SUI-USD: possibly delisted; no price data found  (period=1y)
+127.0.0.1 - - [12/Jan/2026 21:34:43] "GET /api/crypto/vcp-signals HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 21:34:43] "GET /api/crypto/vcp-signals HTTP/1.1" 200 -
+ERROR:yfinance:$RNDR-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:$IMX-USD: possibly delisted; no price data found  (period=1y)
+ERROR:yfinance:$SUI-USD: possibly delisted; no price data found  (period=1y)
+127.0.0.1 - - [12/Jan/2026 21:39:48] "GET /api/crypto/vcp-signals HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jan/2026 21:39:48] "GET /api/crypto/vcp-signals HTTP/1.1" 200 -
+ * Detected change in '/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/app.py', reloading
+INFO:werkzeug: * Detected change in '/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/app.py', reloading
+🚀 TokenPost PRO API starting on port 5001...
+ * Restarting with stat
+  File "/Users/youngbeen/Desktop/TOKENPOST PRO/tokenpost-pro/flask-backend/app.py", line 98
+    try:
+    ^
+IndentationError: expected an indented block

@@ -13,9 +13,8 @@
 
 .content {
     flex: 1;
-    padding: 20px 24px;
+    padding: 16px 24px;
     max-width: 1000px;
-    margin: 0 auto;
     width: 100%;
 }
 
@@ -23,38 +22,49 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .pageTitle {
-    font-size: 22px;
-    /* Standardize Page Title */
-    font-weight: 800;
+    font-size: 20px;
+    font-weight: 700;
     margin-bottom: 4px;
     color: var(--text-primary);
     line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pageTitle::before {
+    content: '';
+    width: 3px;
+    height: 16px;
+    background: var(--accent-blue);
+    border-radius: 1px;
 }
 
 .subtitle {
-    font-size: 14px;
-    color: var(--text-secondary);
+    font-size: 13px;
+    color: var(--text-muted);
+    padding-left: 11px;
 }
 
 .categories {
     display: flex;
-    gap: 12px;
-    margin-bottom: 40px;
+    gap: 8px;
+    margin-bottom: 24px;
     overflow-x: auto;
     padding-bottom: 8px;
 }
 
 .categoryBtn {
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
     font-weight: 600;
-    transition: all 0.2s;
-    background: var(--bg-secondary);
+    transition: all 0.15s;
+    background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
     cursor: pointer;
@@ -62,34 +72,38 @@
 }
 
 .categoryBtn:hover {
-    background: var(--bg-hover);
+    background: var(--bg-secondary);
     color: var(--text-primary);
+    border-color: var(--border-color-hover);
 }
 
 .categoryBtn.active {
-    background: var(--accent-blue);
+    background: var(--accent-blue-dim);
     border-color: var(--accent-blue);
-    color: white;
+    color: var(--accent-blue);
 }
 
-/* Standardized Section Heading */
+/* Standardized Section Heading - Terminal Style */
 .sectionHeading {
-    font-size: 18px;
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 12px;
-    padding-left: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    padding-left: 10px;
     border-left: 3px solid var(--accent-blue);
     line-height: 1.2;
     margin-top: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 /* Timeline Feed Styles */
 .timelineFeed {
     position: relative;
-    padding-left: 12px;
+    padding-left: 16px;
     border-left: 2px solid var(--border-color);
-    margin-left: 12px;
+    margin-left: 8px;
 }
 
 .newsItem {
@@ -184,18 +198,18 @@
 
 /* Spotlight Item */
 .spotlightItem {
-    margin-bottom: 16px;
-    padding: 12px;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+    margin-bottom: 20px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(16, 185, 129, 0.04) 100%);
     border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 16px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.15s ease;
 }
 
 .spotlightItem:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-elevation);
     border-color: var(--accent-blue);
 }
 

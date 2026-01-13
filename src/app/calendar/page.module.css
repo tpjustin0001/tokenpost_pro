@@ -24,20 +24,38 @@
 .pageHeader {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: flex-start;
     margin-bottom: 20px;
 }
 
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 .pageTitle {
-    font-size: 24px;
-    font-weight: 800;
-    margin-bottom: 4px;
+    font-size: 20px;
+    font-weight: 700;
     color: var(--text-primary);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pageTitle::before {
+    content: '';
+    width: 3px;
+    height: 16px;
+    background: var(--accent-blue);
+    border-radius: 1px;
 }
 
 .pageDesc {
-    font-size: 14px;
-    color: var(--text-secondary);
+    font-size: 13px;
+    color: var(--text-muted);
+    padding-left: 11px;
 }
 
 .controls {
@@ -47,40 +65,41 @@
 
 .controlBtn {
     padding: 6px 12px;
-    border-radius: 6px;
-    background: var(--bg-secondary);
+    border-radius: 4px;
+    background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
 }
 
 .controlBtn:hover {
-    background: var(--bg-hover);
+    background: var(--bg-secondary);
     color: var(--text-primary);
+    border-color: var(--border-color-hover);
 }
 
 .calendarGrid {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 
 .dateGroup {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 6px;
     overflow: hidden;
 }
 
 .dateHeader {
-    padding: 12px 16px;
-    background: var(--bg-secondary);
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid var(--border-color);
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 600;
     color: var(--text-primary);
     display: flex;
     align-items: center;
@@ -92,7 +111,7 @@
     background: var(--accent-blue);
     color: white;
     padding: 2px 6px;
-    border-radius: 10px;
+    border-radius: 3px;
 }
 
 .eventList {

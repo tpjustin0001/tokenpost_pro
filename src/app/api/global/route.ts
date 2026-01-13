@@ -38,7 +38,13 @@ export async function GET() {
         const ethSparkline = marketData.find((c: any) => c.id === 'ethereum')?.sparkline_in_7d?.price || [];
 
         const combinedData = {
-            ...globalData,
+            // Flattened structure for matching Frontend Hook
+            volume_24h: globalData.data.total_volume.usd / 1e9, // Billions
+            total_market_cap: globalData.data.total_market_cap.usd / 1e12, // Trillions
+            dominance: {
+                btc: globalData.data.market_cap_percentage.btc,
+                eth: globalData.data.market_cap_percentage.eth
+            },
             sparklines: {
                 btc: btcSparkline,
                 eth: ethSparkline

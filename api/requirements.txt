@@ -1,0 +1,13 @@
+flask==3.0.0
+flask-cors==4.0.0
+python-dateutil==2.8.2
+requests==2.31.0
+openai>=1.0.0
+python-dotenv==1.0.0
+# ccxt>=4.0.0
+# Heavy libs (lazy loaded)
+# pandas==2.2.2
+# numpy==1.26.4
+# yfinance>=0.2.33 # Disabled for now to save space
+# sqlalchemy==2.0.0 # Not used yet
+# gunicorn==21.2.0 # Not needed for Vercel

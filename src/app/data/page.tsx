@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import GlobalXRay, { GlobalXRayButton } from '@/components/GlobalXRay';
 
 import Sidebar from '@/components/Sidebar';
 import LeadLagAnalysis from '@/components/LeadLagAnalysis';
 import { useMarketMetrics } from '@/hooks/useMarketMetrics';
 import SmartScreener from '@/components/data/SmartScreener';
+import TokenUnlocks from '@/components/TokenUnlocks';
+import WhaleTracker from '@/components/WhaleTracker';
+import { StablecoinInterestChart } from '@/components/DataWidgets';
 import styles from './page.module.css';
 
 function formatNumber(num: number): string {
@@ -18,7 +20,6 @@ function formatNumber(num: number): string {
 
 export default function DataPage() {
     const { metrics, isLoading: metricsLoading } = useMarketMetrics();
-    const [globalXRayOpen, setGlobalXRayOpen] = useState(false);
 
     return (
         <div className={styles.appLayout}>
@@ -28,11 +29,8 @@ export default function DataPage() {
                 <main className={styles.content}>
                     <div className={styles.header}>
                         <div className={styles.headerLeft}>
-                            <h1 className={styles.pageTitle}>데이터 센터</h1>
-                            <p className={styles.subtitle}>거시 경제 선행 지표 & 실시간 온체인 데이터</p>
-                        </div>
-                        <div className={styles.headerRight}>
-                            <GlobalXRayButton onClick={() => setGlobalXRayOpen(true)} />
+                            <h1 className={styles.pageTitle}>마켓 데이터 센터</h1>
+                            <p className={styles.subtitle}>심층 온체인 분석 & 거시 경제 지표</p>
                         </div>
                     </div>
 
@@ -67,29 +65,32 @@ export default function DataPage() {
                         </div>
                     </section>
 
-                    {/* 2. Smart Crypto Screener */}
+                    {/* 2. Smart Crypto Screener (Full Width) */}
                     <section className={styles.section}>
                         <SmartScreener />
                     </section>
 
-                    {/* 3. Macro Economic Analysis (Lead-Lag) */}
+                    {/* 3. Supply & Whales (Grid) */}
                     <section className={styles.section}>
-                        <div className={styles.sectionHeader}>
-                            <h2 className={styles.sectionTitle}>🌎 거시 경제 선행 지표 (Macro Lead-Lag)</h2>
-                            <span className="badge badge-primary">AI Powered Granger Causality</span>
+                        <h2 className={styles.sectionTitle}>토큰 언락 & 고래 추적 (Supply & Whales)</h2>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                            <TokenUnlocks />
+                            <WhaleTracker />
                         </div>
-                        <p className={styles.sectionDesc}>
-                            과거 데이터를 기반으로 특정 거시 경제 지표가 비트코인 가격 변동을 얼마나 선행하는지 분석합니다. (최대 6개월 시차)
-                        </p>
-                        <LeadLagAnalysis />
                     </section>
+
+                    {/* 4. Liquidity & Macro */}
+                    <section className={styles.section}>
+                        <h2 className={styles.sectionTitle}>유동성 & 거시 경제 (Liquidity & Macro)</h2>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                            <StablecoinInterestChart />
+                            <LeadLagAnalysis />
+                        </div>
+                    </section>
+
                 </main>
             </div>
 
-            <GlobalXRay
-                isOpen={globalXRayOpen}
-                onClose={() => setGlobalXRayOpen(false)}
-            />
         </div>
     );
 }

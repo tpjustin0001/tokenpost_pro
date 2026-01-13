@@ -5,18 +5,18 @@ import { flaskApi, LeadLagData } from '@/services/flaskApi';
 import styles from './LeadLagAnalysis.module.css';
 
 const VAR_MAP: Record<string, string> = {
-    'TNX': '🇺🇸 10년물 국채 금리',
-    'TNX_MoM': '🇺🇸 국채 금리 변화율',
-    'SPY': '🇺🇸 S&P 500',
-    'SPY_MoM': '🇺🇸 S&P 500 변화율',
-    'VIX': '🫣 공포지수 (VIX)',
-    'VIX_MoM': '🫣 공포지수 변화율',
-    'DXY': '💵 달러 인덱스',
-    'DXY_MoM': '💵 달러 인덱스 변화율',
-    'GOLD': '🥇 금',
-    'GOLD_MoM': '🥇 금 변화율',
-    'M2': '💸 M2 통화량',
-    'M2_MoM': '💸 M2 통화량 변화율',
+    'TNX': '10년물 국채 금리',
+    'TNX_MoM': '국채 금리 변화율',
+    'SPY': 'S&P 500',
+    'SPY_MoM': 'S&P 500 변화율',
+    'VIX': '공포지수 (VIX)',
+    'VIX_MoM': '공포지수 변화율',
+    'DXY': '달러 인덱스',
+    'DXY_MoM': '달러 인덱스 변화율',
+    'GOLD': '금',
+    'GOLD_MoM': '금 변화율',
+    'M2': 'M2 통화량',
+    'M2_MoM': 'M2 통화량 변화율',
 };
 
 export default function LeadLagAnalysis() {
@@ -82,8 +82,8 @@ export default function LeadLagAnalysis() {
 
                             <div className={styles.interpretation}>
                                 {isPositive
-                                    ? `📈 ${VAR_MAP[item.variable] || item.variable} 상승 시,\n비트코인도 ${item.lag}개월 뒤 상승 경향`
-                                    : `📉 ${VAR_MAP[item.variable] || item.variable} 상승 시,\n비트코인은 ${item.lag}개월 뒤 하락 경향`
+                                    ? `${VAR_MAP[item.variable] || item.variable} 상승 시,\n비트코인도 ${item.lag}개월 뒤 상승 경향`
+                                    : `${VAR_MAP[item.variable] || item.variable} 상승 시,\n비트코인은 ${item.lag}개월 뒤 하락 경향`
                                 }
                             </div>
                         </div>

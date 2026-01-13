@@ -31,10 +31,13 @@ export interface VcpSignal {
     signal_type: string;
 }
 
+// All Flask backend routes go through /api/python/ proxy to Render
+const API_PREFIX = '/api/python';
+
 export const flaskApi = {
     async getMarketGate(): Promise<MarketGateData | null> {
         try {
-            const res = await fetch('/api/crypto/market-gate');
+            const res = await fetch(`${API_PREFIX}/crypto/market-gate`);
             if (!res.ok) throw new Error('Failed to fetch Market Gate data');
             return await res.json();
         } catch (error) {
@@ -45,7 +48,7 @@ export const flaskApi = {
 
     async getLeadLag(): Promise<LeadLagData | null> {
         try {
-            const res = await fetch('/api/crypto/lead-lag');
+            const res = await fetch(`${API_PREFIX}/crypto/lead-lag`);
             if (res.ok) {
                 return await res.json();
             }
@@ -67,7 +70,7 @@ export const flaskApi = {
 
     async getVcpSignals(): Promise<{ signals: VcpSignal[]; count: number } | null> {
         try {
-            const res = await fetch('/api/crypto/vcp-signals');
+            const res = await fetch(`${API_PREFIX}/crypto/vcp-signals`);
             if (!res.ok) throw new Error('Failed to fetch VCP Signals');
             return await res.json();
         } catch (error) {
@@ -78,7 +81,7 @@ export const flaskApi = {
 
     async getContent(type: 'news' | 'research'): Promise<any[]> {
         try {
-            const res = await fetch(`/api/content/${type}`);
+            const res = await fetch(`${API_PREFIX}/content/${type}`);
             if (!res.ok) throw new Error(`Failed to fetch ${type}`);
             return await res.json();
         } catch (error) {
@@ -89,7 +92,7 @@ export const flaskApi = {
 
     async getXRayAsset(symbol: string): Promise<any | null> {
         try {
-            const res = await fetch(`/api/crypto/xray/asset/${encodeURIComponent(symbol)}`);
+            const res = await fetch(`${API_PREFIX}/crypto/xray/asset/${encodeURIComponent(symbol)}`);
             if (!res.ok) {
                 const text = await res.text();
                 console.error(`X-Ray Asset Fetch Failed: ${res.status} ${res.statusText}`, text);
@@ -104,7 +107,7 @@ export const flaskApi = {
 
     async getXRayGlobal(): Promise<any | null> {
         try {
-            const res = await fetch('/api/crypto/xray/global');
+            const res = await fetch(`${API_PREFIX}/crypto/xray/global`);
             if (!res.ok) {
                 const text = await res.text();
                 console.error(`Global X-Ray Fetch Failed: ${res.status} ${res.statusText}`, text);
@@ -119,7 +122,7 @@ export const flaskApi = {
 
     async getListings(limit: number = 20): Promise<any[]> {
         try {
-            const res = await fetch(`/api/crypto/listings?limit=${limit}`);
+            const res = await fetch(`${API_PREFIX}/crypto/listings?limit=${limit}`);
             if (!res.ok) throw new Error('Failed to fetch listings');
             return await res.json();
         } catch (error) {

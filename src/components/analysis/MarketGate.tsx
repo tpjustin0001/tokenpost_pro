@@ -27,7 +27,7 @@ interface GateData {
 
 export default function MarketGate() {
     const { data, error, isLoading } = useSWR<GateData>(
-        '/api/crypto/market-gate',
+        '/api/python/crypto/market-gate',
         fetcher,
         {
             refreshInterval: 300000, // 5분

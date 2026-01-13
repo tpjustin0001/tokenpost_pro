@@ -9,6 +9,8 @@ interface RadarChartProps {
 }
 
 export default function RadarChart({ data, color = '#3b82f6', size = 300 }: RadarChartProps) {
+    if (!data || data.length === 0) return null;
+
     const center = size / 2;
     const radius = (size / 2) - 40; // Padding
     const sides = data.length;

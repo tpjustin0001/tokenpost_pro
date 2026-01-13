@@ -27,7 +27,7 @@ export default function PricePerformance() {
         <div className={styles.widget}>
             <div className={styles.header}>
                 <div className={styles.titleRow}>
-                    <h3 className={styles.title}>1시간 가격 변동</h3>
+                    <h3 className={styles.title}>실시간 가격 등락 (Live Performance)</h3>
                     <span className={styles.liveBadge}>실시간</span>
                 </div>
                 <div className={styles.tabs}>
@@ -55,7 +55,14 @@ export default function PricePerformance() {
                         <div key={coin.symbol} className={styles.row}>
                             <div className={styles.coinInfo}>
                                 {coin.icon && (
-                                    <img src={coin.icon} alt={coin.symbol} className={styles.coinIcon} />
+                                    <img
+                                        src={coin.icon}
+                                        alt={coin.symbol}
+                                        className={styles.coinIcon}
+                                        onError={(e) => {
+                                            e.currentTarget.src = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/32/icon/generic.png';
+                                        }}
+                                    />
                                 )}
                                 <span className={styles.name}>{coin.name}</span>
                                 <span className={styles.symbol}>{coin.symbol}</span>

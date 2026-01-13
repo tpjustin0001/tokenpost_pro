@@ -11,26 +11,32 @@ interface MarketMetrics {
     ethDominance: number;
     defiMarketCap: number;
     totalCryptos: number;
+    sparklines: {
+        btc: number[];
+        eth: number[];
+    };
 }
 
 export function useMarketMetrics() {
-    const { data, error, isLoading } = useSWR<{ data: any }>(
+    const { data, error, isLoading } = useSWR<{ data: any; sparklines: { btc: number[]; eth: number[] } }>(
         '/api/global', // 프록시 사용
         fetcher,
         {
-            refreshInterval: 30000, // 30초
+            refreshInterval: 60000, // 60초
             revalidateOnFocus: false,
         }
     );
 
-    const metrics: MarketMetrics | null = data?.data ? {
-        spotVolume: data.data.total_volume?.usd || 0,
-        marketCap: data.data.total_market_cap?.usd || 0,
-        btcDominance: data.data.market_cap_percentage?.btc || 0,
-        ethDominance: data.data.market_cap_percentage?.eth || 0,
-        defiMarketCap: data.data.defi_market_cap || 0,
-        totalCryptos: data.data.active_cryptocurrencies || 0,
+    const metrics: MarketMetrics | null = data ? {
+        spotVolume: (data as any).volume_24h ? (data as any).volume_24h * 1e9 : 0, // API returns Billions
+        marketCap: (data as any).total_market_cap ? (data as any).total_market_cap * 1e12 : 0, // API returns Trillions
+        btcDominance: (data as any).dominance?.btc || 0,
+        ethDominance: (data as any).dominance?.eth || 0,
+        defiMarketCap: 0, // Not provided by simplified API
+        totalCryptos: 0, // Not provided
+        sparklines: { btc: [], eth: [] },
     } : null;
+
 
     return { metrics, error, isLoading };
 }

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './AssetScreener.module.css';
+import { flaskApi } from '@/services/flaskApi';
 
 interface Asset {
     id: string;
@@ -17,40 +18,14 @@ interface Asset {
     tvl?: number;
 }
 
-const MOCK_DATA: Asset[] = [
-    { id: 'btc', rank: 1, name: 'Bitcoin', symbol: 'BTC', price: 98500, change24h: 2.1, change7d: 5.4, marketCap: 1950000000000, volume24h: 45000000000, fdv: 2100000000000 },
-    { id: 'eth', rank: 2, name: 'Ethereum', symbol: 'ETH', price: 3450, change24h: -1.2, change7d: 8.2, marketCap: 415000000000, volume24h: 18000000000, fdv: 415000000000, tvl: 65000000000 },
-    { id: 'sol', rank: 3, name: 'Solana', symbol: 'SOL', price: 145, change24h: 5.8, change7d: 12.5, marketCap: 65000000000, volume24h: 4500000000, fdv: 85000000000, tvl: 4500000000 },
-    { id: 'bnb', rank: 4, name: 'BNB', symbol: 'BNB', price: 620, change24h: 0.5, change7d: 1.2, marketCap: 95000000000, volume24h: 1200000000, fdv: 95000000000, tvl: 5200000000 },
-    { id: 'xrp', rank: 5, name: 'XRP', symbol: 'XRP', price: 0.62, change24h: -0.8, change7d: -2.1, marketCap: 34000000000, volume24h: 1500000000, fdv: 62000000000 },
-    { id: 'ada', rank: 6, name: 'Cardano', symbol: 'ADA', price: 0.45, change24h: 1.1, change7d: 3.5, marketCap: 16000000000, volume24h: 450000000, fdv: 20000000000, tvl: 350000000 },
-    { id: 'doge', rank: 7, name: 'Dogecoin', symbol: 'DOGE', price: 0.16, change24h: 8.5, change7d: 15.2, marketCap: 23000000000, volume24h: 2100000000, fdv: 23000000000 },
-    { id: 'avax', rank: 8, name: 'Avalanche', symbol: 'AVAX', price: 35.5, change24h: 2.3, change7d: 6.8, marketCap: 13000000000, volume24h: 650000000, fdv: 25000000000, tvl: 1200000000 },
-];
-
 // Direct CoinGecko image URLs for major coins
 function getCoinIconUrl(symbol: string): string {
-    const urls: Record<string, string> = {
-        'BTC': 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
-        'ETH': 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
-        'SOL': 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
-        'BNB': 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
-        'XRP': 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
-        'ADA': 'https://assets.coingecko.com/coins/images/975/small/cardano.png',
-        'DOGE': 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png',
-        'AVAX': 'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png',
-        'SHIB': 'https://assets.coingecko.com/coins/images/11939/small/shiba.png',
-        'DOT': 'https://assets.coingecko.com/coins/images/12171/small/polkadot.png',
-        'LINK': 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
-        'MATIC': 'https://assets.coingecko.com/coins/images/4713/small/polygon.png',
-        'ATOM': 'https://assets.coingecko.com/coins/images/1481/small/cosmos_hub.png',
-        'LTC': 'https://assets.coingecko.com/coins/images/2/small/litecoin.png',
-        'UNI': 'https://assets.coingecko.com/coins/images/12504/small/uniswap.png',
-    };
-    return urls[symbol.toUpperCase()] || `https://ui-avatars.com/api/?name=${symbol}&background=6366f1&color=fff&size=64&bold=true`;
+    // 1. Try CoinCap CDN (High quality, high coverage)
+    return `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
 }
 
 function formatCurrency(value: number, compact = false) {
+    if (value === undefined || value === null) return '-';
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
@@ -60,11 +35,25 @@ function formatCurrency(value: number, compact = false) {
 }
 
 function formatPercent(value: number) {
+    if (value === undefined || value === null) return '-';
     return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
 export default function AssetScreener() {
-    const [assets] = useState<Asset[]>(MOCK_DATA);
+    const [assets, setAssets] = useState<Asset[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchAssets() {
+            setLoading(true);
+            const data = await flaskApi.getListings(30); // Increased limit for fuller screen
+            if (data && data.length > 0) {
+                setAssets(data);
+            }
+            setLoading(false);
+        }
+        fetchAssets();
+    }, []);
 
     return (
         <div className={styles.screenerContainer}>
@@ -81,54 +70,65 @@ export default function AssetScreener() {
             </div>
 
             <div className={styles.tableContainer}>
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>Price</th>
-                            <th>24h %</th>
-                            <th>7d %</th>
-                            <th>Market Cap</th>
-                            <th>Volume (24h)</th>
-                            <th>FDV</th>
-                            <th>TVL</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {assets.map((asset) => (
-                            <tr key={asset.id} className={styles.row}>
-                                <td>{asset.rank}</td>
-                                <td>
-                                    <div className={styles.assetName}>
-                                        <img
-                                            src={getCoinIconUrl(asset.symbol)}
-                                            alt={asset.symbol}
-                                            className={styles.assetIcon}
-                                            onError={(e) => {
-                                                const target = e.target as HTMLImageElement;
-                                                target.src = `https://ui-avatars.com/api/?name=${asset.symbol}&background=6366f1&color=fff&size=64&bold=true`;
-                                            }}
-                                        />
-                                        {asset.name}
-                                        <span className={styles.symbol}>{asset.symbol}</span>
-                                    </div>
-                                </td>
-                                <td>{formatCurrency(asset.price)}</td>
-                                <td className={asset.change24h >= 0 ? styles.positive : styles.negative}>
-                                    {formatPercent(asset.change24h)}
-                                </td>
-                                <td className={asset.change7d >= 0 ? styles.positive : styles.negative}>
-                                    {formatPercent(asset.change7d)}
-                                </td>
-                                <td>{formatCurrency(asset.marketCap, true)}</td>
-                                <td>{formatCurrency(asset.volume24h, true)}</td>
-                                <td>{formatCurrency(asset.fdv, true)}</td>
-                                <td>{asset.tvl ? formatCurrency(asset.tvl, true) : '-'}</td>
+                {loading ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                        Loading Market Data...
+                    </div>
+                ) : (
+                    <table className={styles.table}>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>24h %</th>
+                                <th>7d %</th>
+                                <th>Market Cap</th>
+                                <th>Volume (24h)</th>
+                                <th>FDV</th>
+                                <th>TVL</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {assets.map((asset) => (
+                                <tr key={asset.id} className={styles.row}>
+                                    <td>{asset.rank}</td>
+                                    <td>
+                                        <div className={styles.assetName}>
+                                            <img
+                                                src={getCoinIconUrl(asset.symbol)}
+                                                alt={asset.symbol}
+                                                className={styles.assetIcon}
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement;
+                                                    // Fallback Chain: CoinCap -> GitHub -> UI Avatars
+                                                    if (target.src.includes('coincap')) {
+                                                        target.src = `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${asset.symbol.toLowerCase()}.png`;
+                                                    } else if (target.src.includes('github')) {
+                                                        target.src = `https://ui-avatars.com/api/?name=${asset.symbol}&background=6366f1&color=fff&size=64&bold=true`;
+                                                    }
+                                                }}
+                                            />
+                                            {asset.name}
+                                            <span className={styles.symbol}>{asset.symbol}</span>
+                                        </div>
+                                    </td>
+                                    <td>{formatCurrency(asset.price)}</td>
+                                    <td className={asset.change24h >= 0 ? styles.positive : styles.negative}>
+                                        {formatPercent(asset.change24h)}
+                                    </td>
+                                    <td className={asset.change7d >= 0 ? styles.positive : styles.negative}>
+                                        {formatPercent(asset.change7d)}
+                                    </td>
+                                    <td>{formatCurrency(asset.marketCap, true)}</td>
+                                    <td>{formatCurrency(asset.volume24h, true)}</td>
+                                    <td>{formatCurrency(asset.fdv, true)}</td>
+                                    <td>{asset.tvl ? formatCurrency(asset.tvl, true) : '-'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
             </div>
         </div>
     );

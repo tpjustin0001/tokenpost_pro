@@ -16,7 +16,7 @@ interface CalendarEvent {
 }
 
 const EVENTS: { date: string; isToday?: boolean; items: CalendarEvent[] }[] = [
-    // 캘린더 목업 데이터 초기화
+    // 캘린더 목업 데이터 초기화 (추후 API 연동 필요: 한국/미국 주요 지표 위주)
 ];
 
 export default function CalendarPage() {

@@ -4,19 +4,7 @@ import { useEffect, useRef } from 'react';
 import { createChart, ColorType, Time, LineData } from 'lightweight-charts';
 import styles from './DataWidgets.module.css';
 
-function generateChartData(days: number, baseValue: number, volatility: number): LineData<Time>[] {
-    const data: LineData<Time>[] = [];
-    const now = Date.now();
-    let value = baseValue;
 
-    for (let i = days; i >= 0; i--) {
-        const time = Math.floor((now - i * 24 * 60 * 60 * 1000) / 1000) as Time;
-        value = value * (1 + (Math.random() - 0.5) * volatility);
-        data.push({ time, value });
-    }
-
-    return data;
-}
 
 export function StablecoinInterestChart() {
     const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -83,7 +71,7 @@ export function StablecoinInterestChart() {
                 <div>
                     <h3 className={styles.title}>스테이블코인 이자율 (USDT/Aave)</h3>
                 </div>
-                <span className={styles.viewData}>LIVE</span>
+                <span className={styles.viewData}>LIVE (Updates: 1h)</span>
             </div>
             <div ref={chartContainerRef} className={styles.chart} />
             <div className={styles.legend}>
@@ -163,10 +151,10 @@ export function BlockchainRevChart() {
         <div className={styles.widget}>
             <div className={styles.header}>
                 <div>
-                    <h3 className={styles.title}>블록체인 수수료 수익 (Ethereum)</h3>
-                    <p className={styles.subtitle}>Daily Fees (USD)</p>
+                    <h3 className={styles.title}>프로토콜 매출 (Protocol Revenue)</h3>
+                    <p className={styles.subtitle}>Ethereum Daily Fees (USD)</p>
                 </div>
-                <span className={styles.viewData}>LIVE</span>
+                <span className={styles.viewData}>LIVE (Updates: 24h)</span>
             </div>
             <div ref={chartContainerRef} className={styles.chart} />
         </div>
@@ -247,10 +235,10 @@ export function ETFFlowsChart() {
         <div className={styles.widget}>
             <div className={styles.header}>
                 <div>
-                    <h3 className={styles.title}>BTC 거래량 변화 (5일 롤링)</h3>
-                    <p className={styles.subtitle}>시장 유동성 및 자금 흐름 지표</p>
+                    <h3 className={styles.title}>비트코인 유동성 (BTC Liquidity)</h3>
+                    <p className={styles.subtitle}>거래량 기반 추세 (Volume Trend)</p>
                 </div>
-                <span className={styles.viewData}>LIVE</span>
+                <span className={styles.viewData}>LIVE (Updates: 24h)</span>
             </div>
             <div ref={chartContainerRef} className={styles.chart} />
         </div>

@@ -353,7 +353,10 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     border-radius: 20px;
     width: 100%;
-    max-width: 800px;
+    max-width: 900px;
+    /* Wider for better reading */
+    max-height: 85vh;
+    /* Explicit height cap */
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -367,74 +370,25 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
+    /* Prevent header shrinking */
 }
 
-.headerContent {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.symbolBadge {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    color: white;
-    font-size: 16px;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.titleInfo {
-    display: flex;
-    flex-direction: column;
-}
-
-.title {
-    font-size: 18px;
-    font-weight: 700;
-    color: white;
-    margin: 0;
-}
-
-.subtitle {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
-}
-
-.closeBtn {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    color: rgba(255, 255, 255, 0.5);
-    cursor: pointer;
-    font-size: 20px;
-    transition: all 0.2s;
-}
-
-.closeBtn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-}
+/* ... existing styles ... */
 
 /* Layout */
 .body {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 0;
-    min-height: 400px;
+    display: flex;
+    /* Changed from grid to flex for better height control */
+    flex: 1;
+    min-height: 0;
+    /* Crucial for scrolling inside flex */
+    overflow: hidden;
 }
 
 .leftCol {
+    width: 300px;
+    flex-shrink: 0;
     background: rgba(0, 0, 0, 0.2);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
     padding: 24px;
@@ -442,186 +396,128 @@
     flex-direction: column;
     align-items: center;
     gap: 24px;
+    overflow-y: auto;
+    /* Allow left col scroll if needed */
 }
 
 .rightCol {
+    flex: 1;
     padding: 24px;
     overflow-y: auto;
+    /* Main Scroll Area */
 }
 
-/* Left Column Items */
-.radarContainer {
-    position: relative;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.scoreOverlay {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.scoreVal {
-    font-size: 32px;
-    font-weight: 800;
-    line-height: 1;
-}
-
-.scoreLabel {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.4);
-    text-transform: uppercase;
-}
-
-.signalBox {
-    width: 100%;
-    border: 1px solid;
-    padding: 16px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.03);
-    text-align: center;
-}
-
-.signalLabel {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
-    text-transform: uppercase;
-    margin-bottom: 4px;
-}
-
-.signalValue {
-    font-size: 16px;
-    font-weight: 700;
-}
-
-/* Right Column Items */
-.section {
-    margin-bottom: 24px;
-}
-
-.sectionTitle {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.4);
-    text-transform: uppercase;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    margin-bottom: 12px;
-}
+/* ... existing styles ... */
 
 .summaryText {
-    font-size: 14px;
+    font-size: 12px;
     line-height: 1.6;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.85);
     background: rgba(255, 255, 255, 0.03);
-    padding: 16px;
+    padding: 12px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    white-space: pre-wrap;
+    /* Preserve paragraphs */
+    word-break: keep-all;
+    /* Better Korean wrapping */
 }
 
-.metricsGrid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
-}
+/* ... existing styles ... */
 
-.metricCard {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 12px 16px;
-    border-radius: 12px;
-}
-
-.mLabel {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 4px;
-}
-
-.mValue {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-
-.mSignal {
-    font-size: 10px;
-    font-weight: 600;
-    opacity: 0.8;
-}
-
-.columns {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.colTitle {
+.generatedText {
     font-size: 12px;
-    font-weight: 700;
-    margin-bottom: 8px;
-    text-transform: uppercase;
+    line-height: 1.6;
+    color: var(--text-primary);
+    /* font-family: var(--font-mono); Removed mono for better readability */
+    margin-bottom: 0;
+    white-space: pre-wrap;
+    word-break: keep-all;
 }
 
-.list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.list li {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.7);
-    padding: 4px 0;
-    padding-left: 12px;
-    position: relative;
-    line-height: 1.4;
-}
-
-.list li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 9px;
-    width: 4px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-}
+/* ... existing styles ... */
 
 @media (max-width: 768px) {
     .body {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+        /* Stack vertically on mobile */
         height: auto;
         overflow-y: auto;
-        max-height: 80vh;
-    }
-
-    .leftCol {
-        border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        padding: 16px;
-    }
-
-    .rightCol {
-        padding: 16px;
+        /* Scroll whole body on mobile */
     }
 
     .modal {
         max-width: 95vw;
         height: auto;
         max-height: 90vh;
+        /* Cap height on mobile too */
+    }
+
+    .leftCol {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 16px;
+        overflow-y: visible;
+        /* Let body handle scroll */
+    }
+
+    .rightCol {
+        overflow-y: visible;
     }
 
     .metricsGrid,
     .columns {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Skeleton Loading */
+.skeleton {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+}
+
+.skeletonText {
+    height: 14px;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.skeletonTitle {
+    height: 24px;
+    margin-bottom: 16px;
+    width: 60%;
+}
+
+.skeletonCircle {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    margin: 20px auto;
+}
+
+.skeletonBox {
+    width: 100%;
+    height: 80px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.skeletonCard {
+    width: 100%;
+    height: 120px;
+    border-radius: 12px;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
     }
 }

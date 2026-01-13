@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import { motion, Variants } from 'framer-motion';
 import Sidebar from '@/components/Sidebar';
 import MetricsBar from '@/components/MetricsBar';
 import EventTicker from '@/components/EventTicker';
@@ -43,10 +44,40 @@ const CHART_INTERVALS = [
   { id: '1M', label: '월봉' },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1,
+    }
+  }
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 50,
+      damping: 20
+    }
+  }
+};
+
 export default function HomePage() {
   const [globalXRayOpen, setGlobalXRayOpen] = useState(false);
   const [activeSymbol, setActiveSymbol] = useState('BTC');
   const [activeInterval, setActiveInterval] = useState('15m');
+
+  // Import motion dynamically to avoid SSR mismatch if needed, but 'use client' handles it usually.
+  // We need to use valid motion components.
+  const MotionMain = motion.main;
+  const MotionSection = motion.section;
+  const MotionDiv = motion.div;
 
   return (
     <div className={styles.appLayout}>
@@ -56,17 +87,22 @@ export default function HomePage() {
         <MetricsBar />
         <EventTicker />
 
-        <main className={styles.content}>
-          <div className={styles.xrayHeader}>
+        <MotionMain
+          className={styles.content}
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
+          <MotionDiv className={styles.xrayHeader} variants={itemVariants}>
             <h2 className={styles.pageTitle}>대시보드</h2>
             <div className={styles.headerRight}>
               <KimchiPremium />
               <GlobalXRayButton onClick={() => setGlobalXRayOpen(true)} />
             </div>
-          </div>
+          </MotionDiv>
 
           {/* Main Chart Section */}
-          <div className={styles.chartSection}>
+          <MotionDiv className={styles.chartSection} variants={itemVariants}>
             <div className={styles.chartHeader}>
               <div className={styles.chartControlsLeft}>
                 <div className={styles.chartTabs}>
@@ -98,28 +134,37 @@ export default function HomePage() {
               </span>
             </div>
             <TradingChart symbol={activeSymbol} interval={activeInterval} />
-          </div>
+          </MotionDiv>
 
-          {/* Row 1: 4 Widgets Grid */}
-          <div className={styles.widgetGrid}>
-            <PricePerformance />
-            <StablecoinInterestChart />
-            <BlockchainRevChart />
-            <ETFFlowsChart />
-          </div>
+          {/* Section: Market Intelligence (Sentiment & News) */}
+          <MotionSection className={styles.dashboardSection} variants={itemVariants}>
+            <h2 className={styles.sectionHeading}>🔊 시장 심리 & 트렌드 (Sentiment & Trends)</h2>
+            <div className={styles.twoColumnGrid}>
+              <Mindshare />
+              <NewsFeed />
+            </div>
+          </MotionSection>
 
-          {/* Row 2: Social Sentiment + News Feed */}
-          <div className={styles.twoColumnGrid}>
-            <Mindshare />
-            <NewsFeed />
-          </div>
+          {/* Section: Macro & On-Chain */}
+          <MotionSection className={styles.dashboardSection} variants={itemVariants}>
+            <h2 className={styles.sectionHeading}>📊 시장 펀더멘탈 (Market Fundamentals)</h2>
+            <div className={styles.threeColumnGrid}>
+              <StablecoinInterestChart />
+              <BlockchainRevChart />
+              <ETFFlowsChart />
+            </div>
+          </MotionSection>
 
-          {/* Row 3: Token Unlocks + Whale Tracker */}
-          <div className={styles.twoColumnGrid}>
-            <TokenUnlocks />
-            <WhaleTracker />
-          </div>
-        </main>
+          {/* Section: Market Movers */}
+          <MotionSection className={styles.dashboardSection} variants={itemVariants}>
+            <h2 className={styles.sectionHeading}>⚡️ 변동성 & 수급 (Volatility & Supply)</h2>
+            <div className={styles.threeColumnGrid}>
+              <PricePerformance />
+              <TokenUnlocks />
+              <WhaleTracker />
+            </div>
+          </MotionSection>
+        </MotionMain>
       </div>
 
       <GlobalXRay

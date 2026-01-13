@@ -5,56 +5,34 @@ import styles from './KimchiPremium.module.css';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
-interface UpbitTicker {
-    trade_price: number;
-}
-
-interface BinancePrice {
-    price: string;
-}
-
-interface ForexData {
-    rates: {
-        KRW: number;
-    };
+interface UpbitResponse {
+    btc_krw: number;
+    btc_usd: number;
+    exchange_rate: number;
+    kimchi_premium: number;
 }
 
 export default function KimchiPremium() {
-    // Upbit BTC price in KRW
-    const { data: upbitData } = useSWR<UpbitTicker[]>(
+    // Upbit API now returns calculated premium and prices directly
+    const { data: premiumData } = useSWR<UpbitResponse>(
         '/api/kimchi/upbit',
         fetcher,
         { refreshInterval: 10000 }
     );
 
-    // Binance BTC price in USD
-    const { data: binanceData } = useSWR<BinancePrice>(
-        'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT',
-        fetcher,
-        { refreshInterval: 10000 }
-    );
-
-    // USD/KRW exchange rate (cached)
-    const { data: forexData } = useSWR<ForexData>(
-        '/api/kimchi/forex',
-        fetcher,
-        { refreshInterval: 300000 } // 5분
-    );
-
     const calculatePremium = () => {
-        if (!upbitData?.[0] || !binanceData || !forexData) return null;
-
-        const upbitPriceKrw = upbitData[0].trade_price;
-        const binancePriceUsd = parseFloat(binanceData.price);
-        const usdKrwRate = forexData.rates?.KRW || 1450;
-
-        const binancePriceKrw = binancePriceUsd * usdKrwRate;
-        const premium = ((upbitPriceKrw - binancePriceKrw) / binancePriceKrw) * 100;
+        if (!premiumData ||
+            typeof premiumData.kimchi_premium !== 'number' ||
+            typeof premiumData.btc_krw !== 'number' ||
+            typeof premiumData.btc_usd !== 'number'
+        ) {
+            return null;
+        }
 
         return {
-            premium: premium.toFixed(2),
-            upbitPrice: upbitPriceKrw,
-            binancePrice: binancePriceKrw,
+            premium: premiumData.kimchi_premium.toFixed(2),
+            upbitPrice: premiumData.btc_krw,
+            binancePrice: premiumData.btc_usd * premiumData.exchange_rate, // Converted to KRW
         };
     };
 

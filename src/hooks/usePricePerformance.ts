@@ -4,21 +4,20 @@ import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
-interface CoinData {
-    id: string;
+interface MarketData {
     symbol: string;
-    name: string;
-    current_price: number;
-    price_change_percentage_1h_in_currency: number;
-    image: string;
+    price: number;
+    change: number; // 24h change
+    volume: number;
+    market_cap: number;
 }
 
 export function usePricePerformance() {
-    const { data, error, isLoading } = useSWR<CoinData[]>(
-        '/api/markets', // 프록시 사용
+    const { data, error, isLoading } = useSWR<MarketData[]>(
+        '/api/markets',
         fetcher,
         {
-            refreshInterval: 60000, // 1분
+            refreshInterval: 60000,
             revalidateOnFocus: false,
         }
     );
@@ -27,26 +26,26 @@ export function usePricePerformance() {
         return { gainers: [], losers: [], isLoading, error };
     }
 
-    const withChange = data.filter(c => c.price_change_percentage_1h_in_currency !== null);
-    const sorted = [...withChange].sort(
-        (a, b) => (b.price_change_percentage_1h_in_currency || 0) -
-            (a.price_change_percentage_1h_in_currency || 0)
-    );
+    // Filter out null changes just in case
+    const withChange = data.filter(c => c.change !== undefined && c.change !== null);
+
+    // API returns 24h change, we use that for performance sorting
+    const sorted = [...withChange].sort((a, b) => b.change - a.change);
 
     return {
         gainers: sorted.slice(0, 7).map(c => ({
-            symbol: c.symbol.toUpperCase(),
-            name: c.name,
-            change: c.price_change_percentage_1h_in_currency,
-            price: c.current_price,
-            icon: c.image,
+            symbol: c.symbol,
+            name: c.symbol, // We don't have full names in this lightweight API
+            change: c.change,
+            price: c.price,
+            icon: `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/32/icon/${c.symbol.toLowerCase()}.png`
         })),
         losers: sorted.slice(-7).reverse().map(c => ({
-            symbol: c.symbol.toUpperCase(),
-            name: c.name,
-            change: c.price_change_percentage_1h_in_currency,
-            price: c.current_price,
-            icon: c.image,
+            symbol: c.symbol,
+            name: c.symbol,
+            change: c.change,
+            price: c.price,
+            icon: `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/32/icon/${c.symbol.toLowerCase()}.png`
         })),
         isLoading,
         error,

@@ -135,34 +135,33 @@ export default function ResearchPage() {
                         </section>
                     )}
 
-                    {/* Insights Grid */}
-                    <div className={styles.insightsGrid}>
+                    {/* Feed List (formerly Grid) */}
+                    <h2 className={styles.sectionHeading}>최신 인사이트 (Latest Insights)</h2>
+                    <div className={styles.feedList}>
                         {filteredInsights.map((insight) => (
-                            <article key={insight.id} className={styles.insightCard}>
+                            <div key={insight.id} className={styles.feedItem}>
                                 <div className={styles.cardHeader}>
-                                    <span
-                                        className={styles.typeBadge}
-                                        style={{
-                                            background: `${getTypeColor(insight.type)}20`,
-                                            color: getTypeColor(insight.type)
-                                        }}
-                                    >
-                                        {getTypeLabel(insight.type)}
-                                    </span>
-                                    {insight.isPro && <span className={styles.proBadge}>PRO</span>}
+                                    <div className={styles.feedHeaderLeft}>
+                                        <span className={styles.typeBadge} style={{
+                                            color: insight.type === 'REPORT' ? '#3b82f6' : insight.type === 'ANALYSIS' ? '#8b5cf6' : '#10b981'
+                                        }}>
+                                            {getTypeLabel(insight.type)}
+                                        </span>
+                                        {insight.isPro && <span className={styles.proBadge}>PRO</span>}
+                                        <span className={styles.meta}>{insight.date}</span>
+                                    </div>
                                 </div>
+
                                 <h3 className={styles.cardTitle}>{insight.title}</h3>
                                 <p className={styles.cardSummary}>{insight.summary}</p>
-                                <div className={styles.cardTags}>
-                                    {insight.tags.map(tag => (
-                                        <span key={tag} className={styles.tag}>{tag}</span>
-                                    ))}
-                                </div>
+
                                 <div className={styles.cardFooter}>
                                     <span className={styles.author}>{insight.author}</span>
-                                    <span className={styles.meta}>{insight.date} · {insight.readTime}</span>
+                                    {insight.tags && insight.tags.map(tag => (
+                                        <span key={tag} className={styles.meta} style={{ opacity: 0.7 }}>#{tag}</span>
+                                    ))}
                                 </div>
-                            </article>
+                            </div>
                         ))}
                     </div>
                 </main>

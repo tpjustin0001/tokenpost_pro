@@ -4,43 +4,21 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import styles from './SmartScreener.module.css';
 
-// --- Types ---
-interface BreakoutData {
+// --- Simplified Interfaces matching Real API (api/index.py) ---
+interface TickerData {
     symbol: string;
     price: number;
-    sma20: number;
-    sma50: number;
-    sma200: number;
-    status_20: 'Bullish' | 'Bearish';
-    status_50: 'Bullish' | 'Bearish';
-    status_200: 'Bull Market' | 'Bear Market';
-    is_fresh_breakout: boolean;
-    pct_from_sma200: number;
-}
-
-interface PerformanceData {
-    symbol: string;
-    price: number;
-    ath: number;
-    ath_date: string;
-    atl: number;
-    atl_date: string;
-    drawdown: number;
-    from_atl: number;
-    cycle_position: number;
-}
-
-interface RiskData {
-    symbol: string;
-    price: number;
-    volatility: number;
-    risk_score: number;
-    rating: 'Low' | 'Medium' | 'Extreme';
+    change_24h?: number;
+    volume?: number;
+    is_breakout?: boolean;
+    volatility?: number;
+    risk_score?: number;
+    rating?: 'Low' | 'Medium' | 'Extreme';
 }
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
-// Helper for icons (duplicated from VCPScanner for now to be self-contained)
+// Helper for icons
 function getCoinIconUrl(symbol: string): string {
     const urls: Record<string, string> = {
         'BTC': 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
@@ -71,9 +49,9 @@ export default function SmartScreener() {
     const [tab, setTab] = useState<'breakout' | 'performance' | 'risk'>('breakout');
 
     const apiUrl =
-        tab === 'breakout' ? '/api/python/screener/breakout' :
-            tab === 'performance' ? '/api/python/screener/price-performance' :
-                '/api/python/screener/risk';
+        tab === 'breakout' ? '/api/screener/breakout' :
+            tab === 'performance' ? '/api/screener/price-performance' :
+                '/api/screener/risk';
 
     const { data, isLoading, error } = useSWR(apiUrl, fetcher, {
         refreshInterval: 60000,
@@ -86,88 +64,86 @@ export default function SmartScreener() {
             {[1, 2, 3].map(i => (
                 <div key={i} className={styles.skeletonRow} />
             ))}
-            <div className={styles.skeletonText}>AI가 시장 데이터를 분석하고 있습니다... (약 5~10초 소요)</div>
+            <div className={styles.skeletonText}>AI가 데이터를 분석 중입니다... (약 5초 소요)</div>
         </div>
     );
 
     const summaryCards = () => {
         if (!data?.data) return null;
+        const list = data.data as TickerData[];
 
         if (tab === 'breakout') {
-            const list = data.data as BreakoutData[];
-            const bullMarketCount = list.filter(i => i.status_200 === 'Bull Market').length;
-            const freshBreakouts = list.filter(i => i.is_fresh_breakout).length;
-            const topGainer = list.sort((a, b) => b.pct_from_sma200 - a.pct_from_sma200)[0];
+            const breakouts = list.filter(i => i.is_breakout).length;
+            const topGainer = [...list].sort((a, b) => (b.change_24h || 0) - (a.change_24h || 0))[0];
 
             return (
                 <>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>📈 상승장 코인 (Bull Market)</span>
-                        <span className={styles.cardValue}>{bullMarketCount}</span>
-                        <span className={styles.cardDesc}>200일 이평선 상회</span>
+                        <span className={styles.cardTitle}>🚀 상승 추세</span>
+                        <span className={styles.cardValue}>{list.filter(i => (i.change_24h || 0) > 0).length}</span>
+                        <span className={styles.cardDesc}>24시간 가격 상승</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>🚀 급등 포착 (Breakout)</span>
-                        <span className={styles.cardValue}>{freshBreakouts}</span>
-                        <span className={styles.cardDesc}>골든크로스 / 돌파 발생</span>
+                        <span className={styles.cardTitle}>🔥 돌파 신호</span>
+                        <span className={styles.cardValue}>{breakouts}</span>
+                        <span className={styles.cardDesc}>고점 근접 (상위 2%)</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>🔥 최강 모멘텀</span>
+                        <span className={styles.cardTitle}>🏆 최고 상승</span>
                         <span className={styles.cardValue}>{topGainer?.symbol || '-'}</span>
-                        <span className={styles.cardDesc}>SMA200 대비 +{topGainer?.pct_from_sma200.toFixed(1)}%</span>
+                        <span className={styles.cardDesc}>+{topGainer?.change_24h?.toFixed(1) || '0.0'}% (24시간)</span>
                     </div>
                 </>
             );
         }
 
         if (tab === 'performance') {
-            const list = data.data as PerformanceData[];
-            const oversold = list.filter(i => i.drawdown <= -80).length;
-            const deepDip = list.sort((a, b) => a.drawdown - b.drawdown)[0]; // Lowest drawdown
+            const upCount = list.filter(i => (i.change_24h || 0) > 5).length;
+            const downCount = list.filter(i => (i.change_24h || 0) < -5).length;
+            const topVol = [...list].sort((a, b) => (b.volume || 0) - (a.volume || 0))[0];
 
             return (
                 <>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>📉 과매도 구간 (Oversold)</span>
-                        <span className={styles.cardValue}>{oversold}</span>
-                        <span className={styles.cardDesc}>고점 대비 -80% 이상</span>
+                        <span className={styles.cardTitle}>💪 강세 코인 (+5%↑)</span>
+                        <span className={styles.cardValue}>{upCount}</span>
+                        <span className={styles.cardDesc}>모멘텀 강세</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>💎 저점 매수 기회</span>
-                        <span className={styles.cardValue}>{deepDip?.symbol || '-'}</span>
-                        <span className={styles.cardDesc}>{deepDip?.drawdown.toFixed(1)}% 하락 (최대)</span>
+                        <span className={styles.cardTitle}>📉 약세 코인 (-5%↓)</span>
+                        <span className={styles.cardValue}>{downCount}</span>
+                        <span className={styles.cardDesc}>단기 조정 중</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>💰 분석 대상</span>
-                        <span className={styles.cardValue}>{list.length}</span>
-                        <span className={styles.cardDesc}>주요 자산 스캔 완료</span>
+                        <span className={styles.cardTitle}>💰 거래 대장</span>
+                        <span className={styles.cardValue}>{topVol?.symbol || '-'}</span>
+                        <span className={styles.cardDesc}>최고 거래량 (USDT)</span>
                     </div>
                 </>
             );
         }
 
         if (tab === 'risk') {
-            const list = data.data as RiskData[];
             const lowRisk = list.filter(i => i.rating === 'Low').length;
             const extremeRisk = list.filter(i => i.rating === 'Extreme').length;
-            const mostVolatile = list[0]; // Already sorted by risk desc
+            const mostVolatile = list[0];
 
             return (
                 <>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>🛡 저위험 자산</span>
+                        <span className={styles.cardTitle}>🛡 안정형 자산</span>
                         <span className={styles.cardValue}>{lowRisk}</span>
-                        <span className={styles.cardDesc}>BTC 대비 안정적 움직임</span>
+                        <span className={styles.cardDesc}>변동성 3% 미만</span>
                     </div>
                     <div className={styles.card}>
                         <span className={styles.cardTitle}>☢️ 고위험 주의</span>
                         <span className={styles.cardValue}>{extremeRisk}</span>
-                        <span className={styles.cardDesc}>높은 변동성 경고</span>
+                        <span className={styles.cardDesc}>변동성 7% 초과</span>
                     </div>
                     <div className={styles.card}>
                         <span className={styles.cardTitle}>🌪 최고 변동성</span>
                         <span className={styles.cardValue}>{mostVolatile?.symbol || '-'}</span>
-                        <span className={styles.cardDesc}>연간 변동성 {mostVolatile?.volatility.toFixed(1)}%</span>
+                        <span className={styles.cardDesc}>변동폭 {mostVolatile?.volatility?.toFixed(1) || '0.0'}%</span>
                     </div>
                 </>
             );
@@ -188,17 +164,18 @@ export default function SmartScreener() {
             );
         }
 
-        if (tab === 'breakout') {
-            const list = data.data as BreakoutData[];
+        const list = data.data as TickerData[];
+
+        if (tab === 'breakout' || tab === 'performance') {
             return (
                 <table className={styles.table}>
                     <thead>
                         <tr>
-                            <th>자산 (Asset)</th>
+                            <th>자산</th>
                             <th>현재가</th>
-                            <th>단기 추세 (20 SMA)</th>
-                            <th>중기 추세 (50 SMA)</th>
-                            <th>장기 추세 (200 SMA)</th>
+                            <th>변동률 (24시간)</th>
+                            <th>거래량 (24시간)</th>
+                            <th>상태</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -208,74 +185,18 @@ export default function SmartScreener() {
                                     <div className={styles.assetCell}>
                                         <img src={getCoinIconUrl(item.symbol)} alt="" className={styles.coinIcon} />
                                         <span className={styles.symbol}>{item.symbol}</span>
-                                        {item.is_fresh_breakout && <span className={styles.badge} style={{ backgroundColor: '#f59e0b', color: '#fff' }}>🔥 돌파</span>}
+                                        {item.is_breakout && <span className={styles.badge} style={{ backgroundColor: '#f59e0b', color: '#fff' }}>🔥 고점 근접</span>}
                                     </div>
                                 </td>
                                 <td>${item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                                <td style={{ color: (item.change_24h || 0) >= 0 ? '#10b981' : '#ef4444' }}>
+                                    {(item.change_24h || 0) >= 0 ? '+' : ''}{(item.change_24h || 0).toFixed(2)}%
+                                </td>
+                                <td>{(item.volume || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                                 <td>
-                                    <span className={`${styles.badge} ${item.status_20 === 'Bullish' ? styles.bullish : styles.bearish}`}>
-                                        {item.status_20 === 'Bullish' ? '상승' : '하락'}
+                                    <span className={`${styles.badge} ${(item.change_24h || 0) >= 0 ? styles.bullish : styles.bearish}`}>
+                                        {(item.change_24h || 0) >= 0 ? '상승' : '하락'}
                                     </span>
-                                </td>
-                                <td>
-                                    <span className={`${styles.badge} ${item.status_50 === 'Bullish' ? styles.bullish : styles.bearish}`}>
-                                        {item.status_50 === 'Bullish' ? '상승' : '하락'}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span className={`${styles.badge} ${item.status_200 === 'Bull Market' ? styles.bullMarket : styles.bearMarket}`}>
-                                        {item.status_200 === 'Bull Market' ? '강세장' : '약세장'}
-                                    </span>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            );
-        }
-
-        if (tab === 'performance') {
-            const list = data.data as PerformanceData[];
-            return (
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th>자산 (Asset)</th>
-                            <th>전고점 (ATH)</th>
-                            <th>하락률 (MDD)</th>
-                            <th>저점 대비 상승 (From ATL)</th>
-                            <th>사이클 위치</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {list.map(item => (
-                            <tr key={item.symbol}>
-                                <td>
-                                    <div className={styles.assetCell}>
-                                        <img src={getCoinIconUrl(item.symbol)} alt="" className={styles.coinIcon} />
-                                        <span className={styles.symbol}>{item.symbol}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>${item.ath.toLocaleString()}</div>
-                                    <div style={{ fontSize: '10px', color: '#9ca3af' }}>{item.ath_date}</div>
-                                </td>
-                                <td style={{ color: '#ef4444', fontWeight: 'bold' }}>
-                                    {item.drawdown.toFixed(2)}%
-                                </td>
-                                <td style={{ color: '#10b981' }}>
-                                    +{item.from_atl.toFixed(1)}%
-                                </td>
-                                <td>
-                                    <div className={styles.progressBar}>
-                                        <div
-                                            className={styles.progressFill}
-                                            style={{ width: `${item.cycle_position * 100}%` }}
-                                        />
-                                    </div>
-                                    <div style={{ fontSize: '10px', color: '#6b7280', textAlign: 'right', marginTop: '2px' }}>
-                                        {Math.round(item.cycle_position * 100)}%
-                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -285,16 +206,15 @@ export default function SmartScreener() {
         }
 
         if (tab === 'risk') {
-            const list = data.data as RiskData[];
             return (
                 <table className={styles.table}>
                     <thead>
                         <tr>
-                            <th>자산 (Asset)</th>
+                            <th>자산</th>
                             <th>현재가</th>
-                            <th>변동성 (연간)</th>
-                            <th>리스크 점수 (vs BTC)</th>
-                            <th>등급 (Rating)</th>
+                            <th>변동성 (등락폭)</th>
+                            <th>위험도 점수</th>
+                            <th>위험 등급</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -307,8 +227,8 @@ export default function SmartScreener() {
                                     </div>
                                 </td>
                                 <td>${item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-                                <td>{item.volatility.toFixed(2)}%</td>
-                                <td>{item.risk_score.toFixed(2)}x</td>
+                                <td>{item.volatility?.toFixed(2) || '-'}%</td>
+                                <td>{item.risk_score?.toFixed(1) || '-'}</td>
                                 <td>
                                     <span className={styles[`risk${item.rating}`]}>
                                         {item.rating === 'Low' && '🛡 안정'}
@@ -331,7 +251,7 @@ export default function SmartScreener() {
                     <h2 className={styles.title}>
                         🔭 스마트 가상자산 스크리너
                     </h2>
-                    <p className={styles.subtitle}>AI 기반 기회 포착 & 리스크 분석 시스템</p>
+                    <p className={styles.subtitle}>AI 기반 기회 포착 & 리스크 분석 시스템 <span style={{ fontSize: '11px', color: '#6b7280', marginLeft: '8px' }}>(업데이트: 1분)</span></p>
                 </div>
 
                 <div className={styles.tabs}>

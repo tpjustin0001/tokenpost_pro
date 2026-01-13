@@ -12,22 +12,42 @@
 }
 
 .content {
-  padding: var(--spacing-lg);
+  padding: 16px 24px;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: 16px;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.dashboardSection {
+  margin-top: 32px;
+  margin-bottom: 8px;
+}
+
+.sectionHeading {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 12px;
+  padding-left: 4px;
+  border-left: 3px solid var(--accent-blue);
+  line-height: 1.2;
 }
 
 .xrayHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-bottom: 20px;
 }
 
 .pageTitle {
-  font-size: var(--text-xl);
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   color: var(--text-primary);
+  margin: 0;
 }
 
 .headerRight {
@@ -113,6 +133,7 @@
 
 
 /* Legacy Grids (Keep for components reusing them if any, or safely remove if confirmed unused) */
+/* Legacy Grids */
 .widgetGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -122,27 +143,58 @@
 .twoColumnGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-lg);
+  gap: 16px;
+  grid-auto-rows: 420px;
+  /* Uniform height for Sentiment/News */
 }
 
 .threeColumnGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-lg);
+  gap: 16px;
+  grid-auto-rows: 320px;
+  /* Uniform height for Charts */
 }
 
 @media (max-width: 1600px) {
   .widgetGrid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .threeColumnGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 1200px) {
-  .widgetGrid {
-    grid-template-columns: 1fr;
-  }
 
+  .widgetGrid,
+  .threeColumnGrid,
   .twoColumnGrid {
     grid-template-columns: 1fr;
+    height: auto;
+    grid-auto-rows: auto;
+    /* Allow auto height on mobile */
   }
+}
+
+/* Enforce fixed height for desktop consistency */
+.twoColumnGrid>*,
+.threeColumnGrid>* {
+  height: 100%;
+  /* Fill the grid row */
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+/* Ensure internal content fills the shell */
+.twoColumnGrid>*>* {
+  height: 100%;
+}
+
+/* Optional: constrain three column items if needed, or leave auto */
+.threeColumnGrid>* {
+  min-height: 320px;
 }

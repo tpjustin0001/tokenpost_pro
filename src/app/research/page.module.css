@@ -13,18 +13,19 @@
 
 .content {
     flex: 1;
-    padding: var(--spacing-lg);
+    padding: 20px 24px;
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
 }
 
 /* Page Header */
+/* Page Header */
 .pageHeader {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 24px;
 }
 
 .headerLeft {
@@ -32,15 +33,17 @@
 }
 
 .pageTitle {
-    font-size: var(--text-xl);
-    font-weight: 700;
-    margin-bottom: var(--spacing-xs);
+    font-size: 22px;
+    /* Standardize Page Title */
+    font-weight: 800;
+    margin-bottom: 4px;
     color: var(--text-primary);
+    line-height: 1.2;
 }
 
 .pageDesc {
-    font-size: var(--text-xs);
-    color: var(--text-muted);
+    font-size: 14px;
+    color: var(--text-secondary);
 }
 
 .headerActions {
@@ -126,8 +129,8 @@
 .featuredCard {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05));
     border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 24px;
-    padding: 40px;
+    border-radius: 16px;
+    padding: 20px;
     position: relative;
     overflow: hidden;
 }
@@ -144,19 +147,20 @@
 }
 
 .featuredTitle {
-    font-size: 32px;
+    font-size: 20px;
+    /* Standardize Hero Title */
     font-weight: 800;
     color: var(--text-primary);
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     line-height: 1.3;
 }
 
 .featuredSummary {
-    font-size: 16px;
+    font-size: 13px;
     color: var(--text-secondary);
-    line-height: 1.6;
+    line-height: 1.5;
     max-width: 800px;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
 }
 
 .featuredMeta {
@@ -172,45 +176,101 @@
     gap: var(--spacing-xs);
 }
 
-/* Insights Grid */
-.insightsGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 24px;
+/* Feed Layout (Replaces Grid) */
+.sectionHeading {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+    padding-left: 4px;
+    border-left: 3px solid var(--accent-blue);
+    line-height: 1.2;
 }
 
-.insightCard {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 24px;
+.feedList {
     display: flex;
     flex-direction: column;
-    transition: all 0.2s;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
+    max-width: 840px;
+    margin: 0;
 }
 
-.insightCard:hover {
-    transform: translateY(-4px);
-    border-color: var(--accent-blue);
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+.feedItem {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 0;
+    /* Standardize Padding */
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.feedItem:hover {
+    background: linear-gradient(90deg, var(--bg-secondary) 0%, transparent 100%);
+    padding-left: 8px;
+    /* Subtle movement */
+}
+
+.feedItem:hover .cardTitle {
+    color: var(--accent-blue);
 }
 
 .cardHeader {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 16px;
+    align-items: center;
+    margin-bottom: 4px;
 }
 
-.typeBadge {
-    font-size: 10px;
+.feedHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cardTitle {
+    font-size: 15px;
+    /* Standardize Title */
     font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 6px;
-    text-transform: uppercase;
+    color: var(--text-primary);
+    margin: 0 0 6px 0;
+    line-height: 1.4;
+}
+
+.cardSummary {
+    font-size: 13px;
+    /* Standardize Body */
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    overflow: hidden;
+}
+
+.cardFooter {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.metaDivider {
+    width: 3px;
+    height: 3px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    opacity: 0.5;
+}
+
+/* Badge Tweaks for Feed */
+.typeBadge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
 }
 
 .proBadge {
@@ -220,62 +280,6 @@
     color: black;
     padding: 2px 6px;
     border-radius: 4px;
-}
-
-.cardTitle {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 12px 0;
-    line-height: 1.4;
-    flex: 1;
-}
-
-.cardSummary {
-    font-size: 13px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin-bottom: 20px;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    line-clamp: 3;
-    overflow: hidden;
-}
-
-.cardTags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 20px;
-}
-
-.tag {
-    font-size: 11px;
-    color: var(--text-muted);
-    background: var(--bg-tertiary);
-    padding: 2px 8px;
-    border-radius: 4px;
-}
-
-.cardFooter {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid var(--border-color);
-    padding-top: 16px;
-    margin-top: auto;
-}
-
-.author {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.meta {
-    font-size: 11px;
-    color: var(--text-muted);
 }
 
 @media (max-width: 768px) {
@@ -290,9 +294,5 @@
 
     .filterBar {
         flex-wrap: wrap;
-    }
-
-    .insightsGrid {
-        grid-template-columns: 1fr;
     }
 }

@@ -100,3 +100,12 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+.timestamp {
+    position: absolute;
+    bottom: 5px;
+    right: 20px;
+    font-size: 10px;
+    color: var(--text-muted);
+    opacity: 0.6;
+}

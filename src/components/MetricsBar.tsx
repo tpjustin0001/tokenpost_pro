@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useMarketMetrics } from '@/hooks/useMarketMetrics';
 import { useOpenInterest } from '@/hooks/useOpenInterest';
 import { XRayIcon } from './XRayTooltip';
@@ -41,40 +42,50 @@ export default function MetricsBar() {
     const { metrics, isLoading } = useMarketMetrics();
     const { totalOpenInterest } = useOpenInterest();
 
-    const sparklineUp = [20, 35, 28, 45, 38, 52, 48, 60, 55, 70];
+    // Default Fallback
+    const defaultSparkline = [20, 20, 20, 20, 20, 20, 20]; // Flat line if no data
 
     const METRICS = [
         {
             label: '24시간 현물 거래량',
             value: metrics ? formatNumber(metrics.spotVolume) : '---',
             xrayKey: 'spot_volume',
-            sparkline: sparklineUp,
         },
         {
             label: '오픈 인터레스트',
             value: totalOpenInterest ? formatNumber(totalOpenInterest) : '---',
             xrayKey: 'open_interest',
-            sparkline: sparklineUp,
         },
         {
             label: '총 시가총액',
             value: metrics ? formatNumber(metrics.marketCap) : '---',
             xrayKey: 'market_cap',
-            sparkline: sparklineUp,
         },
         {
             label: 'BTC 도미넌스',
             value: metrics ? `${metrics.btcDominance.toFixed(1)}%` : '---',
             xrayKey: 'btc_dominance',
-            sparkline: sparklineUp,
         },
         {
             label: 'ETH 도미넌스',
             value: metrics ? `${metrics.ethDominance.toFixed(1)}%` : '---',
             xrayKey: 'market_cap',
-            sparkline: sparklineUp,
         },
     ];
+
+    const [mounted, setMounted] = useState(false);
+    const [timeStr, setTimeStr] = useState('');
+
+    useEffect(() => {
+        setMounted(true);
+        setTimeStr(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }));
+
+        const timer = setInterval(() => {
+            setTimeStr(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }));
+        }, 60000); // Optional: Update every minute
+
+        return () => clearInterval(timer);
+    }, []);
 
     return (
         <div className={styles.metricsBar}>
@@ -89,12 +100,12 @@ export default function MetricsBar() {
                         <span className={`${styles.value} ${isLoading ? styles.loading : ''}`}>
                             {metric.value}
                         </span>
-                        {metric.sparkline && (
-                            <Sparkline data={metric.sparkline} color="#22c55e" />
-                        )}
                     </div>
                 </div>
             ))}
+            <div className={styles.timestamp}>
+                Updated: {mounted ? timeStr : '--:--'}
+            </div>
         </div>
     );
 }

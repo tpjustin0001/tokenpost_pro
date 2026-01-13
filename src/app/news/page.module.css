@@ -13,26 +13,31 @@
 
 .content {
     flex: 1;
-    padding: var(--spacing-lg);
+    padding: 20px 24px;
     max-width: 1000px;
     margin: 0 auto;
     width: 100%;
 }
 
 .header {
-    margin-bottom: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 24px;
 }
 
 .pageTitle {
-    font-size: var(--text-xl);
-    font-weight: 700;
-    margin-bottom: var(--spacing-xs);
+    font-size: 22px;
+    /* Standardize Page Title */
+    font-weight: 800;
+    margin-bottom: 4px;
     color: var(--text-primary);
+    line-height: 1.2;
 }
 
 .subtitle {
-    font-size: var(--text-xs);
-    color: var(--text-muted);
+    font-size: 14px;
+    color: var(--text-secondary);
 }
 
 .categories {
@@ -67,18 +72,31 @@
     color: white;
 }
 
+/* Standardized Section Heading */
+.sectionHeading {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+    padding-left: 4px;
+    border-left: 3px solid var(--accent-blue);
+    line-height: 1.2;
+    margin-top: 24px;
+}
+
 /* Timeline Feed Styles */
 .timelineFeed {
     position: relative;
-    padding-left: 24px;
+    padding-left: 12px;
     border-left: 2px solid var(--border-color);
     margin-left: 12px;
 }
 
 .newsItem {
     position: relative;
-    margin-bottom: 40px;
-    padding-left: 24px;
+    margin-bottom: 24px;
+    /* Standardize Gap */
+    padding-left: 16px;
     /* Space for dot */
 }
 
@@ -130,10 +148,11 @@
 }
 
 .title {
-    font-size: 18px;
+    font-size: 15px;
+    /* Standardize Title */
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0 0 8px 0;
+    margin: 0 0 6px 0;
     line-height: 1.4;
     cursor: pointer;
     transition: color 0.2s;
@@ -144,10 +163,11 @@
 }
 
 .summary {
-    font-size: 14px;
+    font-size: 13px;
+    /* Standardize Body */
     color: var(--text-secondary);
     line-height: 1.6;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -160,4 +180,50 @@
     gap: var(--spacing-sm);
     font-size: var(--text-xs);
     color: var(--text-muted);
+}
+
+/* Spotlight Item */
+.spotlightItem {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.spotlightItem:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    border-color: var(--accent-blue);
+}
+
+.spotlightHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.spotlightTitle {
+    font-size: 20px;
+    /* Standardize Hero Title */
+    font-weight: 800;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.spotlightSummary {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    max-width: 90%;
+}
+
+.spotlightMeta {
+    display: flex;
+    gap: 12px;
 }

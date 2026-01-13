@@ -12,8 +12,8 @@
 
 .content {
     flex: 1;
-    padding: var(--spacing-lg);
-    max-width: 1400px;
+    padding: 16px 24px;
+    max-width: 1600px;
     margin: 0 auto;
     width: 100%;
 }
@@ -32,30 +32,35 @@
 
 
 .header {
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 24px;
 }
 
 .pageTitle {
-    font-size: var(--text-xl);
-    font-weight: 700;
+    font-size: 24px;
+    font-weight: 800;
     color: var(--text-primary);
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: 4px;
+    line-height: 1.2;
 }
 
 .subtitle {
-    font-size: var(--text-xs);
-    color: var(--text-muted);
+    font-size: 14px;
+    color: var(--text-secondary);
 }
 
 .section {
-    margin-bottom: var(--spacing-2xl);
+    margin-top: 32px;
+    margin-bottom: 8px;
 }
 
 .sectionTitle {
-    font-size: var(--text-lg);
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-lg);
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+    padding-left: 4px;
+    border-left: 3px solid var(--accent-blue);
+    line-height: 1.2;
 }
 
 .sectionHeader {

@@ -27,7 +27,7 @@ interface GateData {
 
 export default function MarketGate() {
     const { data, error, isLoading } = useSWR<GateData>(
-        '/api/analysis/market-gate',
+        '/api/crypto/market-gate',
         fetcher,
         {
             refreshInterval: 300000, // 5분
@@ -154,9 +154,11 @@ export default function MarketGate() {
                         <div key={i} className={styles.indicator}>
                             <span className={styles.indName}>{ind.name}</span>
                             <span className={`${styles.indValue} ${styles[ind.signal.toLowerCase()]}`}>
-                                {typeof ind.value === 'number'
-                                    ? ind.value.toLocaleString()
-                                    : ind.value}
+                                {ind.value !== undefined && ind.value !== null
+                                    ? (typeof ind.value === 'number'
+                                        ? ind.value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+                                        : ind.value)
+                                    : '-'}
                             </span>
                         </div>
                     ))}

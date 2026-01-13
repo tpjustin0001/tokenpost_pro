@@ -298,10 +298,14 @@ a {
   margin-bottom: var(--spacing-md);
 }
 
+/* Standardized Section Headers */
 .section-title {
-  font-size: var(--text-lg);
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--text-primary);
+  padding-left: 10px;
+  border-left: 3px solid var(--accent-blue);
+  line-height: 1.2;
 }
 
 .section-subtitle {
@@ -330,8 +334,12 @@ a {
 }
 
 .card-title {
-  font-size: var(--text-sm);
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding-left: 8px;
+  border-left: 3px solid var(--accent-blue);
+  line-height: 1.2;
 }
 
 .card-body {

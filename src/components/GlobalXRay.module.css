@@ -225,11 +225,11 @@
 }
 
 .summaryText {
-    font-size: 14px;
+    font-size: 12px;
     line-height: 1.6;
     color: rgba(255, 255, 255, 0.8);
     background: rgba(255, 255, 255, 0.03);
-    padding: 16px;
+    padding: 12px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -396,5 +396,55 @@
 
     .riskOppSection {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Skeleton Loading */
+.skeleton {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+}
+
+.skeletonText {
+    height: 14px;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.skeletonTitle {
+    height: 24px;
+    margin-bottom: 16px;
+    width: 60%;
+}
+
+.skeletonCircle {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    margin: 20px auto;
+}
+
+.skeletonBox {
+    width: 100%;
+    height: 80px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.skeletonCard {
+    width: 100%;
+    height: 120px;
+    border-radius: 12px;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
     }
 }

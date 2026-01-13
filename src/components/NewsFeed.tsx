@@ -56,14 +56,19 @@ export default function NewsFeed() {
 
     function mapNewsToItem(row: News): NewsItem {
         const date = new Date(row.published_at || new Date().toISOString());
-        // Simple time formatting (e.g., 10:30 AM)
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        // Determine sentiment based on score (mock logic if score is null)
         let sentiment: 'positive' | 'negative' | 'neutral' = 'neutral';
+        let importance: 'high' | 'normal' = 'normal';
+
         if (row.sentiment_score !== null) {
             if (row.sentiment_score > 0.3) sentiment = 'positive';
             else if (row.sentiment_score < -0.3) sentiment = 'negative';
+
+            // High magnitude = High importance
+            if (Math.abs(row.sentiment_score) > 0.6) {
+                importance = 'high';
+            }
         }
 
         return {
@@ -73,7 +78,8 @@ export default function NewsFeed() {
             title: row.title,
             sentiment: sentiment,
             summary: row.summary || undefined,
-            tags: [], // Tags not yet in DB schema for news, strictly
+            // importance property isn't in interface yet, we will just use it in render
+            tags: importance === 'high' ? ['중요'] : [],
         };
     }
 
@@ -83,26 +89,43 @@ export default function NewsFeed() {
 
     return (
         <div className={styles.feedContainer}>
-            <div className={styles.timeline}>
-                {newsItems.length === 0 ? (
-                    <div style={{ padding: '0 20px', color: 'var(--text-muted)' }}>No recent news.</div>
-                ) : (
-                    newsItems.map((news, index) => (
-                        <article key={news.id} className={`${styles.item} ${styles[news.sentiment || 'neutral']}`}>
-                            {index === 0 && <div className={styles.liveIndicator} />}
-                            <span className={styles.time}>{news.time}</span>
+            <div className={styles.header}>
+                <h3 className={styles.headerTitle}>실시간 뉴스 (Live News)</h3>
+                <div className={styles.headerControls}>
+                    <span className={styles.liveBadge} />
+                    <span className={styles.liveText}>LIVE</span>
+                </div>
+            </div>
 
-                            <div className={styles.header}>
-                                {news.sentiment && (
-                                    <span className={`${styles.sentimentBadge} ${styles[news.sentiment]}`}>
-                                        {news.sentiment === 'positive' ? 'Bullish' : news.sentiment === 'negative' ? 'Bearish' : 'Neutral'}
-                                    </span>
-                                )}
+            <div className={styles.list}>
+                {newsItems.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No recent news.</div>
+                ) : (
+                    newsItems.map((news) => (
+                        <article key={news.id} className={`${styles.item} ${styles[news.sentiment || 'neutral']}`}>
+                            <div className={styles.itemMeta}>
+                                <span className={styles.time}>{news.time}</span>
                                 <span className={styles.source}>{news.source}</span>
                             </div>
 
-                            <h3 className={styles.title}>{news.title}</h3>
-                            {news.summary && <p className={styles.summary}>{news.summary}</p>}
+                            <div className={styles.itemContent}>
+                                <div className={styles.titleRow}>
+                                    {news.tags && news.tags.includes('중요') && (
+                                        <span className={styles.importanceBadge}>⭐️ 중요</span>
+                                    )}
+                                    <h3
+                                        className={styles.title}
+                                        title={news.summary} // Native tooltip for quick summary
+                                    >
+                                        {news.title}
+                                    </h3>
+                                </div>
+                                <div className={styles.indicators}>
+                                    <span className={`${styles.sentimentPill} ${styles[news.sentiment || 'neutral']}`}>
+                                        {news.sentiment === 'positive' ? '▲ 호재' : news.sentiment === 'negative' ? '▼ 악재' : '- 중립'}
+                                    </span>
+                                </div>
+                            </div>
                         </article>
                     ))
                 )}

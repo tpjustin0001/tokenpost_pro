@@ -17,11 +17,12 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:5001';
+    // REWRITE: Vercel Frontend -> Render Backend (Production & Dev)
+    const backendUrl = process.env.BACKEND_URL || 'https://tokenpost-pro.onrender.com';
     return [
       {
-        source: '/api/python/:path*',
-        destination: `${backendUrl}/api/:path*`,
+        source: '/api/python/:path*', // Frontend calls /api/python/crypto...
+        destination: `${backendUrl}/api/:path*`, // Proxy to Render /api/crypto...
       },
     ];
   },

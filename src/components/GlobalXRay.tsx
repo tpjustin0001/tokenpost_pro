@@ -70,8 +70,8 @@ export default function GlobalXRay({ isOpen, onClose }: GlobalXRayProps) {
                             <span style={{ fontSize: '20px' }}>🌍</span>
                         </div>
                         <div className={styles.titleInfo}>
-                            <h2 className={styles.title}>Global Market Analysis</h2>
-                            <span className={styles.subtitle}>AI-Driven Macro Analysis v3.0</span>
+                            <h2 className={styles.title}>글로벌 마켓 심층 분석</h2>
+                            <span className={styles.subtitle}>AI 기반 거시 경제 국면 분석 v3.0</span>
                         </div>
                     </div>
                     <button className={styles.closeBtn} onClick={onClose}>×</button>

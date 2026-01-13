@@ -32,7 +32,7 @@ export default function AssetPage({ params }: AssetPageProps) {
             <main className={`container ${styles.main}`}>
                 {/* Breadcrumb */}
                 <nav className={styles.breadcrumb}>
-                    <Link href="/">Dashboard</Link>
+                    <Link href="/">대시보드</Link>
                     <span>/</span>
                     <span>{symbol.toUpperCase()}</span>
                 </nav>

@@ -32,6 +32,7 @@ interface AIAnalysis {
     risks: string[];
     opportunities: string[];
     recommendation: string;
+    recent_news?: { title: string; link: string; pubDate: string; source: string }[];
 }
 
 const TypewriterText = ({ text, delay = 10 }: { text: string; delay?: number }) => {
@@ -85,8 +86,8 @@ export default function AIXRay({ symbol, isOpen, onClose }: AIXRayProps) {
     }, [isOpen, symbol]);
 
     if (!isOpen) return null;
+    if (!isOpen) return null;
     if (loading || !analysis) {
-        // Optionally render a loading spinner or placeholder here
         return (
             <div className={styles.overlay} onClick={onClose}>
                 <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -95,13 +96,35 @@ export default function AIXRay({ symbol, isOpen, onClose }: AIXRayProps) {
                             <div className={styles.symbolBadge}>{symbol}</div>
                             <div className={styles.titleInfo}>
                                 <h2 className={styles.title}>AI X-Ray 정밀 분석</h2>
-                                <span className={styles.subtitle}>Loading...</span>
+                                <span className={styles.subtitle}>AI가 실시간 데이터를 분석 중입니다...</span>
                             </div>
                         </div>
                         <button className={styles.closeBtn} onClick={onClose}>×</button>
                     </div>
-                    <div className={styles.body} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
-                        {loading ? 'Loading AI Analysis...' : 'No analysis available.'}
+                    {/* Skeleton Body */}
+                    <div className={styles.body}>
+                        <div className={styles.leftCol}>
+                            {/* Radar Skeleton */}
+                            <div className={`${styles.skeleton} ${styles.skeletonCircle}`} />
+                            {/* Rec Box Skeleton */}
+                            <div className={`${styles.skeleton} ${styles.skeletonBox}`} style={{ height: '60px' }} />
+                        </div>
+                        <div className={styles.rightCol}>
+                            {/* Summary Skeleton */}
+                            <div className={`${styles.skeleton} ${styles.skeletonTitle}`} style={{ width: '30%' }} />
+                            <div className={`${styles.skeleton} ${styles.skeletonBox}`} style={{ height: '80px' }} />
+
+                            {/* Metrics Skeleton */}
+                            <div className={styles.metricsGrid}>
+                                <div className={`${styles.skeleton} ${styles.skeletonBox}`} style={{ height: '100px' }} />
+                                <div className={`${styles.skeleton} ${styles.skeletonBox}`} style={{ height: '100px' }} />
+                                <div className={`${styles.skeleton} ${styles.skeletonBox}`} style={{ height: '100px' }} />
+                                <div className={`${styles.skeleton} ${styles.skeletonBox}`} style={{ height: '100px' }} />
+                            </div>
+
+                            {/* Generative Skeleton */}
+                            <div className={`${styles.skeleton} ${styles.skeletonBox}`} style={{ height: '150px' }} />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -170,6 +193,44 @@ export default function AIXRay({ symbol, isOpen, onClose }: AIXRayProps) {
                                 </div>
                             ))}
                         </div>
+
+                        {/* Recent News Section */}
+                        {analysis?.recent_news && analysis.recent_news.length > 0 && (
+                            <div className={styles.section} style={{ marginBottom: '20px' }}>
+                                <h3 className={styles.sectionTitle} style={{ color: '#3b82f6' }}>
+                                    📰 Latest News
+                                </h3>
+                                <div className={styles.newsList} style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '150px', overflowY: 'auto' }}>
+                                    {analysis.recent_news.map((news, idx) => (
+                                        <a
+                                            key={idx}
+                                            href={news.link}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{
+                                                display: 'block',
+                                                padding: '6px 8px',
+                                                background: 'rgba(255,255,255,0.03)',
+                                                borderRadius: '6px',
+                                                border: '1px solid rgba(255,255,255,0.05)',
+                                                textDecoration: 'none',
+                                                transition: 'background 0.2s'
+                                            }}
+                                            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                                            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                                        >
+                                            <div style={{ fontSize: '11px', color: 'var(--text-primary)', fontWeight: '500', marginBottom: '2px', lineHeight: '1.3' }}>
+                                                {news.title}
+                                            </div>
+                                            <div style={{ fontSize: '9px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+                                                <span style={{ opacity: 0.7 }}>{news.source}</span>
+                                                <span style={{ opacity: 0.7 }}>{new Date(news.pubDate).toLocaleDateString()}</span>
+                                            </div>
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Generative Insight Section */}
                         {analysis?.detailed_analysis && (

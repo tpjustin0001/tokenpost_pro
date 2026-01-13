@@ -25,7 +25,7 @@ const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export default function LeadLag() {
     const { data, error, isLoading } = useSWR(
-        '/api/analysis/lead-lag',
+        '/api/crypto/lead-lag',
         fetcher,
         {
             refreshInterval: 600000, // 10분

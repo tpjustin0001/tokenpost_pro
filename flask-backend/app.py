@@ -229,128 +229,72 @@ def api_vcp_signals():
 # SMART CRYPTO SCREENER API
 # ============================================================
 
+# ============================================================
+# SMART CRYPTO SCREENER API
+# ============================================================
+
 SCREENER_SYMBOLS = [
-    'BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD',
-    'ADA-USD', 'AVAX-USD', 'DOGE-USD', 'DOT-USD', 'TRX-USD',
-    'LINK-USD', 'MATIC-USD', 'SHIB-USD', 'LTC-USD', 'BCH-USD',
-    'ATOM-USD', 'UNI-USD', 'XLM-USD', 'ETC-USD', 'FIL-USD',
-    'ICP-USD', 'HBAR-USD', 'APT-USD', 'VET-USD', 'NEAR-USD',
-    'ARB-USD', 'OP-USD', 'INJ-USD', 'RNDR-USD', 'STX-USD',
-    'IMX-USD', 'SUI-USD', 'SEI-USD', 'TIA-USD', 'FET-USD'
+    'BTC', 'ETH', 'SOL', 'BNB', 'XRP',
+    'ADA', 'DOGE', 'AVAX', 'TRX', 'DOT',
+    'LINK', 'MATIC', 'SHIB', 'LTC', 'BCH',
+    'ATOM', 'UNI', 'ETC', 'FIL', 'NEAR',
+    'APT', 'INJ', 'RNDR', 'STX', 'IMX',
+    'ARB', 'OP', 'SUI', 'SEI', 'TIA'
 ]
-
-# Global Cache for Screener Data
-SCREENER_CACHE = {
-    '1y': {'data': None, 'timestamp': None},
-    'max': {'data': None, 'timestamp': None}
-}
-
-def fetch_bulk_data(period="1y"):
-    """Fetch data for all symbols in one go using yfinance bulk download"""
-    import yfinance as yf
-    
-    # Check cache
-    now = datetime.now()
-    if SCREENER_CACHE.get(period) and SCREENER_CACHE[period]['data'] is not None:
-        # 5 minute cache
-        if (now - SCREENER_CACHE[period]['timestamp']).total_seconds() < 300:
-            return SCREENER_CACHE[period]['data']
-
-    try:
-        # Bulk download
-        print(f"📥 Fetching bulk data for period={period}...")
-        data = yf.download(SCREENER_SYMBOLS, period=period, group_by='ticker', threads=True, progress=False)
-        
-        SCREENER_CACHE[period] = {
-            'data': data,
-            'timestamp': now
-        }
-        return data
-    except Exception as e:
-        print(f"Bulk fetch error: {e}")
-        return None
-
-def get_symbol_data(bulk_data, symbol):
-    """Extract single symbol DataFrame from bulk data"""
-    try:
-        # yfinance bulk structure: data[symbol][Open/High/Low/Close]
-        # Or if single symbol, just DataFrame
-        # Handle multi-level columns
-        if isinstance(bulk_data.columns, pd.MultiIndex):
-            return bulk_data[symbol]
-        else:
-            return bulk_data # Fallback if structure is different
-    except:
-        return None
 
 @app.route('/api/screener/breakout')
 def api_screener_breakout():
-    """Tab 1: Breakout Hunter - SMA Trends"""
-    import pandas as pd
+    """Tab 1: Breakout Hunter - SMA Trends via MarketDataService"""
+    from market_data_service import market_data_service
     
     results = []
-    bulk_data = fetch_bulk_data(period="1y")
     
-    if bulk_data is None:
-        return jsonify({'error': 'Failed to fetch data'}), 500
-
+    # Iterate symbols and fetch via robust service
     for symbol in SCREENER_SYMBOLS:
         try:
-            # Extract specific symbol data
-            if isinstance(bulk_data.columns, pd.MultiIndex):
-                try:
-                    hist = bulk_data[symbol].dropna()
-                except KeyError:
-                    continue
-            else:
-                hist = bulk_data # Should not happen with multiple symbols
-                
-            if hist.empty or len(hist) < 200:
-                continue
-                
-            close = hist['Close']
-            # Ensure series
-            if isinstance(close, pd.DataFrame):
-                close = close.iloc[:, 0]
-                
-            current_price = float(close.iloc[-1])
+            data = market_data_service.get_asset_data(symbol)
+            # data keys: symbol, source, current_price, change_24h, ma_20, trend, volume_status, raw_df
             
-            # Calculate SMAs
-            sma20 = float(close.rolling(window=20).mean().iloc[-1])
-            sma50 = float(close.rolling(window=50).mean().iloc[-1])
-            sma200 = float(close.rolling(window=200).mean().iloc[-1])
+            # Additional Trend Metrics from raw_df
+            df = data['raw_df']
+            current_price = data['current_price']
             
-            # Status determination
+            sma20 = data['ma_20']
+            sma50 = df['Close'].tail(50).mean()
+            sma200 = df['Close'].tail(200).mean()
+            
             status_20 = 'Bullish' if current_price > sma20 else 'Bearish'
             status_50 = 'Bullish' if current_price > sma50 else 'Bearish'
             status_200 = 'Bull Market' if current_price > sma200 else 'Bear Market'
             
-            # Check for recent crossover (approximate)
-            if len(close) > 2:
-                prev_close = float(close.iloc[-2])
-                prev_sma200 = float(close.rolling(window=200).mean().iloc[-2])
-                is_fresh_breakout = (prev_close < prev_sma200) and (current_price > sma200)
-            else:
-                is_fresh_breakout = False
-            
+            # Breakout Check
+            is_fresh_breakout = False
+            if len(df) > 2:
+                prev_close = df['Close'].iloc[-2]
+                prev_sma200 = df['Close'].expanding().mean().iloc[-2] # Approx if rolling not avail, but we have rolling
+                # Re-calc rolling for prev if needed, but safe approximation:
+                is_fresh_breakout = (prev_close < sma200 * 0.99) and (current_price > sma200)
+
             results.append({
-                'symbol': symbol.replace('-USD', ''),
+                'symbol': data['symbol'],
                 'price': current_price,
+                'change_24h': data['change_24h'],
+                'volume': df['Volume'].iloc[-1],
                 'sma20': sma20,
                 'sma50': sma50,
                 'sma200': sma200,
                 'status_20': status_20,
                 'status_50': status_50,
                 'status_200': status_200,
-                'is_fresh_breakout': bool(is_fresh_breakout),
-                'pct_from_sma200': float(((current_price - sma200) / sma200) * 100) if sma200 else 0
+                'is_fresh_breakout': is_fresh_breakout,
+                'pct_from_sma200': ((current_price - sma200) / sma200) * 100 if sma200 else 0
             })
             
         except Exception as e:
-            # print(f"Error processing {symbol}: {e}")
+            # print(f"Screener Error ({symbol}): {e}")
             continue
-            
-    # Sort by 'fresh breakout' first, then distance from SMA 200 desc
+
+    # Sort
     results.sort(key=lambda x: (x['is_fresh_breakout'], x['pct_from_sma200']), reverse=True)
     
     return jsonify({
@@ -361,70 +305,38 @@ def api_screener_breakout():
 
 @app.route('/api/screener/price-performance')
 def api_screener_performance():
-    """Tab 2: Bottom Fisher - ATH/ATL Drawdown"""
-    import pandas as pd
+    """Tab 2: Price Performance"""
+    from market_data_service import market_data_service
     
     results = []
-    # For performance we usually need MAX data. 
-    # Calling bulk download for 'max' might be heavy for 35 coins but generally acceptable (few MBs).
-    bulk_data = fetch_bulk_data(period="5y") # 5 years is usually enough for most recent cycles
     
-    if bulk_data is None:
-        return jsonify({'error': 'Failed to fetch data'}), 500
-
     for symbol in SCREENER_SYMBOLS:
         try:
-             # Extract specific symbol data
-            if isinstance(bulk_data.columns, pd.MultiIndex):
-                try:
-                    hist = bulk_data[symbol].dropna()
-                except KeyError:
-                    continue
-            else:
-                hist = bulk_data
+            data = market_data_service.get_asset_data(symbol)
+            df = data['raw_df']
+            current_price = data['current_price']
             
-            if hist.empty or len(hist) < 30:
-                continue
-                
-            close = hist['Close']
-             # Ensure series
-            if isinstance(close, pd.DataFrame):
-                close = close.iloc[:, 0]
-                
-            current_price = float(close.iloc[-1])
+            ath = df['High'].max()
+            atl = df['Low'].min()
             
-            # Calculate ATH / ATL
-            ath = float(close.max())
-            atl = float(close.min())
-            ath_date = close.idxmax().strftime('%Y-%m-%d')
-            atl_date = close.idxmin().strftime('%Y-%m-%d')
-            
-            # Drawdown %
-            drawdown = ((current_price - ath) / ath) * 100
-            
-            # From ATL %
-            from_atl = ((current_price - atl) / atl) * 100
-            
-            # Cycle Position (0 to 1 scale)
-            position = (current_price - atl) / (ath - atl) if (ath - atl) > 0 else 0
+            # Drawdown
+            drawdown = ((current_price - ath) / ath) * 100 if ath > 0 else 0
+            from_atl = ((current_price - atl) / atl) * 100 if atl > 0 else 0
             
             results.append({
-                'symbol': symbol.replace('-USD', ''),
+                'symbol': data['symbol'],
                 'price': current_price,
+                'change_24h': data['change_24h'],
+                'volume': df['Volume'].iloc[-1],
                 'ath': ath,
-                'ath_date': ath_date,
                 'atl': atl,
-                'atl_date': atl_date,
                 'drawdown': drawdown,
-                'from_atl': from_atl,
-                'cycle_position': float(position)
+                'from_atl': from_atl
             })
             
-        except Exception as e:
-             # print(f"Error processing {symbol}: {e}")
-             continue
-
-    # Sort by biggest drawdown (deepest dip first)
+        except Exception:
+            continue
+            
     results.sort(key=lambda x: x['drawdown'])
     
     return jsonify({
@@ -435,66 +347,33 @@ def api_screener_performance():
 
 @app.route('/api/screener/risk')
 def api_screener_risk():
-    """Tab 3: Risk Scanner - Volatility Analysis"""
+    """Tab 3: Risk Scanner"""
+    from market_data_service import market_data_service
     import numpy as np
-    import pandas as pd
     
     results = []
-    bulk_data = fetch_bulk_data(period="1y")
-    
-    if bulk_data is None:
-        return jsonify({'error': 'Failed to fetch data'}), 500
-        
-    # Pre-fetch BTC to calculate relative risk
-    btc_vol = 50.0 # Default fallback
-    try:
-        if isinstance(bulk_data.columns, pd.MultiIndex):
-            btc_hist = bulk_data['BTC-USD']['Close'].dropna()
-        else:
-            btc_hist = bulk_data['Close'] # Fallback
-            
-        btc_ret = btc_hist.pct_change().dropna()
-        btc_vol = float(btc_ret.std() * np.sqrt(365) * 100)
-    except:
-        pass
     
     for symbol in SCREENER_SYMBOLS:
         try:
-            if isinstance(bulk_data.columns, pd.MultiIndex):
-                try:
-                    hist = bulk_data[symbol].dropna()
-                except KeyError:
-                    continue
-            else:
-                hist = bulk_data
-                
-            close = hist['Close']
-            if isinstance(close, pd.DataFrame): close = close.iloc[:, 0]
+            data = market_data_service.get_asset_data(symbol)
+            df = data['raw_df']
+            current_price = data['current_price']
             
-            if len(close) < 30: continue
+            # Volatility (Annualized)
+            returns = df['Close'].pct_change().dropna()
+            volatility = float(returns.std() * np.sqrt(365) * 100) if len(returns) > 1 else 0
             
-            current_price = float(close.iloc[-1])
+            # Simplified Risk Score (0-2 scale)
+            risk_score = volatility / 50.0 # Benchmark 50%
             
-            # Annualized Volatility
-            returns = close.pct_change().dropna()
-            volatility = float(returns.std() * np.sqrt(365) * 100)
-            
-            # Beta / Risk Score (approximate vs BTC)
-            risk_score = volatility / btc_vol if btc_vol > 0 else 1.0
-            
-            # Rating
             if risk_score > 1.5: rating = 'Extreme'
             elif risk_score < 0.8: rating = 'Low'
             else: rating = 'Medium'
             
-            # If Stablecoin (USDT/USDC - not in list but just in case)
-            if 'USD' in symbol and 'BTC' not in symbol and volatility < 5:
-                rating = 'Low'
-                risk_score = 0.1
-            
             results.append({
-                'symbol': symbol.replace('-USD', ''),
+                'symbol': data['symbol'],
                 'price': current_price,
+                'change_24h': data['change_24h'],
                 'volatility': volatility,
                 'risk_score': risk_score,
                 'rating': rating
@@ -503,7 +382,6 @@ def api_screener_risk():
         except Exception:
             continue
             
-    # Sort by Risk Score desc
     results.sort(key=lambda x: x['risk_score'], reverse=True)
     
     return jsonify({

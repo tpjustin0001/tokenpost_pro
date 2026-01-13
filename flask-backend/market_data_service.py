@@ -5,6 +5,7 @@ import requests
 import pandas as pd
 from datetime import datetime
 
+class MarketDataService:
     def __init__(self):
         # 1. Binance (CCXT) - Public/Free/Fast
         self.binance = ccxt.binance({

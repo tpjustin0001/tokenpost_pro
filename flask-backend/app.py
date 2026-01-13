@@ -701,3 +701,4 @@ if __name__ == '__main__':
     
     print(f"🚀 TokenPost PRO API starting on port {port}...")
     app.run(host='0.0.0.0', port=port, debug=debug)
+# Force Redeploy: Wed Jan 14 00:10:51 KST 2026

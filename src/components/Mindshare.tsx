@@ -1,6 +1,9 @@
 'use client';
 
+import { TrendingUp } from 'lucide-react';
 import styles from './Mindshare.module.css';
+import { TableSkeleton } from './LoadingSkeleton';
+import EmptyState from './EmptyState';
 
 interface MindshareItem {
     symbol: string;
@@ -36,6 +39,8 @@ const MOCK_DATA: MindshareItem[] = [
 ];
 
 export default function Mindshare() {
+    const isLoading = false; // API 연동 시 사용
+
     return (
         <div className={styles.widget}>
             <div className={styles.header}>
@@ -55,10 +60,14 @@ export default function Mindshare() {
             </div>
 
             <div className={styles.list}>
-                {MOCK_DATA.length === 0 ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                        소셜 데이터를 수집하고 있습니다...
-                    </div>
+                {isLoading ? (
+                    <TableSkeleton rows={5} />
+                ) : MOCK_DATA.length === 0 ? (
+                    <EmptyState
+                        icon={<TrendingUp size={48} />}
+                        title="소셜 데이터를 수집하고 있습니다"
+                        description="잠시 후 트위터, 레딧 등의 소셜 센티멘트 데이터가 표시됩니다."
+                    />
                 ) : (
                     MOCK_DATA.map((item) => (
                         <div key={item.symbol} className={styles.row}>

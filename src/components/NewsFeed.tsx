@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Newspaper } from 'lucide-react';
 import { supabase, News } from '@/lib/supabase';
+import { NewsFeedSkeleton } from './LoadingSkeleton';
+import EmptyState from './EmptyState';
 import styles from './NewsFeed.module.css';
 
 interface NewsItem {
@@ -83,10 +86,6 @@ export default function NewsFeed() {
         };
     }
 
-    if (loading) {
-        return <div className={styles.feedContainer} style={{ padding: '20px', color: 'var(--text-muted)' }}>Loading news...</div>;
-    }
-
     return (
         <div className={styles.feedContainer}>
             <div className={styles.header}>
@@ -98,8 +97,14 @@ export default function NewsFeed() {
             </div>
 
             <div className={styles.list}>
-                {newsItems.length === 0 ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No recent news.</div>
+                {loading ? (
+                    <NewsFeedSkeleton />
+                ) : newsItems.length === 0 ? (
+                    <EmptyState
+                        icon={<Newspaper size={48} />}
+                        title="뉴스를 불러오는 중입니다"
+                        description="최신 암호화폐 뉴스가 곧 표시됩니다."
+                    />
                 ) : (
                     newsItems.map((news) => (
                         <article key={news.id} className={`${styles.item} ${styles[news.sentiment || 'neutral']}`}>

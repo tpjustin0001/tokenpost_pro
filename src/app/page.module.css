@@ -12,18 +12,18 @@
 }
 
 .content {
-  padding: 16px 24px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
 }
 
 .dashboardSection {
-  margin-top: 24px;
-  margin-bottom: 8px;
+  margin-top: 32px;
+  margin-bottom: 16px;
 }
 
 .sectionHeading {

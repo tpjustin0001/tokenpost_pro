@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { TrendingDown } from 'lucide-react';
 import { usePricePerformance } from '@/hooks/usePricePerformance';
 import AIXRay from './AIXRay';
+import EmptyState from './EmptyState';
+import { TableSkeleton } from './LoadingSkeleton';
 import styles from './PricePerformance.module.css';
 
 export default function PricePerformance() {
@@ -47,9 +50,13 @@ export default function PricePerformance() {
             </div>
             <div className={styles.list} style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
                 {isLoading ? (
-                    <div className={styles.loading}>로딩 중...</div>
+                    <TableSkeleton rows={6} />
                 ) : data.length === 0 ? (
-                    <div className={styles.loading}>데이터 없음</div>
+                    <EmptyState
+                        icon={<TrendingDown size={48} />}
+                        title="가격 데이터를 불러오는 중입니다"
+                        description="실시간 가격 등락 정보가 곧 표시됩니다."
+                    />
                 ) : (
                     data.map((coin) => (
                         <div key={coin.symbol} className={styles.row}>

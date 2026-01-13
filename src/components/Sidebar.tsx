@@ -1,12 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useXRay } from '@/context/XRayContext';
 import styles from './Sidebar.module.css';
 
-import { LayoutDashboard, Newspaper, Search, BarChart3, Radio, Bot, GraduationCap, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Newspaper, Search, BarChart3, Radio, Bot, GraduationCap, CalendarDays, Menu, X } from 'lucide-react';
 
 // Using Lucide icons
 const NAV_ITEMS = [
@@ -23,9 +24,49 @@ export default function Sidebar() {
     const pathname = usePathname();
     const { theme, toggleTheme } = useTheme();
     const { isXRayActive, toggleXRay } = useXRay();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // Close mobile menu on route change
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [pathname]);
+
+    // Close menu on escape key
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsMobileMenuOpen(false);
+            }
+        };
+        
+        if (isMobileMenuOpen) {
+            document.addEventListener('keydown', handleEscape);
+            return () => document.removeEventListener('keydown', handleEscape);
+        }
+    }, [isMobileMenuOpen]);
 
     return (
-        <aside className={styles.sidebar}>
+        <>
+            {/* Mobile Menu Toggle Button */}
+            <button
+                className={styles.mobileMenuToggle}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label={isMobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
+                aria-expanded={isMobileMenuOpen}
+            >
+                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+
+            {/* Mobile Overlay */}
+            {isMobileMenuOpen && (
+                <div 
+                    className={styles.mobileOverlay}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    aria-hidden="true"
+                />
+            )}
+
+            <aside className={`${styles.sidebar} ${isMobileMenuOpen ? styles.mobileOpen : ''}`}>
             {/* Logo Area */}
             <Link href="/" className={styles.logo}>
                 {/* Simulated Logo text/image */}
@@ -82,5 +123,6 @@ export default function Sidebar() {
                 </button>
             </div>
         </aside>
+        </>
     );
 }

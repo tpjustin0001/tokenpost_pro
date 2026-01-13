@@ -49,8 +49,8 @@ const containerVariants = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
+      staggerChildren: 0.05,
+      delayChildren: 0.05,
     }
   }
 };
@@ -88,6 +88,7 @@ export default function HomePage() {
         <EventTicker />
 
         <MotionMain
+          id="main-content"
           className={styles.content}
           variants={containerVariants}
           initial="hidden"

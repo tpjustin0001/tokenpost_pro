@@ -10,6 +10,68 @@
     position: sticky;
     top: 0;
     z-index: 50;
+    transition: transform 0.3s ease;
+}
+
+/* Mobile Menu Toggle Button */
+.mobileMenuToggle {
+    display: none;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 60;
+    width: 44px;
+    height: 44px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-card);
+    transition: all var(--transition-fast);
+}
+
+.mobileMenuToggle:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--accent-blue);
+}
+
+/* Mobile Overlay */
+.mobileOverlay {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobileMenuToggle {
+        display: flex;
+    }
+
+    .mobileOverlay {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+        backdrop-filter: blur(2px);
+    }
+
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        transform: translateX(-100%);
+        z-index: 50;
+        box-shadow: var(--shadow-elevation);
+    }
+
+    .sidebar.mobileOpen {
+        transform: translateX(0);
+    }
 }
 
 .logo {

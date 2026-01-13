@@ -123,7 +123,7 @@ export default function ResearchIntel() {
     };
 
     return (
-        <div className="card">
+        <div className={styles.widget}>
             <div className={styles.header}>
                 <div className={styles.headerLeft}>
                     <span className="card-title">

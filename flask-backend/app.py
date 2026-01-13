@@ -21,6 +21,18 @@ app = Flask(__name__)
 load_dotenv()
 CORS(app)
 
+# DEBUG: Version Check
+API_VERSION = "1.0.2-fix-gitignore-env"
+print(f"🚀 Starting TokenPost PRO API - Version: {API_VERSION}")
+
+@app.route('/api/version')
+def api_version():
+    return jsonify({
+        'version': API_VERSION,
+        'timestamp': datetime.now().isoformat(),
+        'status': 'active'
+    })
+
 # ----------------------------------------------------
 # Vercel Middleware to strip /api/python prefix
 # ----------------------------------------------------

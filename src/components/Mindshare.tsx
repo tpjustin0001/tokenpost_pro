@@ -53,9 +53,9 @@ export default function Mindshare() {
             </div>
 
             <div className={styles.tableHeader}>
-                <span className={styles.th}>ASSET</span>
-                <span className={`${styles.th} ${styles.thCenter}`}>INTEREST</span>
-                <span className={`${styles.th} ${styles.thCenter}`}>SENTIMENT</span>
+                <span className={styles.th}>자산</span>
+                <span className={`${styles.th} ${styles.thCenter}`}>관심도</span>
+                <span className={`${styles.th} ${styles.thCenter}`}>감성</span>
                 <span className={styles.th}></span>
             </div>
 

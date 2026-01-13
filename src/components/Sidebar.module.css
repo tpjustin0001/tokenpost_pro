@@ -46,6 +46,12 @@
 @media (max-width: 768px) {
     .mobileMenuToggle {
         display: flex;
+        z-index: 100;
+        /* Ensure button is on top of everything */
+        background: var(--bg-card);
+        border: 1px solid var(--border-color-hover);
+        color: var(--text-primary);
+        box-shadow: var(--shadow-elevation);
     }
 
     .mobileOverlay {
@@ -55,18 +61,23 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 40;
-        backdrop-filter: blur(2px);
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 90;
+        backdrop-filter: blur(4px);
     }
 
     .sidebar {
         position: fixed;
         left: 0;
         top: 0;
+        bottom: 0;
+        /* Enforce full height */
         transform: translateX(-100%);
-        z-index: 50;
+        z-index: 95;
         box-shadow: var(--shadow-elevation);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        width: 260px;
+        /* Slightly wider on mobile for better touch target */
     }
 
     .sidebar.mobileOpen {

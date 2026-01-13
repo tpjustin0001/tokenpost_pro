@@ -11,13 +11,13 @@ import { LayoutDashboard, Newspaper, Search, BarChart3, Radio, Bot, GraduationCa
 
 // Using Lucide icons
 const NAV_ITEMS = [
-    { id: 'home', icon: <LayoutDashboard size={20} />, label: '터미널 (Terminal)', href: '/' },
-    { id: 'data', icon: <BarChart3 size={20} />, label: '마켓 데이터 (Data)', href: '/data' },
-    { id: 'analysis', icon: <Bot size={20} />, label: 'AI 전략 (Strategy)', href: '/analysis' },
-    { id: 'news', icon: <Newspaper size={20} />, label: '뉴스피드 (News)', href: '/news' },
-    { id: 'research', icon: <Search size={20} />, label: '인사이트 (Insights)', href: '/research' },
-    { id: 'calendar', icon: <CalendarDays size={20} />, label: '일정 (Calendar)', href: '/calendar' },
-    { id: 'academy', icon: <GraduationCap size={20} />, label: '아카데미 (Academy)', href: 'https://academy.tokenpost.kr/', external: true },
+    { id: 'home', icon: <LayoutDashboard size={20} />, label: '터미널', href: '/' },
+    { id: 'data', icon: <BarChart3 size={20} />, label: '마켓 데이터', href: '/data' },
+    { id: 'analysis', icon: <Bot size={20} />, label: 'AI 전략', href: '/analysis' },
+    { id: 'news', icon: <Newspaper size={20} />, label: '뉴스피드', href: '/news' },
+    { id: 'research', icon: <Search size={20} />, label: '인사이트', href: '/research' },
+    { id: 'calendar', icon: <CalendarDays size={20} />, label: '일정', href: '/calendar' },
+    { id: 'academy', icon: <GraduationCap size={20} />, label: '아카데미', href: 'https://academy.tokenpost.kr/', external: true },
 ];
 
 export default function Sidebar() {
@@ -38,7 +38,7 @@ export default function Sidebar() {
                 setIsMobileMenuOpen(false);
             }
         };
-        
+
         if (isMobileMenuOpen) {
             document.addEventListener('keydown', handleEscape);
             return () => document.removeEventListener('keydown', handleEscape);
@@ -59,7 +59,7 @@ export default function Sidebar() {
 
             {/* Mobile Overlay */}
             {isMobileMenuOpen && (
-                <div 
+                <div
                     className={styles.mobileOverlay}
                     onClick={() => setIsMobileMenuOpen(false)}
                     aria-hidden="true"
@@ -67,62 +67,62 @@ export default function Sidebar() {
             )}
 
             <aside className={`${styles.sidebar} ${isMobileMenuOpen ? styles.mobileOpen : ''}`}>
-            {/* Logo Area */}
-            <Link href="/" className={styles.logo}>
-                {/* Simulated Logo text/image */}
-                <span style={{ fontSize: '18px', fontWeight: 'bold', background: 'linear-gradient(90deg, #fff, #aaa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                    TOKENPOST PRO
-                </span>
-            </Link>
+                {/* Logo Area */}
+                <Link href="/" className={styles.logo}>
+                    {/* Simulated Logo text/image */}
+                    <span style={{ fontSize: '18px', fontWeight: 'bold', background: 'linear-gradient(90deg, #fff, #aaa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                        TOKENPOST PRO
+                    </span>
+                </Link>
 
-            {/* Navigation */}
-            <nav className={styles.nav}>
-                {NAV_ITEMS.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                {/* Navigation */}
+                <nav className={styles.nav}>
+                    {NAV_ITEMS.map((item) => {
+                        const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
 
-                    return (
-                        <Link
-                            key={item.id}
-                            href={item.href}
-                            className={`${styles.navItem} ${isActive ? styles.active : ''}`}
-                            {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                        >
-                            <span className={styles.icon}>{item.icon}</span>
-                            <span className={styles.label}>{item.label}</span>
-                        </Link>
-                    );
-                })}
-            </nav>
+                        return (
+                            <Link
+                                key={item.id}
+                                href={item.href}
+                                className={`${styles.navItem} ${isActive ? styles.active : ''}`}
+                                {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                            >
+                                <span className={styles.icon}>{item.icon}</span>
+                                <span className={styles.label}>{item.label}</span>
+                            </Link>
+                        );
+                    })}
+                </nav>
 
-            {/* Footer / User Profile */}
-            <div className={styles.footer}>
-                <div className={styles.userProfile}>
-                    <div className={styles.userAvatar}>QP</div>
-                    <div className={styles.userInfo}>
-                        <span className={styles.username}>Admin User</span>
-                        <span className={styles.userRole}>PRO MEMBER</span>
+                {/* Footer / User Profile */}
+                <div className={styles.footer}>
+                    <div className={styles.userProfile}>
+                        <div className={styles.userAvatar}>QP</div>
+                        <div className={styles.userInfo}>
+                            <span className={styles.username}>관리자</span>
+                            <span className={styles.userRole}>PRO 멤버</span>
+                        </div>
                     </div>
+
+                    <button
+                        className={`${styles.themeBtn} ${isXRayActive ? styles.activeXRay : ''}`}
+                        onClick={toggleXRay}
+                        style={isXRayActive ? { borderColor: 'var(--accent-blue)', color: 'var(--accent-blue)', background: 'rgba(59, 130, 246, 0.1)' } : { marginBottom: '8px' }}
+                    >
+                        <Radio size={16} />
+                        <span>X-Ray 모드</span>
+                    </button>
+
+                    <button
+                        className={styles.themeBtn}
+                        onClick={toggleTheme}
+                        title="테마 변경"
+                    >
+                        <span className={styles.themeIcon}>{theme === 'dark' ? '☀️' : '🌙'}</span>
+                        <span>{theme === 'dark' ? '라이트 모드' : '다크 모드'}</span>
+                    </button>
                 </div>
-
-                <button
-                    className={`${styles.themeBtn} ${isXRayActive ? styles.activeXRay : ''}`}
-                    onClick={toggleXRay}
-                    style={isXRayActive ? { borderColor: 'var(--accent-blue)', color: 'var(--accent-blue)', background: 'rgba(59, 130, 246, 0.1)' } : { marginBottom: '8px' }}
-                >
-                    <Radio size={16} />
-                    <span>X-Ray Mode</span>
-                </button>
-
-                <button
-                    className={styles.themeBtn}
-                    onClick={toggleTheme}
-                    title="테마 변경"
-                >
-                    <span className={styles.themeIcon}>{theme === 'dark' ? '☀️' : '🌙'}</span>
-                    <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-                </button>
-            </div>
-        </aside>
+            </aside>
         </>
     );
 }

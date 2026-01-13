@@ -30,8 +30,8 @@ export default function PricePerformance() {
         <div className={styles.widget} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <div className={styles.header} style={{ height: '52px', minHeight: '52px', flex: '0 0 52px' }}>
                 <div className={styles.titleRow}>
-                    <h3 className={styles.title}>실시간 가격 등락 (1H)</h3>
-                    <span className={styles.liveBadge} style={{ background: '#22c55e', color: '#fff' }}>LIVE</span>
+                    <h3 className={styles.title}>실시간 가격 등락 (1시간)</h3>
+                    <span className={styles.liveBadge} style={{ background: '#22c55e', color: '#fff' }}>실시간</span>
                 </div>
                 <div className={styles.tabs}>
                     <button

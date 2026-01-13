@@ -4282,3 +4282,214 @@
 [0]  GET /api/kimchi/upbit 200 in 114ms (compile: 29ms, render: 84ms)
 [0]  GET /api/kimchi/upbit 200 in 94ms (compile: 18ms, render: 76ms)
 [0]  GET /api/kimchi/upbit 200 in 132ms (compile: 26ms, render: 106ms)
+[0]  GET /api/global 200 in 451ms (compile: 77ms, render: 374ms)
+[0]  GET /api/markets 200 in 390ms (compile: 8ms, render: 382ms)
+[0]  GET /api/kimchi/upbit 200 in 70ms (compile: 2ms, render: 68ms)
+[0]  GET /api/global 200 in 91ms (compile: 82ms, render: 9ms)
+[0]  GET /api/kimchi/upbit 200 in 110ms (compile: 10ms, render: 100ms)
+[0]  GET /api/kimchi/upbit 200 in 375ms (compile: 8ms, render: 367ms)
+[0]  GET /api/kimchi/upbit 200 in 118ms (compile: 29ms, render: 89ms)
+[0]  GET /api/kimchi/upbit 200 in 147ms (compile: 25ms, render: 122ms)
+[0]  GET /api/kimchi/upbit 200 in 111ms (compile: 11ms, render: 100ms)
+[0]  GET /api/global 200 in 379ms (compile: 20ms, render: 358ms)
+[0]  GET /api/markets 200 in 346ms (compile: 4ms, render: 342ms)
+[0]  GET /api/kimchi/upbit 200 in 105ms (compile: 3ms, render: 102ms)
+[0]  GET /api/global 200 in 17ms (compile: 6ms, render: 11ms)
+[0]  GET /api/kimchi/upbit 200 in 117ms (compile: 10ms, render: 107ms)
+[0]  GET /api/kimchi/upbit 200 in 102ms (compile: 4ms, render: 98ms)
+[0]  GET /api/kimchi/upbit 200 in 102ms (compile: 18ms, render: 85ms)
+[0]  GET /api/kimchi/upbit 200 in 151ms (compile: 36ms, render: 115ms)
+[0]  GET /api/kimchi/upbit 200 in 93ms (compile: 10ms, render: 83ms)
+[0]  GET /api/global 200 in 372ms (compile: 34ms, render: 339ms)
+[0]  GET /api/markets 200 in 438ms (compile: 5ms, render: 433ms)
+[0]  GET /api/kimchi/upbit 200 in 88ms (compile: 3ms, render: 84ms)
+[0]  GET /api/global 200 in 36ms (compile: 17ms, render: 20ms)
+[0]  GET /api/kimchi/upbit 200 in 177ms (compile: 18ms, render: 158ms)
+[0]  GET /api/kimchi/upbit 200 in 101ms (compile: 21ms, render: 79ms)
+[0]  GET /api/kimchi/upbit 200 in 113ms (compile: 6ms, render: 107ms)
+[0]  GET /api/kimchi/upbit 200 in 110ms (compile: 15ms, render: 94ms)
+[0]  GET /api/kimchi/upbit 200 in 111ms (compile: 18ms, render: 93ms)
+[0]  GET /api/global 200 in 442ms (compile: 22ms, render: 420ms)
+[0]  GET /api/markets 200 in 539ms (compile: 8ms, render: 531ms)
+[0]  GET /api/kimchi/upbit 200 in 107ms (compile: 9ms, render: 98ms)
+[0]  GET /api/global 200 in 36ms (compile: 30ms, render: 7ms)
+[0]  GET /api/kimchi/upbit 200 in 95ms (compile: 15ms, render: 80ms)
+[0]  GET /api/kimchi/upbit 200 in 98ms (compile: 9ms, render: 90ms)
+[0]  GET /api/kimchi/upbit 200 in 131ms (compile: 36ms, render: 95ms)
+[0]  GET /api/kimchi/upbit 200 in 108ms (compile: 17ms, render: 91ms)
+[0]  GET /profile 404 in 606ms (compile: 469ms, render: 137ms)
+[0]  GET / 200 in 160ms (compile: 28ms, render: 132ms)
+[0]  GET /api/global 200 in 12ms (compile: 4ms, render: 7ms)
+[0]  GET /api/markets 200 in 48ms (compile: 44ms, render: 4ms)
+[0]  GET /api/kimchi/upbit 200 in 127ms (compile: 13ms, render: 115ms)
+[0]  GET /api/kimchi/upbit 200 in 59ms (compile: 3ms, render: 57ms)
+[0]  GET /data 200 in 21ms (compile: 5ms, render: 16ms)
+[0]  GET /api/global 200 in 8ms (compile: 3ms, render: 5ms)
+[0]  GET /data 200 in 83ms (compile: 11ms, render: 72ms)
+[0]  GET /api/global 200 in 26ms (compile: 21ms, render: 5ms)
+[0]  GET /data 200 in 98ms (compile: 7ms, render: 91ms)
+[0]  GET /api/global 200 in 29ms (compile: 22ms, render: 7ms)
+[0]  GET /api/global 200 in 336ms (compile: 2ms, render: 334ms)
+[0]  GET /api/markets 200 in 348ms (compile: 3ms, render: 345ms)
+[0]  GET /api/kimchi/upbit 200 in 536ms (compile: 49ms, render: 487ms)
+[0]  GET /api/global 200 in 25ms (compile: 19ms, render: 6ms)
+[0]  GET /api/kimchi/upbit 200 in 131ms (compile: 37ms, render: 93ms)
+[0]  GET /api/kimchi/upbit 200 in 275ms (compile: 43ms, render: 233ms)
+[0]  GET /api/kimchi/upbit 200 in 232ms (compile: 65ms, render: 167ms)
+[0]  GET /api/kimchi/upbit 200 in 145ms (compile: 18ms, render: 127ms)
+[0]  GET /api/kimchi/upbit 200 in 120ms (compile: 36ms, render: 84ms)
+[0]  GET /api/global 200 in 546ms (compile: 45ms, render: 501ms)
+[0]  GET /api/markets 200 in 526ms (compile: 19ms, render: 507ms)
+[0]  GET /api/global 200 in 30ms (compile: 20ms, render: 11ms)
+[0]  GET /api/kimchi/upbit 200 in 217ms (compile: 9ms, render: 208ms)
+[0]  GET /api/kimchi/upbit 200 in 102ms (compile: 17ms, render: 85ms)
+[0]  GET /api/kimchi/upbit 200 in 106ms (compile: 15ms, render: 91ms)
+[0]  GET /api/kimchi/upbit 200 in 117ms (compile: 21ms, render: 95ms)
+[0]  GET /api/kimchi/upbit 200 in 127ms (compile: 12ms, render: 115ms)
+[0]  GET /api/kimchi/upbit 200 in 145ms (compile: 17ms, render: 128ms)
+[0]  GET /api/global 200 in 417ms (compile: 46ms, render: 371ms)
+[0]  GET /api/markets 200 in 499ms (compile: 6ms, render: 493ms)
+[0]  GET /api/global 200 in 84ms (compile: 53ms, render: 32ms)
+[0]  GET /api/kimchi/upbit 200 in 136ms (compile: 10ms, render: 126ms)
+[0]  GET /api/kimchi/upbit 200 in 131ms (compile: 22ms, render: 109ms)
+[0]  GET /api/kimchi/upbit 200 in 120ms (compile: 28ms, render: 92ms)
+[0]  GET /api/kimchi/upbit 200 in 166ms (compile: 15ms, render: 151ms)
+[0]  GET /api/kimchi/upbit 200 in 87ms (compile: 16ms, render: 71ms)
+[0]  GET /api/kimchi/upbit 200 in 146ms (compile: 25ms, render: 121ms)
+[0]  GET /api/global 200 in 457ms (compile: 39ms, render: 418ms)
+[0]  GET /api/markets 200 in 526ms (compile: 5ms, render: 521ms)
+[0]  GET /api/global 200 in 34ms (compile: 27ms, render: 7ms)
+[0]  GET /api/kimchi/upbit 200 in 124ms (compile: 5ms, render: 119ms)
+[0]  GET /api/kimchi/upbit 200 in 120ms (compile: 16ms, render: 104ms)
+[0]  GET /api/kimchi/upbit 200 in 104ms (compile: 9ms, render: 95ms)
+[0]  GET /api/kimchi/upbit 200 in 104ms (compile: 27ms, render: 77ms)
+[0]  GET /api/kimchi/upbit 200 in 117ms (compile: 25ms, render: 91ms)
+[0]  GET /api/kimchi/upbit 200 in 115ms (compile: 14ms, render: 101ms)
+[0]  GET /api/global 200 in 350ms (compile: 4ms, render: 346ms)
+[0]  GET /api/markets 200 in 338ms (compile: 3ms, render: 335ms)
+[0]  GET /api/global 200 in 30ms (compile: 24ms, render: 6ms)
+[0]  GET /api/kimchi/upbit 200 in 108ms (compile: 5ms, render: 103ms)
+[0]  GET /api/kimchi/upbit 200 in 146ms (compile: 12ms, render: 134ms)
+[0]  GET /api/kimchi/upbit 200 in 137ms (compile: 53ms, render: 84ms)
+[0]  GET /api/kimchi/upbit 200 in 106ms (compile: 12ms, render: 93ms)
+[0]  GET /api/kimchi/upbit 200 in 122ms (compile: 11ms, render: 111ms)
+[0]  GET /api/kimchi/upbit 200 in 223ms (compile: 20ms, render: 204ms)
+[0]  GET /api/global 200 in 442ms (compile: 16ms, render: 426ms)
+[0]  GET /api/markets 200 in 384ms (compile: 14ms, render: 371ms)
+[0]  GET /api/global 200 in 15ms (compile: 7ms, render: 8ms)
+[0]  GET /api/kimchi/upbit 200 in 102ms (compile: 4ms, render: 98ms)
+[0]  GET /api/kimchi/upbit 200 in 106ms (compile: 13ms, render: 93ms)
+[0]  GET /api/kimchi/upbit 200 in 126ms (compile: 35ms, render: 91ms)
+[0]  GET /api/global 200 in 388ms (compile: 41ms, render: 347ms)
+[0]  GET /api/global 200 in 358ms (compile: 15ms, render: 344ms)
+[0]  GET /api/global 200 in 381ms (compile: 31ms, render: 350ms)
+[0]  GET /api/global 200 in 408ms (compile: 25ms, render: 382ms)
+[0] Failed to proxy https://tokenpost-pro.onrender.com/api/screener/breakout Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0] Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0]  GET /api/global 200 in 377ms (compile: 17ms, render: 361ms)
+[0]  GET /api/global 200 in 381ms (compile: 12ms, render: 369ms)
+[0]  GET /api/global 200 in 371ms (compile: 37ms, render: 334ms)
+[0]  GET /api/global 200 in 384ms (compile: 33ms, render: 351ms)
+[0]  GET /api/global 200 in 369ms (compile: 34ms, render: 335ms)
+[0]  GET /api/global 200 in 640ms (compile: 25ms, render: 615ms)
+[0]  GET /api/global 200 in 359ms (compile: 13ms, render: 346ms)
+[0] Failed to proxy https://tokenpost-pro.onrender.com/api/screener/breakout Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0] Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0]  GET /api/global 200 in 380ms (compile: 6ms, render: 374ms)
+[0]  GET /api/global 200 in 426ms (compile: 10ms, render: 416ms)
+[0]  GET /api/global 200 in 358ms (compile: 29ms, render: 329ms)
+[0]  GET /api/global 200 in 61ms (compile: 53ms, render: 8ms)
+[0]  GET /api/kimchi/upbit 200 in 173ms (compile: 23ms, render: 149ms)
+[0]  GET /api/markets 200 in 351ms (compile: 22ms, render: 330ms)
+[0]  GET / 200 in 285ms (compile: 27ms, render: 258ms)
+[0]  GET /api/global 200 in 13ms (compile: 3ms, render: 9ms)
+[0]  GET /api/markets 200 in 27ms (compile: 25ms, render: 2ms)
+[0]  GET /api/kimchi/upbit 200 in 103ms (compile: 17ms, render: 85ms)
+[0]  GET /data 200 in 46ms (compile: 12ms, render: 34ms)
+[0]  GET /api/global 200 in 8ms (compile: 4ms, render: 4ms)
+[0]  GET /data 200 in 472ms (compile: 22ms, render: 450ms)
+[0]  GET /api/global 200 in 52ms (compile: 16ms, render: 36ms)
+[0] TypeError: fetch failed
+[0]     at ignore-listed frames {
+[0]   [cause]: Error [ConnectTimeoutError]: Connect Timeout Error (attempted addresses: 172.66.172.219:443, timeout: 10000ms)
+[0]       at ignore-listed frames {
+[0]     code: 'UND_ERR_CONNECT_TIMEOUT'
+[0]   }
+[0] }
+[0] TypeError: fetch failed
+[0]     at ignore-listed frames {
+[0]   [cause]: Error [ConnectTimeoutError]: Connect Timeout Error (attempted addresses: 172.66.172.219:443, timeout: 10000ms)
+[0]       at ignore-listed frames {
+[0]     code: 'UND_ERR_CONNECT_TIMEOUT'
+[0]   }
+[0] }
+[0] ⨯ Error: failed to pipe response
+[0]     at ignore-listed frames {
+[0]   [cause]: TypeError: fetch failed
+[0]       at ignore-listed frames {
+[0]     [cause]: Error [ConnectTimeoutError]: Connect Timeout Error (attempted addresses: 172.66.172.219:443, timeout: 10000ms)
+[0]         at ignore-listed frames {
+[0]       code: 'UND_ERR_CONNECT_TIMEOUT'
+[0]     }
+[0]   }
+[0] }
+[0]  GET /api/global 500 in 11.0s (compile: 32ms, render: 11.0s)
+[0]  GET /api/global 200 in 35ms (compile: 14ms, render: 21ms)
+[0]  GET /api/global 200 in 403ms (compile: 39ms, render: 364ms)
+[0]  GET /api/global 200 in 44ms (compile: 22ms, render: 22ms)
+[0]  GET /api/global 200 in 360ms (compile: 22ms, render: 338ms)
+[0]  GET /api/global 200 in 21ms (compile: 13ms, render: 8ms)
+[0]  GET /api/global 200 in 369ms (compile: 31ms, render: 338ms)
+[0] Failed to proxy https://tokenpost-pro.onrender.com/api/screener/breakout Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0] Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0]  GET /api/global 200 in 19ms (compile: 7ms, render: 12ms)
+[0]  GET /api/global 200 in 349ms (compile: 12ms, render: 336ms)
+[0]  GET /data 200 in 103ms (compile: 15ms, render: 88ms)
+[0]  GET /api/global 200 in 14ms (compile: 5ms, render: 9ms)
+[0]  GET /api/global 200 in 348ms (compile: 22ms, render: 326ms)
+[0]  GET /api/global 200 in 337ms (compile: 20ms, render: 316ms)
+[0]  GET /api/global 200 in 354ms (compile: 24ms, render: 330ms)
+[0]  GET /api/global 200 in 365ms (compile: 20ms, render: 344ms)
+[0] Failed to proxy https://tokenpost-pro.onrender.com/api/screener/breakout Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0] Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0]  GET /api/global 200 in 359ms (compile: 37ms, render: 323ms)
+[0]  GET /api/global 200 in 370ms (compile: 16ms, render: 354ms)
+[0] ✓ Compiled in 493ms
+[0]  GET /api/global 200 in 366ms (compile: 27ms, render: 339ms)
+[0] ✓ Compiled in 714ms
+[0]  GET /api/global 200 in 375ms (compile: 33ms, render: 342ms)
+[0]  GET /api/global 200 in 360ms (compile: 19ms, render: 342ms)
+[0]  GET /api/global 200 in 385ms (compile: 44ms, render: 342ms)
+[0] Failed to proxy https://tokenpost-pro.onrender.com/api/screener/breakout Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0] Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0]  GET /api/global 200 in 496ms (compile: 86ms, render: 410ms)

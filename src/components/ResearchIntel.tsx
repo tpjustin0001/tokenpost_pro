@@ -124,7 +124,7 @@ export default function ResearchIntel() {
 
     return (
         <div className="card">
-            <div className="card-header">
+            <div className={styles.header}>
                 <div className={styles.headerLeft}>
                     <span className="card-title">
                         <XRayTooltip dataKey="ai_analysis">
@@ -143,7 +143,7 @@ export default function ResearchIntel() {
                         className={`${styles.tab} ${activeTab === 'ALL' ? styles.active : ''}`}
                         onClick={() => setActiveTab('ALL')}
                     >
-                        ALL
+                        전체
                     </button>
                     <button
                         className={`${styles.tab} ${activeTab === 'PRO' ? styles.active : ''}`}
@@ -155,7 +155,7 @@ export default function ResearchIntel() {
                         className={`${styles.tab} ${activeTab === 'NEWS' ? styles.active : ''}`}
                         onClick={() => setActiveTab('NEWS')}
                     >
-                        NEWS
+                        뉴스
                     </button>
                 </div>
             </div>

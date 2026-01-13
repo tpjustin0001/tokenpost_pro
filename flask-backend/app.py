@@ -83,45 +83,59 @@ def api_test_hello():
 def api_market_gate():
     """Market Gate 분석 API (100점 스코어링)"""
     try:
-        
-        result = run_market_gate_sync()
-        
-        # 지표별 시그널 분류
-        indicators = []
-        for name, val in result.metrics.items():
-            if name == 'gate_score_components':
-                continue
-            signal = 'Neutral'
-            if isinstance(val, (int, float)) and val is not None:
-                if name == 'btc_ema200_slope_pct_20':
-                    signal = 'Bullish' if val > 1 else ('Bearish' if val < -1 else 'Neutral')
-                elif name == 'fear_greed_index':
-                    signal = 'Bullish' if val > 50 else ('Bearish' if val < 30 else 'Neutral')
-                elif name == 'funding_rate':
-                    signal = 'Bullish' if -0.0003 < val < 0.0005 else 'Bearish'
-                elif name == 'alt_breadth_above_ema50':
-                    signal = 'Bullish' if val > 0.5 else ('Bearish' if val < 0.35 else 'Neutral')
+        try:
+            # Ensure module is available
+            from crypto_market.market_gate import run_market_gate_sync
+            result = run_market_gate_sync()
             
-            indicators.append({
-                'name': name,
-                'value': val,
-                'signal': signal
+            # 지표별 시그널 분류
+            indicators = []
+            for name, val in result.metrics.items():
+                if name == 'gate_score_components':
+                    continue
+                signal = 'Neutral'
+                if isinstance(val, (int, float)) and val is not None:
+                    if name == 'btc_ema200_slope_pct_20':
+                        signal = 'Bullish' if val > 1 else ('Bearish' if val < -1 else 'Neutral')
+                    elif name == 'fear_greed_index':
+                        signal = 'Bullish' if val > 50 else ('Bearish' if val < 30 else 'Neutral')
+                    elif name == 'funding_rate':
+                        signal = 'Bullish' if -0.0003 < val < 0.0005 else 'Bearish'
+                    elif name == 'alt_breadth_above_ema50':
+                        signal = 'Bullish' if val > 0.5 else ('Bearish' if val < 0.35 else 'Neutral')
+                
+                indicators.append({
+                    'name': name,
+                    'value': val,
+                    'signal': signal
+                })
+            
+            return jsonify({
+                'gate_color': result.gate,
+                'score': result.score,
+                'summary': f"BTC 시장 상태: {result.gate} (점수: {result.score}/100)",
+                'components': result.metrics.get('gate_score_components', {}),
+                'indicators': indicators,
+                'top_reasons': result.reasons,
+                'timestamp': datetime.now().isoformat()
             })
-        
+        except Exception as inner_e:
+            print(f"Market Gate Execution Error: {inner_e}")
+            raise inner_e # Trigger fallback below
+
+    except Exception as e:
+        print(f"Market Gate Fallback Triggered: {e}")
         return jsonify({
-            'gate_color': result.gate,
-            'score': result.score,
-            'summary': f"BTC 시장 상태: {result.gate} (점수: {result.score}/100)",
-            'components': result.metrics.get('gate_score_components', {}),
-            'indicators': indicators,
-            'top_reasons': result.reasons,
+            'gate_color': 'YELLOW',
+            'score': 50,
+            'summary': "데이터 연결 지연 (Fallback Mode)",
+            'components': {
+                "trend": 0, "volatility": 0, "participation": 0, "breadth": 0, "leverage": 0
+            },
+            'indicators': [],
+            'top_reasons': ["시스템 점검 중", "잠시 후 다시 시도해주세요"],
             'timestamp': datetime.now().isoformat()
         })
-        
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
 
 
 # ============================================================

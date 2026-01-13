@@ -34,7 +34,25 @@ interface GlobalXRayViewProps {
 export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProps) {
     if (loading) {
         return (
-            <div className={styles.body}>
+            <div className={styles.body} style={{ position: 'relative' }}>
+                {/* Loading Overlay */}
+                <div style={{
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10,
+                    background: 'rgba(13, 17, 23, 0.7)',
+                    backdropFilter: 'blur(2px)',
+                    color: '#fff'
+                }}>
+                    <div className={styles.spinner} style={{ marginBottom: '16px', width: '30px', height: '30px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                    <div style={{ fontSize: '15px', fontWeight: '500', color: '#e2e8f0' }}>AI가 최신 시장 데이터를 분석 중입니다...</div>
+                    <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>실시간 뉴스 및 온체인 데이터 수집 중</div>
+                </div>
+
                 <div className={styles.leftCol}>
                     <div className={`${styles.skeleton} ${styles.skeletonCircle}`} />
                     <div className={`${styles.skeleton} ${styles.skeletonBox}`} />
@@ -155,21 +173,25 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
                 <div className={styles.section} style={{ marginBottom: '20px' }}>
                     <h3 className={styles.sectionTitle}>Sector Rotation</h3>
                     <div className={styles.sectorGrid}>
-                        {analysis.sectorAnalysis?.map((sector) => (
-                            <div key={sector.name} className={styles.sectorCard}>
-                                <div className={styles.metricHeader}>
-                                    <span className={styles.metricLabel} style={{ fontWeight: 'bold', color: 'white' }}>{sector.name}</span>
-                                    <span style={{
-                                        fontSize: '10px',
-                                        fontWeight: 'bold',
-                                        color: sector.signal === 'bullish' ? '#10b981' : sector.signal === 'bearish' ? '#ef4444' : '#f59e0b'
-                                    }}>
-                                        {sector.score}
-                                    </span>
+                        {analysis.sectorAnalysis && Array.isArray(analysis.sectorAnalysis) ? (
+                            analysis.sectorAnalysis.map((sector) => (
+                                <div key={sector.name} className={styles.sectorCard}>
+                                    <div className={styles.metricHeader}>
+                                        <span className={styles.metricLabel} style={{ fontWeight: 'bold', color: 'white' }}>{sector.name}</span>
+                                        <span style={{
+                                            fontSize: '10px',
+                                            fontWeight: 'bold',
+                                            color: sector.signal === 'bullish' ? '#10b981' : sector.signal === 'bearish' ? '#ef4444' : '#f59e0b'
+                                        }}>
+                                            {sector.score}
+                                        </span>
+                                    </div>
+                                    <div className={styles.metricComment}>{sector.insight}</div>
                                 </div>
-                                <div className={styles.metricComment}>{sector.insight}</div>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Sector analysis data unavailable</div>
+                        )}
                     </div>
                 </div>
 
@@ -177,17 +199,21 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
                 <div className={styles.section} style={{ marginBottom: '20px' }}>
                     <h3 className={styles.sectionTitle}>Key Indicators</h3>
                     <div className={styles.metricsGrid}>
-                        {analysis.keyMetrics?.map((m, i) => (
-                            <div key={i} className={styles.metricCard}>
-                                <div className={styles.mLabel}>{m.label}</div>
-                                <div className={styles.mValue} style={{
-                                    color: m.signal === 'bullish' ? '#10b981' : m.signal === 'bearish' ? '#ef4444' : '#fbbf24'
-                                }}>
-                                    {m.value}
+                        {analysis.keyMetrics && Array.isArray(analysis.keyMetrics) ? (
+                            analysis.keyMetrics.map((m, i) => (
+                                <div key={i} className={styles.metricCard}>
+                                    <div className={styles.mLabel}>{m.label}</div>
+                                    <div className={styles.mValue} style={{
+                                        color: m.signal === 'bullish' ? '#10b981' : m.signal === 'bearish' ? '#ef4444' : '#fbbf24'
+                                    }}>
+                                        {m.value}
+                                    </div>
+                                    <div className={styles.metricComment}>{m.comment}</div>
                                 </div>
-                                <div className={styles.metricComment}>{m.comment}</div>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Key metrics data unavailable</div>
+                        )}
                     </div>
                 </div>
 

@@ -5,6 +5,7 @@ import requests
 import pandas as pd
 from datetime import datetime
 
+# Force Update: Fix Indentation Error via Re-deploy
 class MarketDataService:
     def __init__(self):
         # 1. Binance (CCXT) - Public/Free/Fast

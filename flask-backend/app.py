@@ -625,7 +625,7 @@ def api_xray_global():
 @app.route('/api/crypto/listings')
 def api_crypto_listings():
     """Fetch Top Crypto Listings (CMC or Binance Fallback)"""
-    from market_data_service import market_data_service
+    from market_provider import market_data_service
     
     try:
         limit = request.args.get('limit', default=30, type=int)

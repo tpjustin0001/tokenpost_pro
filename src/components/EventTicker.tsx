@@ -4,7 +4,11 @@ import styles from './EventTicker.module.css';
 import Link from 'next/link';
 
 const EVENTS: { time: string; title: string; type: string; country: string; impact: string }[] = [
-    // 캘린더 데이터 초기화 요청으로 비움
+    { time: '22:30', title: '미국 1월 CPI 소비자물가지수 발표', type: 'Economic', country: '🇺🇸', impact: 'High' },
+    { time: '23:00', title: '연준 파월 의장 연설', type: 'Speech', country: '🇺🇸', impact: 'High' },
+    { time: '03:00', title: 'FOMC 의사록 공개', type: 'Economic', country: '🇺🇸', impact: 'Medium' },
+    { time: '09:00', title: '한국 금통위 기준금리 결정', type: 'Economic', country: '🇰🇷', impact: 'High' },
+    { time: '18:00', title: '유로존 GDP 성장률 발표', type: 'Economic', country: '🇪🇺', impact: 'Medium' },
 ];
 
 export default function EventTicker() {

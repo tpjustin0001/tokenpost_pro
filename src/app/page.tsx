@@ -141,7 +141,7 @@ export default function HomePage() {
 
           {/* Section: Market Pulse (Sentiment & Volatility) */}
           <MotionSection className={styles.dashboardSection} variants={itemVariants}>
-            <h2 className={styles.sectionHeading}>마켓 펄스 (Market Pulse)</h2>
+            <h2 className={styles.sectionHeading}>마켓 펄스</h2>
             <div className={styles.twoColumnGrid}>
               <Mindshare />
               <PricePerformance />
@@ -150,7 +150,7 @@ export default function HomePage() {
 
           {/* Section: Breaking & Insights */}
           <MotionSection className={styles.dashboardSection} variants={itemVariants}>
-            <h2 className={styles.sectionHeading}>속보 및 인사이트 (Breaking & Insights)</h2>
+            <h2 className={styles.sectionHeading}>속보 및 인사이트</h2>
             <div className={styles.twoColumnGrid}>
               <NewsFeed />
               <ResearchIntel />

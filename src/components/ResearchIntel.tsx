@@ -128,7 +128,7 @@ export default function ResearchIntel() {
                 <div className={styles.headerLeft}>
                     <span className="card-title">
                         <XRayTooltip dataKey="ai_analysis">
-                            리서치 & 인텔리전스
+                            인사이트
                         </XRayTooltip>
                     </span>
                     <span className={styles.badge}>핵심 강점</span>

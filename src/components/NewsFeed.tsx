@@ -90,7 +90,7 @@ export default function NewsFeed() {
     return (
         <div className={styles.feedContainer}>
             <div className={styles.header}>
-                <h3 className={styles.headerTitle}>실시간 뉴스 (Live News)</h3>
+                <h3 className={styles.headerTitle}>실시간 뉴스</h3>
                 <div className={styles.headerControls}>
                     <span className={styles.liveBadge} />
                     <span className={styles.liveText}>LIVE</span>

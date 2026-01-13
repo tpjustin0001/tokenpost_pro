@@ -563,54 +563,28 @@ def api_xray_global():
         # 0. Fetch Global News
         news_list = news_service.get_crypto_news("Bitcoin")
 
-        # 1. Fetch Key Assets (BTC, ETH) via Requests (Lighter than CCXT)
-        def fetch_price(symbol):
-            try:
-                # Binance US Public API (Bypass Geo-blocking)
-                # Try USD pair first, then USDT
-                url = "https://api.binance.us/api/v3/klines"
-                params = {'symbol': symbol, 'interval': '1d', 'limit': 1}
-                r = requests.get(url, params=params, timeout=5)
-                
-                if r.status_code != 200:
-                    # Fallback to Coingecko if Binance US fails
-                    print(f"Binance US failed ({r.status_code}), trying CoinGecko...")
-                    cg_id = "bitcoin" if "BTC" in symbol else "ethereum"
-                    cg_url = f"https://api.coingecko.com/api/v3/simple/price?ids={cg_id}&vs_currencies=usd"
-                    cg_r = requests.get(cg_url, timeout=5)
-                    return float(cg_r.json()[cg_id]['usd'])
+        # 1. Fetch Global Metrics from CMC (via MarketDataService)
+        from market_data_service import market_data_service
+        global_metrics = market_data_service.get_global_metrics()
+        
+        # 2. Fetch Key Asset Prices (BTC, ETH) - Upbit/Binance Hybrid
+        try:
+            btc_data = market_data_service.get_asset_data("BTC")
+            eth_data = market_data_service.get_asset_data("ETH")
+            btc_price = btc_data['current_price']
+            eth_price = eth_data['current_price']
+        except:
+            btc_price = 0
+            eth_price = 0
 
-                data = r.json()
-                # [time, open, high, low, close, volume, ...]
-                return float(data[0][4])
-            except Exception as e:
-                print(f"Price fetch failed for {symbol}: {e}")
-                return 45000.0 if "BTC" in symbol else 2500.0 # Emergency Fallback to avoid 0.0
-
-        btc_price = fetch_price("BTCUSD") # Binance US uses USD
-        eth_price = fetch_price("ETHUSD")
-        
-        # 2. Market Gate data (Temporarily Disabled for Vercel Performance)
-        # gate_res = run_market_gate_sync()
-        
-        # Lightweight Fallback since yfinance is too heavy for Lambda
-        class MockGate:
-            metrics = {
-                'fear_greed_index': 50, 
-                'alt_breadth_above_ema50': 0.5,
-                'funding_rate': 0.0001
-            }
-            score = 50
-            gate = "YELLOW"
-        gate_res = MockGate()
-        
         data_summary = {
-            "BTC Price": f"${btc_price:,.0f}",
-            "ETH Price": f"${eth_price:,.0f}",
-            "Fear & Greed": gate_res.metrics.get('fear_greed_index'),
-            "Altcoin Breadth": gate_res.metrics.get('alt_breadth_above_ema50'),
-            "Market Score": gate_res.score,
-            "Market Phase": gate_res.gate
+            "Total Market Cap": f"${global_metrics['total_market_cap']:,.0f}",
+            "24h Volume": f"${global_metrics['total_volume_24h']:,.0f}",
+            "BTC Dominance": f"{global_metrics['btc_dominance']:.1f}%",
+            "ETH Dominance": f"{global_metrics['eth_dominance']:.1f}%",
+            "BTC Price": f"${btc_price:,.0f} ({btc_data.get('currency', 'USD')})",
+            "ETH Price": f"${eth_price:,.0f} ({eth_data.get('currency', 'USD')})",
+            "Market Cap Change": f"{global_metrics['market_cap_change_24h']:.2f}%"
         }
         
         # 3. Call AI with News

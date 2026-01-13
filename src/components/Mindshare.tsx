@@ -39,7 +39,7 @@ export default function Mindshare() {
     return (
         <div className={styles.widget}>
             <div className={styles.header}>
-                <h3 className={styles.title}>소셜 센티멘트 (Social Sentiment)</h3>
+                <h3 className={styles.title}>소셜 센티멘트</h3>
                 <div className={styles.tabs}>
                     <button className={`${styles.tab} ${styles.active}`}>전체</button>
                     <button className={styles.tab}>트위터</button>

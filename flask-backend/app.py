@@ -337,7 +337,7 @@ def api_screener_breakout():
                     'status_20': status_20,
                     'status_50': status_50,
                     'status_200': status_200,
-                    'is_fresh_breakout': is_fresh_breakout,
+                    'is_fresh_breakout': bool(is_fresh_breakout),
                     'pct_from_sma200': ((current_price - sma200) / sma200) * 100 if sma200 else 0
                 })
             except Exception as e:

@@ -6353,3 +6353,6 @@
 [0] ⚠ Fast Refresh had to perform a full reload due to a runtime error.
 [0] ✓ Compiled in 78ms
 [0]  GET / 200 in 599ms (compile: 172ms, render: 427ms)
+[0]  GET /api/global 200 in 399ms (compile: 40ms, render: 360ms)
+[0]  GET /api/markets 200 in 472ms (compile: 25ms, render: 448ms)
+[0]  GET /api/kimchi/upbit 200 in 558ms (compile: 9ms, render: 549ms)

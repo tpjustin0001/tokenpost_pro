@@ -2,8 +2,12 @@
 
 import { use } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
-import TradingChart from '@/components/TradingChart';
+const TradingChart = dynamic(() => import('@/components/TradingChart'), {
+    ssr: false,
+    loading: () => <div style={{ height: 400, background: 'var(--bg-card)', borderRadius: 8 }} />
+});
 import { usePrices, formatPrice, formatChange, formatKimchiPremium, formatVolume } from '@/lib/prices';
 import { SUPPORTED_TICKERS } from '@/types';
 import styles from './page.module.css';

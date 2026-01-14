@@ -21,6 +21,12 @@ app = Flask(__name__)
 load_dotenv()
 CORS(app)
 
+# Cache Config
+from flask_caching import Cache
+import concurrent.futures
+
+cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache'})
+
 # DEBUG: Version Check
 API_VERSION = "1.0.2-fix-gitignore-env"
 print(f"🚀 Starting TokenPost PRO API - Version: {API_VERSION}")
@@ -269,62 +275,63 @@ SCREENER_SYMBOLS = [
 ]
 
 @app.route('/api/screener/breakout')
+@cache.cached(timeout=60)
 def api_screener_breakout():
-    """Tab 1: Breakout Hunter - SMA Trends via MarketDataService"""
+    """Tab 1: Breakout Hunter - Parallel Fetch"""
     from market_provider import market_data_service
     
     results = []
     
-    # Iterate symbols and fetch via robust service
-    for symbol in SCREENER_SYMBOLS:
+    def fetch_data(symbol):
         try:
-            data = market_data_service.get_asset_data(symbol)
-            # data keys: symbol, source, current_price, change_24h, ma_20, trend, volume_status, raw_df
-            
-            # Additional Trend Metrics from raw_df
-            df = data['raw_df']
-            current_price = data['current_price']
-            
-            sma20 = data['ma_20']
-            sma50 = df['Close'].tail(50).mean()
-            sma200 = df['Close'].tail(200).mean()
-            
-            status_20 = 'Bullish' if current_price > sma20 else 'Bearish'
-            status_50 = 'Bullish' if current_price > sma50 else 'Bearish'
-            status_200 = 'Bull Market' if current_price > sma200 else 'Bear Market'
-            
-            # Breakout Check
-            is_fresh_breakout = False
-            if len(df) > 2:
-                prev_close = df['Close'].iloc[-2]
-                prev_sma200 = df['Close'].expanding().mean().iloc[-2] # Approx if rolling not avail, but we have rolling
-                # Re-calc rolling for prev if needed, but safe approximation:
-                is_fresh_breakout = (prev_close < sma200 * 0.99) and (current_price > sma200)
+            return market_data_service.get_asset_data(symbol)
+        except:
+            return None
 
-            results.append({
-                'symbol': data['symbol'],
-                'price': current_price,
-                'symbol': data['symbol'],
-                'price': current_price,
-                'change_24h': data['change_24h'],
-                'change_1h': data.get('change_1h', 0),
-                'volume': df['Volume'].iloc[-1],
-                'volume': df['Volume'].iloc[-1],
-                'sma20': sma20,
-                'sma50': sma50,
-                'sma200': sma200,
-                'status_20': status_20,
-                'status_50': status_50,
-                'status_200': status_200,
-                'is_fresh_breakout': is_fresh_breakout,
-                'pct_from_sma200': ((current_price - sma200) / sma200) * 100 if sma200 else 0
-            })
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(fetch_data, sym): sym for sym in SCREENER_SYMBOLS}
+        
+        for future in concurrent.futures.as_completed(futures):
+            item = future.result()
+            if not item: continue
             
-        except Exception as e:
-            # print(f"Screener Error ({symbol}): {e}")
-            continue
+            try:
+                # Logic (same as before)
+                df = item['raw_df']
+                current_price = item['current_price']
+                if df is None or df.empty: continue
 
-    # Sort
+                sma20 = item['ma_20']
+                sma50 = df['Close'].tail(50).mean()
+                sma200 = df['Close'].tail(200).mean()
+                
+                status_20 = 'Bullish' if current_price > sma20 else 'Bearish'
+                status_50 = 'Bullish' if current_price > sma50 else 'Bearish'
+                status_200 = 'Bull Market' if current_price > sma200 else 'Bear Market'
+                
+                is_fresh_breakout = False
+                if len(df) > 2:
+                    prev_close = df['Close'].iloc[-2]
+                    is_fresh_breakout = (prev_close < sma200 * 0.99) and (current_price > sma200)
+
+                results.append({
+                    'symbol': item['symbol'],
+                    'price': current_price,
+                    'change_24h': item['change_24h'],
+                    'change_1h': item.get('change_1h', 0),
+                    'volume': df['Volume'].iloc[-1],
+                    'sma20': sma20,
+                    'sma50': sma50,
+                    'sma200': sma200,
+                    'status_20': status_20,
+                    'status_50': status_50,
+                    'status_200': status_200,
+                    'is_fresh_breakout': is_fresh_breakout,
+                    'pct_from_sma200': ((current_price - sma200) / sma200) * 100 if sma200 else 0
+                })
+            except Exception as e:
+                continue
+
     results.sort(key=lambda x: (x['is_fresh_breakout'], x['pct_from_sma200']), reverse=True)
     
     return jsonify({
@@ -334,42 +341,50 @@ def api_screener_breakout():
     })
 
 @app.route('/api/screener/price-performance')
+@cache.cached(timeout=60)
 def api_screener_real():
-    """Tab 2: Price Performance"""
+    """Tab 2: Price Performance - Parallel"""
     from market_provider import market_data_service
     
     results = []
     
-    for symbol in SCREENER_SYMBOLS:
+    def fetch_data(symbol):
         try:
-            data = market_data_service.get_asset_data(symbol)
-            df = data['raw_df']
-            current_price = data['current_price']
+            return market_data_service.get_asset_data(symbol)
+        except:
+            return None
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(fetch_data, sym): sym for sym in SCREENER_SYMBOLS}
+        for future in concurrent.futures.as_completed(futures):
+            item = future.result()
+            if not item: continue
             
-            ath = df['High'].max()
-            atl = df['Low'].min()
-            
-            # Drawdown
-            drawdown = ((current_price - ath) / ath) * 100 if ath > 0 else 0
-            from_atl = ((current_price - atl) / atl) * 100 if atl > 0 else 0
-            
-            results.append({
-                'symbol': data['symbol'],
-                'price': current_price,
-                'symbol': data['symbol'],
-                'price': current_price,
-                'change_24h': data['change_24h'],
-                'change_1h': data.get('change_1h', 0),
-                'volume': df['Volume'].iloc[-1],
-                'volume': df['Volume'].iloc[-1],
-                'ath': ath,
-                'atl': atl,
-                'drawdown': drawdown,
-                'from_atl': from_atl
-            })
-            
-        except Exception:
-            continue
+            try:
+                df = item['raw_df']
+                current_price = item['current_price']
+                if df is None or df.empty: continue
+                
+                ath = df['High'].max()
+                atl = df['Low'].min()
+                
+                # Drawdown
+                drawdown = ((current_price - ath) / ath) * 100 if ath > 0 else 0
+                from_atl = ((current_price - atl) / atl) * 100 if atl > 0 else 0
+                
+                results.append({
+                    'symbol': item['symbol'],
+                    'price': current_price,
+                    'change_24h': item['change_24h'],
+                    'change_1h': item.get('change_1h', 0),
+                    'volume': df['Volume'].iloc[-1],
+                    'ath': ath,
+                    'atl': atl,
+                    'drawdown': drawdown,
+                    'from_atl': from_atl
+                })
+            except:
+                continue
             
     results.sort(key=lambda x: x['drawdown'])
     
@@ -380,46 +395,54 @@ def api_screener_real():
     })
 
 @app.route('/api/screener/risk')
+@cache.cached(timeout=60)
 def api_screener_risk():
-    """Tab 3: Risk Scanner"""
+    """Tab 3: Risk Scanner - Parallel"""
     from market_provider import market_data_service
     import numpy as np
     
     results = []
     
-    for symbol in SCREENER_SYMBOLS:
+    def fetch_data(symbol):
         try:
-            data = market_data_service.get_asset_data(symbol)
-            df = data['raw_df']
-            current_price = data['current_price']
+            return market_data_service.get_asset_data(symbol)
+        except:
+            return None
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(fetch_data, sym): sym for sym in SCREENER_SYMBOLS}
+        for future in concurrent.futures.as_completed(futures):
+            item = future.result()
+            if not item: continue
             
-            # Volatility (Annualized)
-            returns = df['Close'].pct_change().dropna()
-            volatility = float(returns.std() * np.sqrt(365) * 100) if len(returns) > 1 else 0
-            
-            # Simplified Risk Score (0-2 scale)
-            risk_score = volatility / 50.0 # Benchmark 50%
-            
-            if risk_score > 1.5: rating = 'Extreme'
-            elif risk_score < 0.8: rating = 'Low'
-            else: rating = 'Medium'
-            
-            results.append({
-                'symbol': data['symbol'],
-                'price': current_price,
-                'symbol': data['symbol'],
-                'price': current_price,
-                'change_24h': data['change_24h'],
-                'change_1h': data.get('change_1h', 0),
-                'volatility': volatility,
-                'volatility': volatility,
-                'risk_score': risk_score,
-                'rating': rating
-            })
-            
-        except Exception:
-            continue
-            
+            try:
+                df = item['raw_df']
+                current_price = item['current_price']
+                if df is None or df.empty: continue
+                
+                # Volatility (Annualized)
+                returns = df['Close'].pct_change().dropna()
+                volatility = float(returns.std() * np.sqrt(365) * 100) if len(returns) > 1 else 0
+                
+                # Simplified Risk Score (0-2 scale)
+                risk_score = volatility / 50.0 # Benchmark 50%
+                
+                if risk_score > 1.5: rating = 'Extreme'
+                elif risk_score < 0.8: rating = 'Low'
+                else: rating = 'Medium'
+                
+                results.append({
+                    'symbol': item['symbol'],
+                    'price': current_price,
+                    'change_24h': item['change_24h'],
+                    'change_1h': item.get('change_1h', 0),
+                    'volatility': volatility,
+                    'risk_score': risk_score,
+                    'rating': rating
+                })
+            except:
+                continue
+
     results.sort(key=lambda x: x['risk_score'], reverse=True)
     
     return jsonify({

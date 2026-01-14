@@ -17,12 +17,18 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    // REWRITE: Vercel Frontend -> Render Backend (Production & Dev)
-    const backendUrl = process.env.BACKEND_URL || 'https://tokenpost-pro.onrender.com';
+    // REWRITE: Vercel Frontend -> Render/Railway Backend
+    let backendUrl = process.env.BACKEND_URL || 'https://tokenpost-pro.onrender.com';
+
+    // Ensure protocol exists (Fix for Vercel Build Error)
+    if (!backendUrl.startsWith('http')) {
+      backendUrl = `https://${backendUrl}`;
+    }
+
     return [
       {
         source: '/api/python/:path*', // Frontend calls /api/python/crypto...
-        destination: `${backendUrl}/api/:path*`, // Proxy to Render /api/crypto...
+        destination: `${backendUrl}/api/:path*`, // Proxy to Backend
       },
     ];
   },

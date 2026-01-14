@@ -299,7 +299,7 @@ def api_screener_breakout():
         except:
             return None
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         futures = {executor.submit(fetch_data, sym): sym for sym in SCREENER_SYMBOLS}
         
         for future in concurrent.futures.as_completed(futures):
@@ -365,7 +365,7 @@ def api_screener_real():
         except:
             return None
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         futures = {executor.submit(fetch_data, sym): sym for sym in SCREENER_SYMBOLS}
         for future in concurrent.futures.as_completed(futures):
             item = future.result()
@@ -420,7 +420,7 @@ def api_screener_risk():
         except:
             return None
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         futures = {executor.submit(fetch_data, sym): sym for sym in SCREENER_SYMBOLS}
         for future in concurrent.futures.as_completed(futures):
             item = future.result()

@@ -7,15 +7,14 @@ class NewsService:
     def __init__(self):
         self.base_url = "https://news.google.com/rss/search"
 
-    def get_crypto_news(self, symbol, limit=3):
+    def get_crypto_news(self, symbol, name=None, limit=3):
         """
         Fetches latest news for a crypto symbol using Google News RSS.
-        Returns a list of dicts: {'title', 'link', 'pubDate', 'source'}
         """
         try:
-            # Construct query: "{Symbol} crypto" for global coverage
-            # when:3d ensures we only get news from the last 3 days
-            query = f"{symbol} crypto when:3d"
+            # Construct query: Use Name if available for better accuracy
+            search_term = f'"{name}" {symbol}' if name and name != symbol else symbol
+            query = f"{search_term} crypto when:3d"
             
             # hl=en-US, gl=US, ceid=US:en -> Global/US news preferred
             url = f"{self.base_url}?q={query}&hl=en-US&gl=US&ceid=US:en"

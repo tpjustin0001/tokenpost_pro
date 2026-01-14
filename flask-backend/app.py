@@ -589,14 +589,16 @@ def api_xray_asset(symbol):
     symbol = symbol.upper()
     
     try:
-        # 1. Fetch News
-        news_list = news_service.get_crypto_news(symbol)
-
         # 2. Fetch Market Data (Binance -> CMC Fallback)
         data = market_data_service.get_asset_data(symbol)
         
+        # 3. Fetch News with Full Name context (Fixed Order: Data first to get Name)
+        asset_name = data.get('name')
+        news_list = news_service.get_crypto_news(symbol, name=asset_name)
+
         data_summary = {
             "Symbol": data['symbol'],
+            "Name": asset_name, # Pass name to AI too
             "Source": data['source'],
             "Current Price": f"${data['current_price']:,.4f}" if data['current_price'] < 1 else f"${data['current_price']:,.2f}",
             "Change 24h": f"{data['change_24h']:.2f}%",

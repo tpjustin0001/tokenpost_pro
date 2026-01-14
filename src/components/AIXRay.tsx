@@ -36,19 +36,23 @@ interface AIAnalysis {
 }
 
 const TypewriterText = ({ text, delay = 10 }: { text: string; delay?: number }) => {
-    const [displayedText, setDisplayedText] = useState('');
+    const [len, setLen] = useState(0);
 
     useEffect(() => {
-        let index = 0;
-        const timer = setInterval(() => {
-            setDisplayedText((prev) => prev + text.charAt(index));
-            index++;
-            if (index === text.length) clearInterval(timer);
+        setLen(0); // Reset when text changes
+        const interval = setInterval(() => {
+            setLen((prev) => {
+                if (prev >= text.length) {
+                    clearInterval(interval);
+                    return prev;
+                }
+                return prev + 1;
+            });
         }, delay);
-        return () => clearInterval(timer);
+        return () => clearInterval(interval);
     }, [text, delay]);
 
-    return <p className={styles.generatedText}>{displayedText}</p>;
+    return <p className={styles.generatedText}>{text.slice(0, len)}</p>;
 };
 
 interface AIXRayProps {

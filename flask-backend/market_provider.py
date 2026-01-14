@@ -78,6 +78,7 @@ class MarketDataService:
         
         return {
             "symbol": symbol,
+            "name": symbol, # Upbit doesn't provide easy name, fallback to symbol
             "source": "Upbit (KRW)",
             "currency": "KRW",
             "current_price": current,
@@ -121,6 +122,7 @@ class MarketDataService:
         
         return {
             "symbol": symbol,
+            "name": symbol, # Binance Ticker doesn't include name
             "source": "Binance",
             "currency": "USD",
             "current_price": current,
@@ -168,6 +170,7 @@ class MarketDataService:
         # For AI compatibility, we return standardized keys
         return {
             "symbol": symbol,
+            "name": coin_data['name'], # Use Full Name from CMC
             "source": "CMC",
             "currency": "USD",
             "current_price": current,

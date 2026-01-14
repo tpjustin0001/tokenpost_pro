@@ -6335,3 +6335,5 @@
 [0]  GET /api/kimchi/upbit 200 in 122ms (compile: 5ms, render: 117ms)
 [0]  GET /api/kimchi/upbit 200 in 96ms (compile: 3ms, render: 93ms)
 [0] ✓ Compiled in 102ms
+[0] ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[0] ✓ Compiled in 595ms

@@ -206,7 +206,22 @@ export default function XRayTooltip({ dataKey, children }: XRayTooltipProps) {
 
             {isOpen && (
                 <div className={styles.overlay} onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}>
-                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                    <div
+                        id={modalId}
+                        className={styles.modal}
+                        onClick={(e) => e.stopPropagation()}
+                        onScroll={updateXarrow}
+                    >
+                        <Xarrow
+                            start={triggerId}
+                            end={modalId}
+                            color="var(--accent-blue)"
+                            strokeWidth={2}
+                            headSize={4}
+                            path="smooth"
+                            animateDrawing={0.3}
+                            zIndex={1000}
+                        />
                         <div className={styles.header}>
                             <div className={styles.headerLeft}>
                                 <span className={styles.xrayBadge}>X-RAY</span>

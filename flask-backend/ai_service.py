@@ -29,6 +29,10 @@ class AIService:
         self.CACHE_TTL_GLOBAL = 300 # Reduced to 5 mins for "live" feel
         self.CACHE_TTL_ASSET = 300
 
+    @property
+    def model(self):
+        return "gpt-4o-mini + grok-2-latest"
+
     def _get_grok_sentiment(self, news_list):
         """
         Use Grok (xAI) to extract deep social sentiment from news.
@@ -41,9 +45,9 @@ class AIService:
         news_text = "\n".join([f"- {item['title']} ({item['source']})" for item in news_list])
         
         try:
-            # Using 'grok-beta' (or 'grok-2-latest' if beta is deprecated)
+            # Using 'grok-2-latest' as beta might be deprecated
             response = self.client_grok.chat.completions.create(
-                model="grok-beta", 
+                model="grok-2-latest", 
                 messages=[
                     {"role": "system", "content": "You are Grok, a real-time Social Sentiment Engine. Analyze the crypto news headlines. Output a brief, witty, uncensored, and slightly edgy paragraph about the current market 'vibe' and crowd psychology. Be bold. Output in KOREAN."},
                     {"role": "user", "content": f"Headlines:\n{news_text}"}

@@ -6441,3 +6441,17 @@
 [0] ✓ Compiled in 119ms
 [0] ✓ Compiled in 59ms
 [0] ✓ Compiled in 69ms
+[0]  GET /api/kimchi/upbit 200 in 551ms (compile: 7ms, render: 544ms)
+[0]  GET / 200 in 337ms (compile: 111ms, render: 226ms)
+[0]  GET /api/kimchi/upbit 200 in 119ms (compile: 23ms, render: 95ms)
+[0]  GET /api/markets 200 in 313ms (compile: 26ms, render: 287ms)
+[0]  GET /api/global 200 in 330ms (compile: 10ms, render: 320ms)
+[0]  GET /api/kimchi/upbit 200 in 91ms (compile: 18ms, render: 73ms)
+[0]  GET /api/kimchi/upbit 200 in 83ms (compile: 10ms, render: 73ms)
+[0]  GET /api/kimchi/upbit 200 in 89ms (compile: 12ms, render: 78ms)
+[0]  GET /api/kimchi/upbit 200 in 85ms (compile: 8ms, render: 76ms)
+[0]  GET /api/kimchi/upbit 200 in 98ms (compile: 15ms, render: 83ms)
+[0] ✓ Compiled in 74ms
+[0]  GET /api/global 200 in 528ms (compile: 17ms, render: 511ms)
+[0]  GET /api/markets 200 in 571ms (compile: 234ms, render: 336ms)
+[0]  GET /api/kimchi/upbit 200 in 103ms (compile: 11ms, render: 92ms)

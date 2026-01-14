@@ -263,7 +263,7 @@ export default function AIXRay({ symbol, isOpen, onClose }: AIXRayProps) {
                                     <h4 className={styles.genTitle}>기술적 전망 (Technical Outlook)</h4>
                                     <TypewriterText text={analysis.detailed_analysis.technical_outlook} delay={5} />
                                     <div style={{ height: '12px' }} />
-                                    <h4 className={styles.genTitle}>온체인 분석 (On-CHain Verdict)</h4>
+                                    <h4 className={styles.genTitle}>온체인 분석 (On-Chain Verdict)</h4>
                                     <TypewriterText text={analysis.detailed_analysis.on_chain_verdict} delay={5} />
                                 </div>
                             </div>

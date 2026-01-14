@@ -64,6 +64,7 @@ export default function Mindshare() {
     const grokSaying = data?.grok_saying || "시장 데이터를 분석 중입니다...";
     const keywords = data?.market_keywords || [];
     const tweets = data?.top_tweets || [];
+    const whales = data?.whale_alerts || [];
 
     return (
         <div className={styles.widget}>
@@ -132,6 +133,24 @@ export default function Mindshare() {
                                     <span className={styles.tweetTime}>· {t.time}</span>
                                 </div>
                                 <p className={styles.tweetContent}>{t.content}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* 5. Whale Alerts */}
+            {whales.length > 0 && (
+                <div className={styles.section} style={{ marginTop: '16px' }}>
+                    <h4 className={styles.sectionTitle}>🐳 고래 추적 (Whale Alert)</h4>
+                    <div className={styles.feedList}>
+                        {whales.map((w: any, i: number) => (
+                            <div key={i} className={styles.whaleItem}>
+                                <span className={styles.whaleSymbol}>{w.symbol}</span>
+                                <span className={w.type === '매수' ? styles.whaleBuy : styles.whaleSell}>{w.type}</span>
+                                <span className={styles.whaleAmount}>{w.amount}</span>
+                                <span className={styles.whaleNote}>{w.note}</span>
+                                <span className={styles.tweetTime}>{w.time}</span>
                             </div>
                         ))}
                     </div>

@@ -76,18 +76,22 @@ class AIService:
         
         TASK:
         Generate a "Social Pulse" report in STRICT JSON format.
-        The content must be in KOREAN (except for usernames/handles).
+        The content must be in KOREAN (except for usernames/handles and numbers).
         
         JSON Structure:
         {{
-            "grok_saying": "A witty, edgy, and insightful one-liner about the market vibe. Be cynical but accurate.",
+            "grok_saying": "A witty, edgy, and insightful one-liner about the market vibe. Be cynical but accurate. IN KOREAN.",
             "atmosphere_score": int(0-100), // 0=Extreme Fear, 100=Extreme Greed
             "atmosphere_label": "공포 (Fear) | 중립 (Neutral) | 탐욕 (Greed)",
             "market_keywords": ["#Keyword1", "#Keyword2", "#Keyword3"],
             "top_tweets": [
-                {{ "author": "User Name", "handle": "@handle", "content": "Tweet text summarizing a key narrative...", "time": "2m ago" }},
-                {{ "author": "Analyst", "handle": "@analyst", "content": "Another key narrative...", "time": "15m ago" }},
-                {{ "author": "News", "handle": "@news", "content": "Breaking news headline...", "time": "1h ago" }}
+                {{ "author": "User Name", "handle": "@handle", "content": "Tweet text...", "time": "2m ago" }},
+                {{ "author": "Analyst", "handle": "@analyst", "content": "Analysis...", "time": "15m ago" }},
+                {{ "author": "News", "handle": "@news", "content": "Breaking...", "time": "1h ago" }}
+            ],
+            "whale_alerts": [
+                {{ "symbol": "BTC", "type": "매수", "amount": "$120M", "time": "5분 전", "note": "바이낸스 입금" }},
+                {{ "symbol": "ETH", "type": "매도", "amount": "$80M", "time": "12분 전", "note": "거래소 출금" }}
             ],
             "sectorAnalysis": [ {{ "name": "...", "signal": "...", "score": int, "insight": "..." }} ],
             "radar_data": [

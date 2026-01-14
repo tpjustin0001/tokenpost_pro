@@ -632,7 +632,7 @@ def ingest_external_content():
                 'content': payload.get('content'),
                 'tags': payload.get('tags', []),
                 'is_premium': payload.get('is_premium', False),
-                'thumbnail_url': payload.get('thumbnail_url'),
+                'image_url': payload.get('thumbnail_url'), # Map to DB column 'image_url'
                 'category': payload.get('type', 'REPORT') # Mapping type to category column
             }
             response = supabase.table('research').insert(db_payload).execute()

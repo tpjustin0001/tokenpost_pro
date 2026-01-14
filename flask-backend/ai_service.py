@@ -31,26 +31,28 @@ class AIService:
 
     def _get_grok_sentiment(self, news_list):
         """
-        Use Grok to extract deep social sentiment from news.
+        Use AI (OpenAI) to extract deep social sentiment from news.
+        (Previously used Grok, now migrated to OpenAI for stability)
         """
-        if not self.client_grok or not news_list:
-            return "Grok AI: No sentiment data available."
+        client = self.client_gpt  # Use OpenAI instead of Grok
+        if not client or not news_list:
+            return "AI Analysis: No sentiment data available."
 
         news_text = "\n".join([f"- {item['title']} ({item['source']})" for item in news_list])
         
         try:
-            response = self.client_grok.chat.completions.create(
-                model="grok-beta", # Grok 4.1 (Beta)
+            response = client.chat.completions.create(
+                model="gpt-4o-mini", 
                 messages=[
-                    {"role": "system", "content": "You are Grok, a real-time Social Sentiment Engine (v4.1). Analyze the crypto news headlines. Output a brief, witty, uncensored, and slightly edgy paragraph about the current market 'vibe' and crowd psychology. Be bold."},
+                    {"role": "system", "content": "You are a real-time Social Sentiment Engine. Analyze the crypto news headlines. Output a brief, witty, uncensored, and slightly edgy paragraph about the current market 'vibe' and crowd psychology. Be bold. Output in KOREAN."},
                     {"role": "user", "content": f"Headlines:\n{news_text}"}
                 ],
-                temperature=0.8 # Higher creativity for sentiment intensity
+                temperature=0.8 
             )
             return response.choices[0].message.content
         except Exception as e:
-            print(f"Grok Sentiment Failed: {e}")
-            return "Grok analysis failed."
+            print(f"Sentiment Analysis Failed: {e}")
+            return "Analysis failed."
 
     def analyze_global_market(self, market_data, news_list=[]):
         cache_key = 'GLOBAL_MARKET_V3'
@@ -72,7 +74,7 @@ class AIService:
         
         INPUT CONTEXT:
         1. Market Data (Technical/Macro)
-        2. Social Sentiment (from Grok): "{grok_sentiment}"
+        2. Social Sentiment (AI Analysis): "{grok_sentiment}"
         
         TASK:
         Generate a "Social Pulse" report in STRICT JSON format.
@@ -221,7 +223,15 @@ class AIService:
             "recommendation": "DCA (분할 매수) 전략 유지",
             "actionable_insight_summary": "단기 변동성에 주의하되 중장기적 관점의 매집 유효",
             "timestamp": datetime.now().isoformat(),
-            "recent_news": []
+            "recent_news": [],
+            
+            # OpenAI/Grok Fallback Fields
+            "grok_saying": "AI 연결이 지연되고 있습니다. 잠시 후 다시 확인해주세요.",
+            "atmosphere_score": 50,
+            "atmosphere_label": "중립 (Neutral)",
+            "market_keywords": ["#Bitcoin", "#Crypto", "#HODL"],
+            "top_tweets": [],
+            "whale_alerts": []
         }
 
     def _get_mock_asset_analysis(self, symbol, error_msg=None):

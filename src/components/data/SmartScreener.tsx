@@ -276,72 +276,73 @@ export default function SmartScreener() {
                             ))}
                         </tbody>
                     </table>
-                    );
+                </>
+            );
         }
     };
 
-                    return (
-                    <div className={styles.container}>
-                        <div className={styles.header}>
-                            <div className={styles.titleGroup}>
-                                <h2 className={styles.title}>
-                                    스마트 가상자산 스크리너
-                                </h2>
-                                <p className={styles.subtitle}>실시간 분석 · 1분 갱신</p>
-                            </div>
+    return (
+        <div className={styles.container}>
+            <div className={styles.header}>
+                <div className={styles.titleGroup}>
+                    <h2 className={styles.title}>
+                        스마트 가상자산 스크리너
+                    </h2>
+                    <p className={styles.subtitle}>실시간 분석 · 1분 갱신</p>
+                </div>
 
-                            <div className={styles.tabs}>
-                                <button
-                                    className={`${styles.tab} ${tab === 'breakout' ? styles.active : ''}`}
-                                    onClick={() => setTab('breakout')}
-                                    title="주요 이동평균선(20/50/200일)을 상향 돌파하는 자산 포착"
-                                >
-                                    🚀 돌파 (Breakout)
-                                </button>
-                                <button
-                                    className={`${styles.tab} ${tab === 'performance' ? styles.active : ''}`}
-                                    onClick={() => setTab('performance')}
-                                    title="고점 대비 하락폭이 큰 자산을 찾아 저점 매수 기회 탐색"
-                                >
-                                    💎 저점 (Bottom)
-                                </button>
-                                <button
-                                    className={`${styles.tab} ${tab === 'risk' ? styles.active : ''}`}
-                                    onClick={() => setTab('risk')}
-                                    title="연환산 변동성을 기준으로 리스크 분석 (High Volatility = High Risk)"
-                                >
-                                    ⚠️ 리스크 (Risk)
-                                </button>
-                            </div>
-                        </div>
+                <div className={styles.tabs}>
+                    <button
+                        className={`${styles.tab} ${tab === 'breakout' ? styles.active : ''}`}
+                        onClick={() => setTab('breakout')}
+                        title="주요 이동평균선(20/50/200일)을 상향 돌파하는 자산 포착"
+                    >
+                        🚀 돌파 (Breakout)
+                    </button>
+                    <button
+                        className={`${styles.tab} ${tab === 'performance' ? styles.active : ''}`}
+                        onClick={() => setTab('performance')}
+                        title="고점 대비 하락폭이 큰 자산을 찾아 저점 매수 기회 탐색"
+                    >
+                        💎 저점 (Bottom)
+                    </button>
+                    <button
+                        className={`${styles.tab} ${tab === 'risk' ? styles.active : ''}`}
+                        onClick={() => setTab('risk')}
+                        title="연환산 변동성을 기준으로 리스크 분석 (High Volatility = High Risk)"
+                    >
+                        ⚠️ 리스크 (Risk)
+                    </button>
+                </div>
+            </div>
 
-                        {/* Guide Section */}
-                        <div style={{
-                            background: 'rgba(59, 130, 246, 0.08)',
-                            padding: '12px 16px',
-                            borderRadius: '8px',
-                            marginBottom: '20px',
-                            fontSize: '13px',
-                            color: 'var(--text-secondary)',
-                            border: '1px solid rgba(59, 130, 246, 0.2)'
-                        }}>
-                            <span style={{ marginRight: '8px', fontSize: '16px' }}>💡</span>
-                            {tab === 'breakout' && <span><strong>돌파 전략:</strong> 현재 가격이 20일/50일/200일 이동평균선을 강하게 뚫고 올라가는 '골든 크로스' 직전 혹은 직후의 자산을 찾습니다.</span>}
-                            {tab === 'performance' && <span><strong>저점 공략:</strong> 역사적 고점(ATH) 대비 하락폭(Drawdown)이 큰 자산을 필터링하여, 펀더멘탈 대비 과매도된 저평가 구간을 탐색합니다.</span>}
-                            {tab === 'risk' && <span><strong>리스크 분석:</strong> 자산의 가격 변동폭(Standard Deviation)을 연율화하여 계산합니다. 'Extreme' 등급은 하루에도 10% 이상 급등락할 수 있는 고위험 자산입니다.</span>}
-                            <span style={{ marginTop: '8px', display: 'block', fontSize: '12px', color: '#3b82f6', fontWeight: 500 }}>
-                                ※ 분석 대상: 시가총액 상위 30개 주요 암호화폐 (실시간)
-                            </span>
-                        </div>
+            {/* Guide Section */}
+            <div style={{
+                background: 'rgba(59, 130, 246, 0.08)',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                marginBottom: '20px',
+                fontSize: '13px',
+                color: 'var(--text-secondary)',
+                border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}>
+                <span style={{ marginRight: '8px', fontSize: '16px' }}>💡</span>
+                {tab === 'breakout' && <span><strong>돌파 전략:</strong> 현재 가격이 20일/50일/200일 이동평균선을 강하게 뚫고 올라가는 '골든 크로스' 직전 혹은 직후의 자산을 찾습니다.</span>}
+                {tab === 'performance' && <span><strong>저점 공략:</strong> 역사적 고점(ATH) 대비 하락폭(Drawdown)이 큰 자산을 필터링하여, 펀더멘탈 대비 과매도된 저평가 구간을 탐색합니다.</span>}
+                {tab === 'risk' && <span><strong>리스크 분석:</strong> 자산의 가격 변동폭(Standard Deviation)을 연율화하여 계산합니다. 'Extreme' 등급은 하루에도 10% 이상 급등락할 수 있는 고위험 자산입니다.</span>}
+                <span style={{ marginTop: '8px', display: 'block', fontSize: '12px', color: '#3b82f6', fontWeight: 500 }}>
+                    ※ 분석 대상: 시가총액 상위 30개 주요 암호화폐 (실시간)
+                </span>
+            </div>
 
 
-                        <div className={styles.summaryGrid}>
-                            {summaryCards()}
-                        </div>
+            <div className={styles.summaryGrid}>
+                {summaryCards()}
+            </div>
 
-                        <div className={styles.tableWrapper}>
-                            {renderTable()}
-                        </div>
-                    </div >
-                    );
+            <div className={styles.tableWrapper}>
+                {renderTable()}
+            </div>
+        </div >
+    );
 }

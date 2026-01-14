@@ -7230,3 +7230,7 @@
 [0]  GET /analysis 200 in 83ms (compile: 46ms, render: 36ms)
 [0] ✓ Compiled in 84ms
 [0] ✓ Compiled in 221ms
+[0] ✓ Compiled in 79ms
+[0]  GET /analysis 200 in 319ms (compile: 21ms, render: 298ms)
+[0]  GET / 200 in 257ms (compile: 165ms, render: 92ms)
+[0]  GET /analysis 200 in 261ms (compile: 3ms, render: 258ms)

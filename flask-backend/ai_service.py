@@ -4,6 +4,8 @@ import json
 from datetime import datetime
 from openai import OpenAI
 
+
+class AIService:
     def __init__(self):
         self.xai_key = os.environ.get("XAI_API_KEY")
         self.openai_key = os.environ.get("OPENAI_API_KEY")

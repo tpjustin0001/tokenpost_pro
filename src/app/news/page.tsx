@@ -23,7 +23,7 @@ export default function NewsPage() {
     const [news, setNews] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState('전체');
-    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [selectedItem, setSelectedItem] = useState<any>(null); // Store full object
 
     useEffect(() => {
         async function fetchNews() {
@@ -76,7 +76,7 @@ export default function NewsPage() {
                                     <h2 className={styles.sectionHeading}>헤드라인 뉴스 (Headline)</h2>
                                     <article
                                         className={styles.spotlightItem}
-                                        onClick={() => setSelectedId(String(filteredNews[0].id))}
+                                        onClick={() => setSelectedItem(filteredNews[0])}
                                     >
                                         <div className={styles.spotlightHeader}>
                                             <span className={styles.sourceBadge}>{filteredNews[0].source || 'TokenPost'}</span>
@@ -103,7 +103,7 @@ export default function NewsPage() {
                                         <article
                                             key={item.id}
                                             className={styles.newsItem}
-                                            onClick={() => setSelectedId(String(item.id))}
+                                            onClick={() => setSelectedItem(item)}
                                         >
                                             <div className={styles.itemHeader}>
                                                 <span className={styles.time}>{item.published_at ? new Date(item.published_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : getTimeAgo(item.created_at || new Date().toISOString())}</span>
@@ -128,9 +128,13 @@ export default function NewsPage() {
             </div>
 
             <ContentModal
-                contentId={selectedId}
-                isOpen={!!selectedId}
-                onClose={() => setSelectedId(null)}
+                contentData={selectedItem ? {
+                    ...selectedItem,
+                    time: selectedItem.published_at || selectedItem.created_at, // Map for Modal
+                    thumbnail: selectedItem.image_url // Map for Modal
+                } : null}
+                isOpen={!!selectedItem}
+                onClose={() => setSelectedItem(null)}
             />
         </div>
     );

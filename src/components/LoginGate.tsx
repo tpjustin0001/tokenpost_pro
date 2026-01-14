@@ -21,10 +21,12 @@ export default function LoginGate({ children }: LoginGateProps) {
     }
 
     // Not logged in - show login modal ONLY (no content rendered at all)
+    // Not logged in - show login modal ONLY (no content rendered at all)
+    /* 
     if (!isLoggedIn) {
         return (
             <div className={styles.gateContainer}>
-                {/* NO CONTENT RENDERED - Cannot bypass with CSS/JS */}
+                
                 <div className={styles.overlay}>
                     <div className={styles.modal}>
                         <div className={styles.logo}>
@@ -50,6 +52,7 @@ export default function LoginGate({ children }: LoginGateProps) {
             </div>
         );
     }
+    */
 
     // Logged in - show content
     return <>{children}</>;

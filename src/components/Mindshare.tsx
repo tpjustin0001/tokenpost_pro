@@ -31,15 +31,18 @@ export default function Mindshare() {
             setLoading(true);
             try {
                 if (supabase) {
-                    const { data: snap } = await supabase
+                    const { data: snaps, error } = await supabase
                         .from('global_market_snapshots')
                         .select('data')
                         .order('created_at', { ascending: false })
-                        .limit(1)
-                        .single();
+                        .limit(1);
 
-                    if (snap?.data) {
-                        setData(snap.data);
+                    if (error) {
+                        console.error("Supabase Error:", error);
+                    }
+
+                    if (snaps && snaps.length > 0) {
+                        setData(snaps[0].data);
                     }
                 }
             } catch (error) {

@@ -8049,3 +8049,4 @@
 [0] Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
 [0] [Next.js Rewrite] Proxying /api/python to: http://127.0.0.1:5001
 [0] Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+[0] npm run next-dev exited with code 0

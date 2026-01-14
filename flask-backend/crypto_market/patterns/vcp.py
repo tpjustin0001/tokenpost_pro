@@ -63,20 +63,57 @@ def find_vcp_candidates(symbols):
             # Volume in last 3 days < 20-day Average Volume
             avg_vol_20 = df['Volume'].tail(20).mean()
             curr_vol = df['Volume'].tail(3).mean()
-            vol_dry_up = curr_vol < avg_vol_20
+            vol_ratio = curr_vol / avg_vol_20 if avg_vol_20 > 0 else 1.0
             
-            if vol_contracting or vol_dry_up:
-                score = 80
-                if vol_contracting: score += 10
-                if vol_dry_up: score += 5
+            # --- Metrics Calculation for Frontend ---
+            pivot_high = high_52w # Using 52w High as main pivot
+            breakout_pct = ((current_price - pivot_high) / pivot_high) * 100
+            
+            # Contraction Depths (Proxy using High-Low range in windows)
+            # c1: 30 days, c2: 20 days, c3: 10 days
+            def get_depth(window):
+                sub = df.tail(window)
+                h = sub['High'].max()
+                l = sub['Low'].min()
+                return ((h - l) / h) * 100 if h > 0 else 0
+
+            c1 = get_depth(30)
+            c2 = get_depth(20)
+            c3 = get_depth(10)
+            
+            # ATR % (Approximate)
+            day_high = df['High'].iloc[-1]
+            day_low = df['Low'].iloc[-1]
+            atr_approx = ((day_high - day_low) / current_price) * 100
+            
+            # Score Calculation (0-100)
+            score = 60 # Base
+            if current_price > sma50: score += 10
+            if current_price > sma150: score += 5
+            if current_price > sma200: score += 5
+            if vol_ratio < 0.8: score += 10 # Volume drying up
+            if c3 < c2 < c1: score += 10 # VCP Characteristic (Tightening)
+            
+            # Signal Type
+            signal_type = 'APPROACHING'
+            if breakout_pct > 0: signal_type = 'BREAKOUT'
+            elif breakout_pct > -2: signal_type = 'RETEST_OK'
+            elif c3 < 5.0: signal_type = 'APPROACHING' # Tight
                 
-                candidates.append({
-                    'symbol': symbol,
-                    'score': score,
-                    'grade': 'A' if score >= 90 else 'B',
-                    'price': current_price,
-                    'signal_type': 'VCP Breakout Ready' if current_price > sma50 * 1.05 else 'VCP Setup Forming'
-                })
+            candidates.append({
+                'symbol': symbol,
+                'score': min(99, score),
+                'grade': 'A' if score >= 85 else 'B' if score >= 70 else 'C',
+                'signal_type': signal_type,
+                'pivot_high': pivot_high,
+                'current_price': current_price,
+                'breakout_pct': breakout_pct,
+                'c1': c1,
+                'c2': c2,
+                'c3': c3,
+                'atr_pct': atr_approx,
+                'vol_ratio': vol_ratio
+            })
                 
         except Exception as e:
             # print(f"Error checking {symbol}: {e}")

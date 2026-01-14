@@ -176,5 +176,75 @@ class AIService:
             print(f"Asset Analysis Failed: {e}")
             return self._get_mock_asset_analysis(symbol)
 
+    def _get_cached_data(self, key, ttl):
+        if key in self._cache:
+            entry = self._cache[key]
+            age = (datetime.now() - entry['time']).total_seconds()
+            if age < ttl:
+                return entry['data']
+        return None
+
+    def _set_cache_data(self, key, data):
+        self._cache[key] = {
+            'data': data,
+            'time': datetime.now()
+        }
+
+    def _get_mock_global_analysis(self):
+        return {
+            "overallScore": 65,
+            "marketPhase": "Accumulation",
+            "summary": "AI 서비스 연결이 원활하지 않습니다. 기본 데이터만 제공됩니다. 현재 시장은 주요 지지선 위에서 횡보하며 다음 방향성을 모색하고 있습니다.",
+            "macro_factors": [
+                {"name": "Interest Rates", "impact": "Neutral", "detail": "금리 정책 불확실성 지속"},
+                {"name": "Inflation", "impact": "Negative", "detail": "CPI 데이터 주시 필요"}
+            ],
+            "radar_data": [
+                {"label": "Macro", "value": 60},
+                {"label": "Technical", "value": 70},
+                {"label": "On-Chain", "value": 65},
+                {"label": "Sentiment", "value": 50},
+                {"label": "Innovation", "value": 80}
+            ],
+            "sectorAnalysis": [
+                {"name": "DeFi", "signal": "Accumulate", "score": 75, "insight": "TVL 상승 추세 유지"},
+                {"name": "GameFi", "signal": "Watch", "score": 60, "insight": "신규 유저 유입 정체"}
+            ],
+            "onchain_signals": [
+                {"metric": "Exchange Inflow", "signal": "Bullish", "value": "Low", "comment": "매도 압력 감소"}
+            ],
+            "risks": ["규제 불확실성", "거시경제 위축"],
+            "opportunities": ["비트코인 반감기", "이더리움 업그레이드"],
+            "recommendation": "DCA (분할 매수) 전략 유지",
+            "actionable_insight_summary": "단기 변동성에 주의하되 중장기적 관점의 매집 유효",
+            "timestamp": datetime.now().isoformat(),
+            "recent_news": []
+        }
+
+    def _get_mock_asset_analysis(self, symbol, error_msg=None):
+        return {
+            "assetName": symbol,
+            "category": "Crypto",
+            "overallScore": 5.0,
+            "summary": error_msg or "AI 분석을 사용할 수 없습니다. 잠시 후 다시 시도해주세요.",
+            "detailed_analysis": {
+                "market_context": "데이터 부족",
+                "technical_outlook": "데이터 부족",
+                "on_chain_verdict": "데이터 부족"
+            },
+            "radarData": [
+                {"label": "펀더멘탈", "value": 50},
+                {"label": "모멘텀", "value": 50},
+                {"label": "기술적분석", "value": 50},
+                {"label": "검색량", "value": 50},
+                {"label": "혁신성", "value": 50}
+            ],
+            "metrics": [],
+            "risks": [],
+            "opportunities": [],
+            "recommendation": "Hold",
+            "timestamp": datetime.now().isoformat()
+        }
+
 # Singleton instance
 ai_service = AIService()

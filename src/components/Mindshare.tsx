@@ -54,9 +54,9 @@ export default function Mindshare() {
                 const mapped: MindshareItem[] = listings.map((coin: any) => ({
                     symbol: coin.symbol,
                     mindshare: 'High', // Top 5 volume = High Attention
-                    change1M: `${coin.percent_change_1h >= 0 ? '+' : ''}${coin.percent_change_1h.toFixed(2)}%`,
-                    isPositive: coin.percent_change_1h >= 0,
-                    volume: `$${(coin.volume_24h / 1000000).toFixed(0)}M`
+                    change1M: `${coin.change24h >= 0 ? '+' : ''}${coin.change24h.toFixed(2)}%`,
+                    isPositive: coin.change24h >= 0,
+                    volume: `$${(coin.volume24h / 1000000).toFixed(0)}M`
                 }));
                 setItems(mapped);
 
@@ -98,7 +98,7 @@ export default function Mindshare() {
             <div className={styles.tableHeader}>
                 <span className={styles.th}>자산</span>
                 <span className={`${styles.th} ${styles.thCenter}`}>주목도 (Vol)</span>
-                <span className={`${styles.th} ${styles.thCenter}`}>변동 (1H)</span>
+                <span className={`${styles.th} ${styles.thCenter}`}>변동 (24H)</span>
                 <span className={styles.th}></span>
             </div>
 

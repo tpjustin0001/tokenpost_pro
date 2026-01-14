@@ -26,6 +26,8 @@ const nextConfig: NextConfig = {
       backendUrl = `https://${backendUrl}`;
     }
 
+    console.log('[Next.js Rewrite] Proxying /api/python to:', backendUrl);
+
     return [
       {
         source: '/api/python/:path*', // Frontend calls /api/python/crypto...

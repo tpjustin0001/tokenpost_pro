@@ -9,6 +9,7 @@ import EventTicker from '@/components/EventTicker';
 import Mindshare from '@/components/Mindshare';
 import KimchiPremium from '@/components/KimchiPremium';
 import PricePerformance from '@/components/PricePerformance';
+import LoginGate from '@/components/LoginGate';
 
 import { StablecoinInterestChart, BlockchainRevChart, ETFFlowsChart } from '@/components/DataWidgets';
 import NewsFeed from '@/components/NewsFeed';
@@ -80,90 +81,91 @@ export default function HomePage() {
   const MotionDiv = motion.div;
 
   return (
-    <div className={styles.appLayout}>
-      <Sidebar />
+    <LoginGate>
+      <div className={styles.appLayout}>
+        <Sidebar />
 
-      <div className={styles.mainArea}>
-        <MetricsBar />
-        <EventTicker />
+        <div className={styles.mainArea}>
+          <MetricsBar />
+          <EventTicker />
 
-        <MotionMain
-          id="main-content"
-          className={styles.content}
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-        >
-          <MotionDiv className={styles.xrayHeader} variants={itemVariants}>
-            <h2 className={styles.pageTitle}>대시보드</h2>
-            <div className={styles.headerRight}>
-              <KimchiPremium />
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                <GlobalXRayButton onClick={() => setGlobalXRayOpen(true)} />
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>AI 거시경제 분석</span>
-              </div>
-            </div>
-          </MotionDiv>
-
-          {/* Main Chart Section */}
-          <MotionDiv className={styles.chartSection} variants={itemVariants}>
-            <div className={styles.chartHeader}>
-              <div className={styles.chartControlsLeft}>
-                <div className={styles.chartTabs}>
-                  {CHART_SYMBOLS.map(sym => (
-                    <button
-                      key={sym.id}
-                      className={`${styles.chartTab} ${activeSymbol === sym.id ? styles.active : ''}`}
-                      onClick={() => setActiveSymbol(sym.id)}
-                    >
-                      {sym.name}
-                    </button>
-                  ))}
-                </div>
-                <div className={styles.dividerVertical} />
-                <div className={styles.chartTabs}>
-                  {CHART_INTERVALS.map(int => (
-                    <button
-                      key={int.id}
-                      className={`${styles.chartTab} ${activeInterval === int.id ? styles.active : ''}`}
-                      onClick={() => setActiveInterval(int.id)}
-                    >
-                      {int.label}
-                    </button>
-                  ))}
+          <MotionMain
+            id="main-content"
+            className={styles.content}
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+          >
+            <MotionDiv className={styles.xrayHeader} variants={itemVariants}>
+              <h2 className={styles.pageTitle}>대시보드</h2>
+              <div className={styles.headerRight}>
+                <KimchiPremium />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                  <GlobalXRayButton onClick={() => setGlobalXRayOpen(true)} />
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>AI 거시경제 분석</span>
                 </div>
               </div>
-              <span className={styles.chartLabel}>
-                {activeSymbol}/USDT · {CHART_INTERVALS.find(i => i.id === activeInterval)?.label}
-              </span>
-            </div>
-            <TradingChart symbol={activeSymbol} interval={activeInterval} />
-          </MotionDiv>
+            </MotionDiv>
 
-          {/* Section: Market Pulse (Sentiment & Volatility) */}
-          <MotionSection className={styles.dashboardSection} variants={itemVariants}>
-            <h2 className={styles.sectionHeading}>마켓 펄스</h2>
-            <div className={styles.twoColumnGrid}>
-              <Mindshare />
-              <PricePerformance />
-            </div>
-          </MotionSection>
+            {/* Main Chart Section */}
+            <MotionDiv className={styles.chartSection} variants={itemVariants}>
+              <div className={styles.chartHeader}>
+                <div className={styles.chartControlsLeft}>
+                  <div className={styles.chartTabs}>
+                    {CHART_SYMBOLS.map(sym => (
+                      <button
+                        key={sym.id}
+                        className={`${styles.chartTab} ${activeSymbol === sym.id ? styles.active : ''}`}
+                        onClick={() => setActiveSymbol(sym.id)}
+                      >
+                        {sym.name}
+                      </button>
+                    ))}
+                  </div>
+                  <div className={styles.dividerVertical} />
+                  <div className={styles.chartTabs}>
+                    {CHART_INTERVALS.map(int => (
+                      <button
+                        key={int.id}
+                        className={`${styles.chartTab} ${activeInterval === int.id ? styles.active : ''}`}
+                        onClick={() => setActiveInterval(int.id)}
+                      >
+                        {int.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <span className={styles.chartLabel}>
+                  {activeSymbol}/USDT · {CHART_INTERVALS.find(i => i.id === activeInterval)?.label}
+                </span>
+              </div>
+              <TradingChart symbol={activeSymbol} interval={activeInterval} />
+            </MotionDiv>
 
-          {/* Section: Breaking & Insights */}
-          <MotionSection className={styles.dashboardSection} variants={itemVariants}>
-            <h2 className={styles.sectionHeading}>속보 및 인사이트</h2>
-            <div className={styles.twoColumnGrid}>
-              <NewsFeed />
-              <ResearchIntel />
-            </div>
-          </MotionSection>
-        </MotionMain>
+            {/* Section: Market Pulse (Sentiment & Volatility) */}
+            <MotionSection className={styles.dashboardSection} variants={itemVariants}>
+              <h2 className={styles.sectionHeading}>마켓 펄스</h2>
+              <div className={styles.twoColumnGrid}>
+                <Mindshare />
+                <PricePerformance />
+              </div>
+            </MotionSection>
+
+            {/* Section: Breaking & Insights */}
+            <MotionSection className={styles.dashboardSection} variants={itemVariants}>
+              <h2 className={styles.sectionHeading}>속보 및 인사이트</h2>
+              <div className={styles.twoColumnGrid}>
+                <NewsFeed />
+                <ResearchIntel />
+              </div>
+            </MotionSection>
+          </MotionMain>
+        </div>
+
+        <GlobalXRay
+          isOpen={globalXRayOpen}
+          onClose={() => setGlobalXRayOpen(false)}
+        />
       </div>
-
-      <GlobalXRay
-        isOpen={globalXRayOpen}
-        onClose={() => setGlobalXRayOpen(false)}
-      />
-    </div>
-  );
+      );
 }

@@ -7142,3 +7142,60 @@
 [0]  GET /data 200 in 329ms (compile: 150ms, render: 179ms)
 [0]  GET /news 200 in 335ms (compile: 194ms, render: 141ms)
 [0]  GET / 200 in 174ms (compile: 82ms, render: 92ms)
+[0]  GET /api/global 200 in 382ms (compile: 9ms, render: 373ms)
+[0]  GET /data 200 in 210ms (compile: 23ms, render: 187ms)
+[0]  GET /api/global 200 in 15ms (compile: 11ms, render: 4ms)
+[0] ⨯ ./src/components/analysis/VCPScanner.tsx:135:13
+[0] Parsing ecmascript source code failed
+[0] [0m [90m 133 |[39m         [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+[0]  [90m 134 |[39m
+[0] [31m[1m>[22m[39m[90m 135 |[39m             {[90m/* VCP Logic Guide */[39m }
+[0]  [90m     |[39m             [31m[1m^[22m[39m
+[0]  [90m 136 |[39m             [33m<[39m[33mdiv[39m style[33m=[39m{{ 
+[0]  [90m 137 |[39m                 background[33m:[39m [32m'rgba(16, 185, 129, 0.08)'[39m[33m,[39m 
+[0]  [90m 138 |[39m                 padding[33m:[39m [32m'12px 16px'[39m[33m,[39m [0m
+[0] 
+[0] Expected ',', got '{'
+[0] 
+[0] Import traces:
+[0]   Client Component Browser:
+[0]     ./src/components/analysis/VCPScanner.tsx [Client Component Browser]
+[0]     ./src/app/analysis/page.tsx [Client Component Browser]
+[0]     ./src/app/analysis/page.tsx [Server Component]
+[0] 
+[0]   Client Component SSR:
+[0]     ./src/components/analysis/VCPScanner.tsx [Client Component SSR]
+[0]     ./src/app/analysis/page.tsx [Client Component SSR]
+[0]     ./src/app/analysis/page.tsx [Server Component]
+[0] 
+[0] 
+[0]  GET /analysis 500 in 207ms (compile: 183ms, render: 25ms)
+[0] ⨯ ./src/components/analysis/VCPScanner.tsx:135:13
+[0] Parsing ecmascript source code failed
+[0] [0m [90m 133 |[39m         [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+[0]  [90m 134 |[39m
+[0] [31m[1m>[22m[39m[90m 135 |[39m             {[90m/* VCP Logic Guide */[39m }
+[0]  [90m     |[39m             [31m[1m^[22m[39m
+[0]  [90m 136 |[39m             [33m<[39m[33mdiv[39m style[33m=[39m{{ 
+[0]  [90m 137 |[39m                 background[33m:[39m [32m'rgba(16, 185, 129, 0.08)'[39m[33m,[39m 
+[0]  [90m 138 |[39m                 padding[33m:[39m [32m'12px 16px'[39m[33m,[39m [0m
+[0] 
+[0] Expected ',', got '{'
+[0] 
+[0] Import traces:
+[0]   Client Component Browser:
+[0]     ./src/components/analysis/VCPScanner.tsx [Client Component Browser]
+[0]     ./src/app/analysis/page.tsx [Client Component Browser]
+[0]     ./src/app/analysis/page.tsx [Server Component]
+[0] 
+[0]   Client Component SSR:
+[0]     ./src/components/analysis/VCPScanner.tsx [Client Component SSR]
+[0]     ./src/app/analysis/page.tsx [Client Component SSR]
+[0]     ./src/app/analysis/page.tsx [Server Component]
+[0] 
+[0] 
+[0]  GET /analysis 500 in 337ms (compile: 329ms, render: 9ms)
+[0] ✓ Compiled in 258ms
+[0]  GET /news 200 in 504ms (compile: 18ms, render: 485ms)
+[0]  GET / 200 in 505ms (compile: 69ms, render: 435ms)
+[0]  GET /analysis 200 in 559ms (compile: 193ms, render: 365ms)

@@ -629,37 +629,42 @@ def api_xray_global():
     """Global Market AI X-Ray Analysis using Binance API (Requests) + News"""
     try:
         import requests
+        import concurrent.futures
         from news_service import news_service
         from ai_service import ai_service
-
-        # 0. Fetch Global News
-        news_list = news_service.get_crypto_news("Bitcoin")
-
-        # 1. Fetch Global Metrics from CMC (via MarketDataService)
         from market_provider import market_data_service
-        global_metrics = market_data_service.get_global_metrics()
-        
-        # 2. Fetch Key Asset Prices (BTC, ETH) - Upbit/Binance Hybrid
-        try:
-            btc_data = market_data_service.get_asset_data("BTC")
-            eth_data = market_data_service.get_asset_data("ETH")
-            btc_price = btc_data['current_price']
-            eth_price = eth_data['current_price']
-        except:
-            btc_price = 0
-            eth_price = 0
+
+        # Parallel Fetching of Data Inputs
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            future_news = executor.submit(news_service.get_crypto_news, "Bitcoin")
+            future_metrics = executor.submit(market_data_service.get_global_metrics)
+            future_btc = executor.submit(market_data_service.get_asset_data, "BTC")
+            future_eth = executor.submit(market_data_service.get_asset_data, "ETH")
+            
+            # Safe Result Retrieval
+            try: news_list = future_news.result(timeout=10)
+            except: news_list = []
+            
+            try: global_metrics = future_metrics.result(timeout=10)
+            except: global_metrics = {"total_market_cap": 0, "total_volume_24h": 0, "btc_dominance": 0, "eth_dominance": 0, "market_cap_change_24h": 0}
+
+            try: btc_data = future_btc.result(timeout=5)
+            except: btc_data = {'current_price': 0, 'currency': 'USD'}
+
+            try: eth_data = future_eth.result(timeout=5)
+            except: eth_data = {'current_price': 0, 'currency': 'USD'}
 
         data_summary = {
-            "Total Market Cap": f"${global_metrics['total_market_cap']:,.0f}",
-            "24h Volume": f"${global_metrics['total_volume_24h']:,.0f}",
-            "BTC Dominance": f"{global_metrics['btc_dominance']:.1f}%",
-            "ETH Dominance": f"{global_metrics['eth_dominance']:.1f}%",
-            "BTC Price": f"${btc_price:,.0f} ({btc_data.get('currency', 'USD')})",
-            "ETH Price": f"${eth_price:,.0f} ({eth_data.get('currency', 'USD')})",
-            "Market Cap Change": f"{global_metrics['market_cap_change_24h']:.2f}%"
+            "Total Market Cap": f"${global_metrics.get('total_market_cap', 0):,.0f}",
+            "24h Volume": f"${global_metrics.get('total_volume_24h', 0):,.0f}",
+            "BTC Dominance": f"{global_metrics.get('btc_dominance', 0):.1f}%",
+            "ETH Dominance": f"{global_metrics.get('eth_dominance', 0):.1f}%",
+            "BTC Price": f"${btc_data.get('current_price', 0):,.0f} ({btc_data.get('currency', 'USD')})",
+            "ETH Price": f"${eth_data.get('current_price', 0):,.0f} ({eth_data.get('currency', 'USD')})",
+            "Market Cap Change": f"{global_metrics.get('market_cap_change_24h', 0):.2f}%"
         }
         
-        # 3. Call AI with News
+        # 3. Call AI with News (This is the slowest part, but data fetch is now fast)
         result = ai_service.analyze_global_market(data_summary, news_list)
         return jsonify(result)
         

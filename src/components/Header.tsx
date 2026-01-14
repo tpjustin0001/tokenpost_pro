@@ -2,8 +2,11 @@
 
 import Link from 'next/link';
 import styles from './Header.module.css';
+import { useAuth } from '../context/AuthContext';
 
 export default function Header() {
+    const { user, isLoggedIn, loading, login, logout } = useAuth();
+
     return (
         <header className="header">
             <div className="header-content container">
@@ -27,9 +30,31 @@ export default function Header() {
                 </nav>
 
                 <div className={styles.headerActions}>
-                    <button className="btn btn-primary">
-                        Login
-                    </button>
+                    {loading ? (
+                        <div className={styles.loadingDot}>...</div>
+                    ) : isLoggedIn && user ? (
+                        <div className={styles.userMenu}>
+                            <span className={styles.userName}>
+                                {user.nickname || user.email || 'User'}
+                            </span>
+                            {user.grade && (
+                                <span className={styles.userBadge}>{user.grade}</span>
+                            )}
+                            <button
+                                className="btn btn-secondary"
+                                onClick={logout}
+                            >
+                                로그아웃
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            className="btn btn-primary"
+                            onClick={login}
+                        >
+                            로그인
+                        </button>
+                    )}
                 </div>
             </div>
         </header>

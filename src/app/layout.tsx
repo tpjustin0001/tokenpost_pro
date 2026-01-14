@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,11 +38,13 @@ export default function RootLayout({
           메인 콘텐츠로 건너뛰기
         </a>
         <ThemeProvider>
-          <XRayProvider>
-            <div className="page-wrapper">
-              {children}
-            </div>
-          </XRayProvider>
+          <AuthProvider>
+            <XRayProvider>
+              <div className="page-wrapper">
+                {children}
+              </div>
+            </XRayProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

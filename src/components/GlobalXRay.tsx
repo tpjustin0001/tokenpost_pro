@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './GlobalXRay.module.css';
 import { flaskApi } from '../services/flaskApi';
+import { supabase } from '../lib/supabase';
 import GlobalXRayView from './GlobalXRayView';
 
 interface MarketAnalysis {
@@ -49,12 +50,30 @@ export default function GlobalXRay({ isOpen, onClose }: GlobalXRayProps) {
 
     useEffect(() => {
         const fetchAnalysis = async () => {
-            if (isOpen) {
+            if (isOpen && supabase) {
                 setLoading(true);
-                const data = await flaskApi.getXRayGlobal();
-                if (data) {
-                    setAnalysis(data);
+                try {
+                    const { data, error } = await supabase
+                        .from('global_market_snapshots')
+                        .select('data')
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .single();
+
+                    if (data && data.data) {
+                        setAnalysis(data.data);
+                    } else {
+                        // If no data in DB, fallback or show empty
+                        console.log("No analysis snapshot found in Supabase.");
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch from Supabase:", e);
                 }
+                setLoading(false);
+            } else if (isOpen) {
+                // Fallback for when Supabase is not configured locally
+                const data = await flaskApi.getXRayGlobal();
+                if (data) setAnalysis(data);
                 setLoading(false);
             }
         };

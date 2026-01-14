@@ -38,6 +38,40 @@ except ImportError:
             return decorator
     cache = MockCache()
 
+# ----------------------------------------------------
+# JSON ENCODER FIX (For numpy types)
+# ----------------------------------------------------
+from flask.json.provider import DefaultJSONProvider
+import numpy as np
+
+class CustomJSONProvider(DefaultJSONProvider):
+    def default(self, obj):
+        if isinstance(obj, np.bool_):
+            return bool(obj)
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
+
+app.json = CustomJSONProvider(app)
+
+# ----------------------------------------------------
+# SCHEDULER STARTUP
+# ----------------------------------------------------
+# Only run scheduler in the main process to avoid duplicates in dev
+if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or os.environ.get('RAILWAY_ENVIRONMENT'):
+    try:
+        from scheduler_service import scheduler_service
+        scheduler_service.start()
+        # Optionally trigger one immediately for instant data? 
+        # scheduler_service.scheduler.add_job(scheduler_service.update_market_analysis, 'date', run_date=datetime.now())
+        print("✅ Scheduler Service initialized.")
+    except Exception as e:
+        print(f"⚠️ Scheduler failed to start: {e}")
+
 # DEBUG: Version Check
 API_VERSION = "1.0.2-fix-gitignore-env"
 print(f"🚀 Starting TokenPost PRO API - Version: {API_VERSION}")

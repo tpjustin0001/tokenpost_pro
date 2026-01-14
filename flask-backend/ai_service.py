@@ -6,8 +6,10 @@ from openai import OpenAI
 
 class AIService:
     def __init__(self):
-        self.api_key = os.environ.get("OPENAI_API_KEY")
+        self.xai_key = os.environ.get("XAI_API_KEY")
+        self.openai_key = os.environ.get("OPENAI_API_KEY")
         self.client = None
+        self.model = "gpt-4o-mini" # Default fallback
         
         # In-memory Cache
         # Structure: { 'key': {'data': dict, 'timestamp': datetime} }
@@ -15,10 +17,21 @@ class AIService:
         self.CACHE_TTL_GLOBAL = 3600  # 1 hour
         self.CACHE_TTL_ASSET = 900    # 15 minutes
         
-        if self.api_key:
-            self.client = OpenAI(api_key=self.api_key)
+        # 1. Prefer xAI (Grok)
+        if self.xai_key:
+            print("🚀 AI Service: Switched to xAI (Grok)")
+            self.client = OpenAI(
+                api_key=self.xai_key,
+                base_url="https://api.x.ai/v1"
+            )
+            self.model = "grok-beta" # Grok 2 / 4.1 equivalent
+        # 2. Fallback to OpenAI
+        elif self.openai_key:
+            print("ℹ️ AI Service: Using OpenAI (GPT-4o)")
+            self.client = OpenAI(api_key=self.openai_key)
+            self.model = "gpt-4o-mini"
         else:
-            print("⚠️ WARNING: OPENAI_API_KEY not found. AI features will use mock data.")
+            print("⚠️ WARNING: No AI API Key found. AI features will use mock data.")
 
     def _get_cached_data(self, key, ttl_seconds):
         """Retrieve data from cache if valid"""
@@ -154,7 +167,7 @@ class AIService:
 
         try:
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=self.model,
                 response_format={"type": "json_object"},
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -245,7 +258,7 @@ class AIService:
 
         try:
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=self.model,
                 response_format={"type": "json_object"},
                 messages=[
                     {"role": "system", "content": system_prompt},

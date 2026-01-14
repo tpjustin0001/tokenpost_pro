@@ -6618,3 +6618,11 @@
 [0]  GET /api/kimchi/upbit 200 in 177ms (compile: 34ms, render: 142ms)
 [0]  GET /api/kimchi/upbit 200 in 95ms (compile: 22ms, render: 73ms)
 [0]  GET /api/kimchi/upbit 200 in 143ms (compile: 10ms, render: 133ms)
+[0]  GET /api/kimchi/upbit 200 in 161ms (compile: 42ms, render: 120ms)
+[0]  GET /api/global 200 in 313ms (compile: 31ms, render: 282ms)
+[0]  GET /api/markets 200 in 299ms (compile: 29ms, render: 270ms)
+[0]  GET /api/kimchi/upbit 200 in 85ms (compile: 6ms, render: 79ms)
+[0]  GET /api/kimchi/upbit 200 in 124ms (compile: 41ms, render: 83ms)
+[0]  GET /api/kimchi/upbit 200 in 125ms (compile: 16ms, render: 109ms)
+[0]  GET /api/kimchi/upbit 200 in 545ms (compile: 28ms, render: 517ms)
+[0] ✓ Compiled in 5.2s

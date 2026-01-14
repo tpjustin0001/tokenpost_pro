@@ -1,6 +1,9 @@
 'use client';
 
-import { TrendingUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { flaskApi } from '../services/flaskApi';
+import { TrendingUp, MessageCircle, BarChart2 } from 'lucide-react';
 import styles from './Mindshare.module.css';
 import { TableSkeleton } from './LoadingSkeleton';
 import EmptyState from './EmptyState';
@@ -10,82 +13,119 @@ interface MindshareItem {
     mindshare: string;
     change1M: string;
     isPositive: boolean;
+    volume: string;
 }
 
-// Direct CoinGecko image URLs for major coins
+// Direct CoinGecko image URLs
 function getCoinIconUrl(symbol: string): string {
-    const urls: Record<string, string> = {
-        'BTC': 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
-        'ETH': 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
-        'SOL': 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
-        'BNB': 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
-        'XRP': 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
-        'ADA': 'https://assets.coingecko.com/coins/images/975/small/cardano.png',
-        'DOGE': 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png',
-        'AVAX': 'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png',
-        'SHIB': 'https://assets.coingecko.com/coins/images/11939/small/shiba.png',
-        'DOT': 'https://assets.coingecko.com/coins/images/12171/small/polkadot.png',
-        'LINK': 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
-        'MATIC': 'https://assets.coingecko.com/coins/images/4713/small/polygon.png',
-        'ATOM': 'https://assets.coingecko.com/coins/images/1481/small/cosmos_hub.png',
-        'LTC': 'https://assets.coingecko.com/coins/images/2/small/litecoin.png',
-        'UNI': 'https://assets.coingecko.com/coins/images/12504/small/uniswap.png',
-    };
-    return urls[symbol.toUpperCase()] || `https://ui-avatars.com/api/?name=${symbol}&background=6366f1&color=fff&size=64&bold=true`;
+    const clean = symbol.toUpperCase();
+    return `https://assets.coincap.io/assets/icons/${clean.toLowerCase()}@2x.png`;
 }
-
-const MOCK_DATA: MindshareItem[] = [
-    // 소셜 센티멘트 데이터 초기화 (실제 API 연동 대기)
-];
 
 export default function Mindshare() {
-    const isLoading = false; // API 연동 시 사용
+    const [loading, setLoading] = useState(true);
+    const [items, setItems] = useState<MindshareItem[]>([]);
+    const [globalSentiment, setGlobalSentiment] = useState<string>('Neutral');
+    const [sentimentScore, setSentimentScore] = useState<number>(50);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // 1. Get Global Sentiment from Supabase (Grok Analysis)
+                if (supabase) {
+                    const { data } = await supabase
+                        .from('global_market_snapshots')
+                        .select('data')
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .single();
+
+                    if (data?.data?.radar_data) {
+                        const sentObj = data.data.radar_data.find((r: any) => r.label === 'Sentiment' || r.label === '센티멘트');
+                        const score = sentObj ? sentObj.value : 50;
+                        setSentimentScore(score);
+                        setGlobalSentiment(score >= 60 ? 'Bullish' : score <= 40 ? 'Bearish' : 'Neutral');
+                    }
+                }
+
+                // 2. Get Top Coins by Volume (Proxy for "Mindshare/Attention")
+                const listings = await flaskApi.getListings(5);
+                const mapped: MindshareItem[] = listings.map((coin: any) => ({
+                    symbol: coin.symbol,
+                    mindshare: 'High', // Top 5 volume = High Attention
+                    change1M: `${coin.percent_change_1h >= 0 ? '+' : ''}${coin.percent_change_1h.toFixed(2)}%`,
+                    isPositive: coin.percent_change_1h >= 0,
+                    volume: `$${(coin.volume_24h / 1000000).toFixed(0)}M`
+                }));
+                setItems(mapped);
+
+            } catch (error) {
+                console.error("Mindshare Load Failed:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const getScoreColor = (score: number) => {
+        if (score >= 60) return '#10b981';
+        if (score <= 40) return '#ef4444';
+        return '#fbbf24';
+    };
 
     return (
         <div className={styles.widget}>
             <div className={styles.header}>
-                <h3 className={styles.title}>소셜 센티멘트</h3>
-                <div className={styles.tabs}>
-                    <button className={`${styles.tab} ${styles.active}`}>전체</button>
-                    <button className={styles.tab}>트위터</button>
-                    <button className={styles.tab}>레딧</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h3 className={styles.title}>소셜 센티멘트 (Social Vibe)</h3>
+                    {!loading && (
+                        <span style={{
+                            fontSize: '11px',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            background: getScoreColor(sentimentScore) + '20',
+                            color: getScoreColor(sentimentScore),
+                            fontWeight: 'bold'
+                        }}>
+                            {globalSentiment} ({sentimentScore})
+                        </span>
+                    )}
                 </div>
             </div>
 
             <div className={styles.tableHeader}>
                 <span className={styles.th}>자산</span>
-                <span className={`${styles.th} ${styles.thCenter}`}>관심도</span>
-                <span className={`${styles.th} ${styles.thCenter}`}>감성</span>
+                <span className={`${styles.th} ${styles.thCenter}`}>주목도 (Vol)</span>
+                <span className={`${styles.th} ${styles.thCenter}`}>변동 (1H)</span>
                 <span className={styles.th}></span>
             </div>
 
             <div className={styles.list}>
-                {isLoading ? (
+                {loading ? (
                     <TableSkeleton rows={5} />
-                ) : MOCK_DATA.length === 0 ? (
+                ) : items.length === 0 ? (
                     <EmptyState
-                        icon={<TrendingUp size={48} />}
-                        title="소셜 데이터를 수집하고 있습니다"
-                        description="잠시 후 트위터, 레딧 등의 소셜 센티멘트 데이터가 표시됩니다."
+                        icon={<MessageCircle size={32} />}
+                        title="데이터 수집 중"
+                        description="Grok AI가 소셜 데이터를 분석하고 있습니다."
                     />
                 ) : (
-                    MOCK_DATA.map((item) => (
+                    items.map((item) => (
                         <div key={item.symbol} className={styles.row}>
                             <div className={styles.colAsset}>
                                 <img
                                     src={getCoinIconUrl(item.symbol)}
                                     alt={item.symbol}
                                     className={styles.assetIcon}
-                                    onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.src = `https://ui-avatars.com/api/?name=${item.symbol}&background=6366f1&color=fff&size=64&bold=true`;
-                                    }}
+                                    onError={(e) => e.currentTarget.src = `https://ui-avatars.com/api/?name=${item.symbol}&background=333&color=fff`}
                                 />
                                 <span className={styles.assetName}>{item.symbol}</span>
                             </div>
                             <div className={styles.colCenter}>
-                                <span className={`${styles.badge} ${item.mindshare === 'High' ? styles.badgeHigh : styles.badgeMed}`}>
-                                    {item.mindshare}
+                                <span className={styles.badge} style={{ background: '#3b82f620', color: '#3b82f6' }}>
+                                    {item.volume}
                                 </span>
                             </div>
                             <div className={styles.colCenter}>
@@ -93,12 +133,17 @@ export default function Mindshare() {
                                     {item.change1M}
                                 </span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                <button className={styles.whyBtn}>?</button>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', opacity: 0.5 }}>
+                                <BarChart2 size={14} />
                             </div>
                         </div>
                     ))
                 )}
+            </div>
+            {/* Grok Branding */}
+            <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Powered by</span>
+                <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-primary)' }}>xAI Grok</span>
             </div>
         </div>
     );

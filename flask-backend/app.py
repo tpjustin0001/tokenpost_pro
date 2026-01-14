@@ -568,66 +568,20 @@ def api_screener_risk():
 
 
 # ============================================================
-# CONTENT API (News & Research) - Simple In-Memory DB
+# INITIALIZE SUPABASE CLIENT
 # ============================================================
-# In a real production app, use SQLite/PostgreSQL
-import uuid
+from supabase import create_client, Client
 
-# In-memory storage
-CONTENT_STORE = {
-    'news': [
-        {
-            'id': '1', 'category': '시장', 'title': '비트코인, 현물 ETF 승인 이후 자금 유입 가속화',
-            'summary': 'BlackRock IBIT 100억 달러 돌파 임박, 기관 매수세 지속',
-            'source': 'TokenPost', 'published_at': datetime.now().isoformat(),
-            'image_url': 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=400&h=250&fit=crop'
-        },
-        {
-            'id': '2', 'category': 'DeFi', 'title': '이더리움 덴쿤 업그레이드, L2 수수료 대폭 인하 전망',
-            'summary': 'Proto-danksharding 도입으로 롤업 비용 90% 절감 기대',
-            'source': 'The Block', 'published_at': datetime.now().isoformat(),
-            'image_url': 'https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=400&h=250&fit=crop'
-        }
-    ],
-    'research': [
-        {
-            'id': '1', 'type': 'REPORT', 'title': '2025년 웹3 게이밍 트렌드 전망',
-            'summary': 'Play-to-Earn에서 Play-and-Earn으로의 전환, AAA급 게임의 등장',
-            'author': '리서치팀', 'source': 'TokenPost PRO', 'date': '2025.01.10',
-            'readTime': '10분', 'isPro': True, 'tags': ['GameFi', 'Trends']
-        }
-    ]
-}
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+supabase: Client = None
 
-@app.route('/api/content/<content_type>', methods=['GET'])
-def get_content(content_type):
-    if content_type not in CONTENT_STORE:
-        return jsonify({'error': 'Invalid content type'}), 400
-    
-    return jsonify(CONTENT_STORE[content_type])
-
-@app.route('/api/content/<content_type>', methods=['POST'])
-def create_content(content_type):
-    if content_type not in CONTENT_STORE:
-        return jsonify({'error': 'Invalid content type'}), 400
-    
-    data = request.json
-    if not data:
-        return jsonify({'error': 'No data provided'}), 400
-        
-    new_item = {
-        'id': str(uuid.uuid4()),
-        'published_at': datetime.now().isoformat(),
-        **data
-    }
-    
-    # Prepend to list for latest first
-    CONTENT_STORE[content_type].insert(0, new_item)
-    
-    return jsonify({'success': True, 'item': new_item})
-
-
-    return jsonify({'success': True})
+if SUPABASE_URL and SUPABASE_KEY:
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        print("✅ Supabase Client initialized.")
+    except Exception as e:
+        print(f"⚠️ Failed to initialize Supabase: {e}")
 
 
 # ============================================================
@@ -636,7 +590,7 @@ def create_content(content_type):
 @app.route('/api/external/ingest', methods=['POST'])
 def ingest_external_content():
     """
-    Secure endpoint for external content injection.
+    Secure endpoint for external content injection (News & Research).
     Requires Header: X-API-KEY
     """
     # 1. Security Check
@@ -657,23 +611,57 @@ def ingest_external_content():
     content_type = data.get('type', 'news') # Default to news
     payload = data.get('data')
     
-    if not payload or content_type not in CONTENT_STORE:
-        return jsonify({'error': 'Invalid content type or missing data'}), 400
-        
-    # 3. Process & Store
+    if not payload:
+        return jsonify({'error': 'Missing data payload'}), 400
+
+    if not supabase:
+        return jsonify({'error': 'Database connection unavailable'}), 503
+
+    # 3. Process & Insert into Supabase
     try:
-        new_item = {
-            'id': str(uuid.uuid4()),
-            'source': 'External API', # Default, can be overridden by payload
-            'published_at': datetime.now().isoformat(),
-            **payload
-        }
+        if content_type == 'news':
+            # Map payload to Supabase 'news' table columns
+            db_payload = {
+                'title': payload.get('title'),
+                'summary': payload.get('summary'),
+                'content': payload.get('content'),
+                'source': payload.get('source', 'External'),
+                'published_at': payload.get('published_at', datetime.now().isoformat()),
+                'sentiment_score': payload.get('sentiment_score'),
+                'image_url': payload.get('image_url'),
+                'category': payload.get('category'),
+                'show_on_chart': payload.get('show_on_chart', False),
+                'related_coin': payload.get('related_coin')
+            }
+            response = supabase.table('news').insert(db_payload).execute()
+            
+        elif content_type == 'research':
+            # Map payload to Supabase 'research' table columns
+            # Note: payload 'type' (REPORT/ANALYSIS) maps to DB 'category' or kept as is if DB has 'category'
+            db_payload = {
+                'title': payload.get('title'),
+                'author': payload.get('author', 'TokenPost'),
+                'summary': payload.get('summary'),
+                'content': payload.get('content'),
+                'tags': payload.get('tags', []),
+                'is_premium': payload.get('is_premium', False),
+                'thumbnail_url': payload.get('thumbnail_url'),
+                'category': payload.get('type', 'REPORT') # Mapping type to category column
+            }
+            response = supabase.table('research').insert(db_payload).execute()
         
-        # Insert at top
-        CONTENT_STORE[content_type].insert(0, new_item)
+        else:
+            return jsonify({'error': f'Unsupported content type: {content_type}'}), 400
+
+        # Check response
+        # supabase-py v1.2.0 returns response object with .data and .error usually? 
+        # Actually .execute() returns APIResponse which has .data
         
-        print(f"📥 Encypted Ingest: Received 1 {content_type} item from external source.")
-        return jsonify({'success': True, 'id': new_item['id'], 'message': 'Content encrypted and stored securely'})
+        inserted_data = response.data if response and response.data else []
+        inserted_id = inserted_data[0]['id'] if inserted_data else 'unknown'
+        
+        print(f"📥 Supabase Ingest ({content_type}): ID {inserted_id}")
+        return jsonify({'success': True, 'id': inserted_id, 'message': 'Content saved to Supabase'})
         
     except Exception as e:
         print(f"Ingest Error: {e}")
@@ -702,24 +690,34 @@ def ingest_markers():
     if not data:
         return jsonify({'error': 'No JSON payload provided'}), 400
         
+    if not supabase:
+        return jsonify({'error': 'Database connection unavailable'}), 503
+
     # Force marker attributes
     payload = data.get('data', data) # Support both wrapped 'data' and direct payload
-    payload['show_on_chart'] = True
     
-    # 3. Process & Store
+    # 3. Process & Insert into Supabase
     try:
-        new_item = {
-            'id': str(uuid.uuid4()),
-            'source': 'External Marker API',
-            'published_at': datetime.now().isoformat(),
-            **payload
+        db_payload = {
+            'title': payload.get('title'),
+            'summary': payload.get('summary'),
+            'content': payload.get('content'),
+            'source': payload.get('source', 'External Market'),
+            'published_at': payload.get('published_at', datetime.now().isoformat()),
+            'sentiment_score': payload.get('sentiment_score'),
+            'image_url': payload.get('image_url'),
+            'category': 'MARKER', # Distinct category for clarity
+            'show_on_chart': True, # Forced
+            'related_coin': payload.get('related_coin')
         }
         
-        # Insert into NEWS list (Markers are a subset of news)
-        CONTENT_STORE['news'].insert(0, new_item)
+        response = supabase.table('news').insert(db_payload).execute()
         
-        print(f"📍 Marker Ingest: Received 1 chart marker.")
-        return jsonify({'success': True, 'id': new_item['id'], 'message': 'Marker stored successfully'})
+        inserted_data = response.data if response and response.data else []
+        inserted_id = inserted_data[0]['id'] if inserted_data else 'unknown'
+
+        print(f"📍 Marker Ingest: Saved to Supabase ID {inserted_id}")
+        return jsonify({'success': True, 'id': inserted_id, 'message': 'Marker stored successfully'})
         
     except Exception as e:
         print(f"Marker Ingest Error: {e}")

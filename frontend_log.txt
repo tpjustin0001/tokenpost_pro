@@ -6596,3 +6596,25 @@
 [0] - Environments: .env.local
 [0] 
 [0] ✓ Starting...
+[0] ✓ Ready in 2.2s
+[0]  GET / 200 in 1326ms (compile: 1027ms, render: 299ms)
+[0]  GET /api/global 200 in 871ms (compile: 383ms, render: 488ms)
+[0]  GET /api/markets 200 in 862ms (compile: 438ms, render: 424ms)
+[0]  GET /api/kimchi/upbit 200 in 970ms (compile: 402ms, render: 567ms)
+[0]  GET /api/kimchi/upbit 200 in 250ms (compile: 51ms, render: 199ms)
+[0]  GET / 200 in 95ms (compile: 21ms, render: 74ms)
+[0]  GET /api/kimchi/upbit 200 in 111ms (compile: 3ms, render: 109ms)
+[0]  GET /api/global 200 in 351ms (compile: 5ms, render: 346ms)
+[0]  GET /api/markets 200 in 255ms (compile: 7ms, render: 248ms)
+[0]  GET /api/kimchi/upbit 200 in 100ms (compile: 16ms, render: 84ms)
+[0]  GET /api/kimchi/upbit 200 in 142ms (compile: 27ms, render: 115ms)
+[0]  GET /api/kimchi/upbit 200 in 95ms (compile: 16ms, render: 79ms)
+[0]  GET /api/kimchi/upbit 200 in 101ms (compile: 27ms, render: 74ms)
+[0]  GET /api/kimchi/upbit 200 in 238ms (compile: 14ms, render: 224ms)
+[0]  GET /api/global 200 in 16ms (compile: 7ms, render: 9ms)
+[0]  GET /api/markets 200 in 19ms (compile: 17ms, render: 2ms)
+[0]  GET /api/kimchi/upbit 200 in 122ms (compile: 5ms, render: 117ms)
+[0]  GET /api/kimchi/upbit 200 in 104ms (compile: 22ms, render: 82ms)
+[0]  GET /api/kimchi/upbit 200 in 177ms (compile: 34ms, render: 142ms)
+[0]  GET /api/kimchi/upbit 200 in 95ms (compile: 22ms, render: 73ms)
+[0]  GET /api/kimchi/upbit 200 in 143ms (compile: 10ms, render: 133ms)

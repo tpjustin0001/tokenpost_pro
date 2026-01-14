@@ -92,7 +92,66 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         return () => { isMounted = false; };
     }, [symbol, interval]);
 
-    // ... (News Effect omitted, unchanged)
+    // 2. Fetch News Markers (Real-time)
+    useEffect(() => {
+        if (!supabase) return;
+
+        async function fetchMarkers() {
+            // Get news for this coin (e.g. BTC) or generic Market news
+            const targetCoin = symbol.replace('USDT', '').replace('USD', '');
+
+            const { data, error } = await supabase
+                .from('news')
+                .select('*')
+                .eq('show_on_chart', true)
+                .order('published_at', { ascending: false })
+                .limit(50);
+
+            if (data) {
+                const markers = data
+                    .filter(item => {
+                        // Filter by symbol match or global market news
+                        if (item.related_coin && item.related_coin !== targetCoin) return false;
+                        return true;
+                    })
+                    .map(item => {
+                        const time = new Date(item.published_at).getTime() / 1000;
+                        const isBullish = (item.sentiment_score || 0) > 0;
+
+                        // Store full item in map for click retrieval
+                        newsMapRef.current[item.id] = item;
+
+                        return {
+                            time: time,
+                            position: isBullish ? 'belowBar' : 'aboveBar',
+                            color: isBullish ? '#00E396' : '#FF4560',
+                            shape: isBullish ? 'arrowUp' : 'arrowDown',
+                            text: 'NEWS',
+                            id: item.id,
+                            size: 1, // default is 1
+                        };
+                    });
+
+                // Sort by time ascending for Lightweight Charts
+                markers.sort((a, b) => (a.time as number) - (b.time as number));
+                setNewsMarkers(markers);
+            }
+        }
+
+        fetchMarkers();
+
+        // Subscribe to new markers
+        const channel = supabase
+            .channel('chart-markers')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news', filter: 'show_on_chart=eq.true' }, (payload) => {
+                fetchMarkers(); // Refresh on new insert
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [symbol]);
 
     // 3. WebSocket Setup
     useEffect(() => {

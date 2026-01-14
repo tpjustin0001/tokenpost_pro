@@ -27,9 +27,16 @@ export default function NewsPage() {
 
     useEffect(() => {
         async function fetchNews() {
+            if (!supabase) return;
             try {
-                const data = await flaskApi.getContent('news');
-                setNews(data);
+                const { data, error } = await supabase
+                    .from('news')
+                    .select('*')
+                    .order('published_at', { ascending: false })
+                    .limit(50);
+
+                if (error) throw error;
+                if (data) setNews(data);
             } catch (error) {
                 console.error('Failed to fetch news', error);
             } finally {

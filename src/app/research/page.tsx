@@ -30,9 +30,34 @@ export default function ResearchPage() {
 
     useEffect(() => {
         async function fetchInsights() {
+            if (!supabase) return;
             try {
-                const data = await flaskApi.getContent('research');
-                setInsights(data);
+                const { data, error } = await supabase
+                    .from('research')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+
+                if (error) throw error;
+
+                if (data) {
+                    const formattedDetails = data.map(item => ({
+                        id: item.id.toString(),
+                        type: item.category === 'KPI' ? 'KPI' :
+                            item.category === 'BREAKING' ? 'NEWS' :
+                                item.is_premium ? 'ANALYSIS' : 'REPORT', // Simple mapping
+                        title: item.title,
+                        summary: item.summary || item.title,
+                        author: item.author || 'TokenPost',
+                        source: 'TokenPost PRO',
+                        date: new Date(item.created_at).toLocaleDateString(),
+                        readTime: '3 min read',
+                        isPro: item.is_premium || false,
+                        tags: item.tags || [],
+                        image: item.image_url
+                    }));
+                    setInsights(formattedDetails as InsightItem[]);
+                }
             } catch (error) {
                 console.error('Failed to fetch research', error);
             } finally {

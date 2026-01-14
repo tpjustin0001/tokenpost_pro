@@ -6825,3 +6825,45 @@
 [0]  GET /api/markets 200 in 357ms (compile: 22ms, render: 335ms)
 [0]  GET /api/kimchi/upbit 200 in 90ms (compile: 4ms, render: 86ms)
 [0]  GET /api/kimchi/upbit 200 in 145ms (compile: 42ms, render: 104ms)
+[0]  GET /api/kimchi/upbit 200 in 219ms (compile: 13ms, render: 206ms)
+[0]  GET /api/kimchi/upbit 200 in 215ms (compile: 45ms, render: 169ms)
+[0] Failed to proxy https://tokenpost-pro.onrender.com/api/crypto/xray/asset/HASH Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0] Error: socket hang up
+[0]     at ignore-listed frames {
+[0]   code: 'ECONNRESET'
+[0] }
+[0]  GET /api/kimchi/upbit 200 in 129ms (compile: 10ms, render: 119ms)
+[0]  GET /api/kimchi/upbit 200 in 111ms (compile: 26ms, render: 85ms)
+[0]  GET /api/markets 200 in 33ms (compile: 28ms, render: 5ms)
+[0]  GET /api/global 200 in 288ms (compile: 12ms, render: 276ms)
+[0]  GET /api/kimchi/upbit 200 in 125ms (compile: 6ms, render: 119ms)
+[0]  GET /api/kimchi/upbit 200 in 127ms (compile: 31ms, render: 95ms)
+[0]  GET /api/kimchi/upbit 200 in 121ms (compile: 29ms, render: 92ms)
+[0]  GET /api/kimchi/upbit 200 in 182ms (compile: 15ms, render: 167ms)
+[0] ⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+[0] ▲ Next.js 16.1.1 (Turbopack)
+[0] - Local:         http://localhost:3000
+[0] - Network:       http://192.168.0.13:3000
+[0] - Environments: .env.local
+[0] 
+[0] ✓ Starting...
+[0] ✓ Ready in 1958ms
+[0]  GET / 200 in 1160ms (compile: 726ms, render: 435ms)
+[0]  GET /api/kimchi/upbit 200 in 1238ms (compile: 640ms, render: 598ms)
+[0]  GET /api/kimchi/upbit 200 in 172ms (compile: 110ms, render: 62ms)
+[0] (node:5904) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+[0] (Use `node --trace-deprecation ...` to show where the warning was created)
+[0]  GET /api/global 200 in 573ms (compile: 187ms, render: 386ms)
+[0]  GET /api/markets 200 in 381ms (compile: 50ms, render: 331ms)
+[0]  GET /api/kimchi/upbit 200 in 159ms (compile: 31ms, render: 128ms)
+[0]  GET /api/kimchi/upbit 200 in 250ms (compile: 24ms, render: 226ms)
+[0]  GET /api/kimchi/upbit 200 in 102ms (compile: 17ms, render: 86ms)
+[0]  GET /api/kimchi/upbit 200 in 155ms (compile: 12ms, render: 143ms)
+[0]  GET / 200 in 106ms (compile: 22ms, render: 83ms)
+[0]  GET /api/kimchi/upbit 200 in 159ms (compile: 41ms, render: 118ms)
+[0]  GET /api/global 200 in 27ms (compile: 18ms, render: 9ms)
+[0]  GET /api/markets 200 in 61ms (compile: 26ms, render: 34ms)
+[0]  GET /api/kimchi/upbit 200 in 91ms (compile: 4ms, render: 86ms)

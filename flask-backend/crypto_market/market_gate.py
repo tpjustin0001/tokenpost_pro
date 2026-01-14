@@ -244,86 +244,148 @@ def evaluate_market_gate(
     )
 
 
+
 def run_market_gate_sync() -> MarketGateResult:
-    """Flask API Sync Wrapper"""
-    import yfinance as yf
+    """Flask API Sync Wrapper - Uses MarketDataService (CCXT)"""
+    from market_provider import market_data_service
     import requests
     
     try:
-        # 1. BTC 1D 데이터
-        btc = yf.Ticker("BTC-USD")
-        hist = btc.history(period="2y")
-        
-        if hist.empty or len(hist) < 200:
+        # 1. BTC 1D Data (via Binance CCXT)
+        try:
+            btc_data = market_data_service.get_asset_data("BTC")
+            raw_df = btc_data.get('raw_df')
+            
+            if raw_df is None or raw_df.empty or len(raw_df) < 200:
+                raise ValueError("Insufficient BTC Data")
+                
+            candles_1d = [Candle(
+                ts=int(idx.timestamp() * 1000),
+                open=float(row['Open']),
+                high=float(row['High']),
+                low=float(row['Low']),
+                close=float(row['Close']),
+                volume=float(row['Volume'])
+            ) for idx, row in raw_df.iterrows()]
+            
+        except Exception as e:
             return MarketGateResult(
                 gate="YELLOW", score=50,
-                reasons=["BTC 데이터 부족"], metrics={}
+                reasons=[f"BTC 데이터 오류: {str(e)}"], metrics={}
             )
         
-        candles_1d = [Candle(
-            ts=int(idx.timestamp() * 1000),
-            open=float(row['Open']),
-            high=float(row['High']),
-            low=float(row['Low']),
-            close=float(row['Close']),
-            volume=float(row['Volume'])
-        ) for idx, row in hist.iterrows()]
-        
-        # 2. 알트코인 Breadth
-        alt_tickers = ["ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD", "ADA-USD", 
-                       "DOGE-USD", "TRX-USD", "DOT-USD", "LINK-USD", "AVAX-USD"]
+        # 2. Altcoin Breadth (Approximate via Top 10 Listings)
+        # We don't have full history for all alts in one go without heavy API usage.
+        # We'll approximate Breadth using 'Trend' from get_asset_data for Top 10 Alts.
+        alt_tickers = ["ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "TRX", "DOT", "LINK", "AVAX"]
         candles_map = {}
         
-        try:
-            alt_data = yf.download(alt_tickers, period="1y", progress=False)
-            for ticker in alt_tickers:
-                try:
-                    if isinstance(alt_data.columns, pd.MultiIndex):
-                        if 'Close' in alt_data.columns.get_level_values(0):
-                            if ticker in alt_data['Close'].columns:
-                                close_series = alt_data['Close'][ticker]
-                                if not close_series.isna().all():
-                                    alt_candles = [Candle(
-                                        ts=int(ts.timestamp() * 1000),
-                                        open=price, high=price, low=price, close=price, volume=0
-                                    ) for ts, price in close_series.items() if not pd.isna(price)]
-                                    candles_map[(ticker.replace("-USD", ""), "1d")] = alt_candles
-                except Exception:
-                    continue
-        except Exception:
-            pass
+        # NOTE: Fetching 10 assets individually is slow-ish but reliable.
+        # In a real prod, we'd batch this. For now, max_workers=5 in ThreadPool could be better but let's keep it simple sync or pseudo.
         
-        # 3. 펀딩비
-        funding_rate = None
+        # Improvement: Just check their current price vs MA20/MA50 from get_asset_data summary
+        # But evaluate_market_gate expects candles_map.
+        # We will create a fake candle map with just enough info (Current Close & EMA50 proxy = MA20 provided by service)
+        
+        bad_breadth_count = 0
+        total_alts = 0
+        
+        for sym in alt_tickers:
+            try:
+                d = market_data_service.get_asset_data(sym)
+                # Create a synthetic history where MA50 ~ MA20 logic or just rely on the 'trend' field
+                # If trend is "Bullish", we assume Close > MA20 (Proxy for MA50)
+                # This is a simplification to save API calls.
+                
+                price = d['current_price']
+                ma_val = d['ma_20'] # Proxy
+                
+                # Construct 2 candles: [One long ago for MA calc, One now]
+                # Actually, compute_alt_breadth checks Close > EMA50.
+                # We'll pass a 1-day DF where EMA50 calculation by 'ema' function (pandas ewm) works?
+                # No, standard EMA needs history.
+                
+                # Hack: We will inject a pre-calculated Breadth Ratio into metrics later 
+                # instead of letting evaluate_market_gate compute it fully if we lack history.
+                
+                if price > ma_val: # Bullish
+                    pass 
+                else: 
+                    bad_breadth_count += 1
+                total_alts += 1
+                
+            except:
+                continue
+                
+        # Manually compute breadth ratio proxy
+        breadth_ratio = 1.0 - (bad_breadth_count / total_alts) if total_alts > 0 else 0.5
+        
+        # 3. Funding Rate
+        funding_rate = 0.0001
         try:
-            url = "https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT"
-            resp = requests.get(url, timeout=3)
+            # Try Binance Future API directly (public)
+            resp = requests.get("https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT", timeout=3)
             data = resp.json()
             if 'lastFundingRate' in data:
                 funding_rate = float(data['lastFundingRate'])
-        except Exception:
-            funding_rate = 0.0001
+        except:
+            pass
         
-        # 4. Fear & Greed Index
-        fng_index = None
+        # 4. Fear & Greed
+        fng_index = 50
         try:
             fng_resp = requests.get("https://api.alternative.me/fng/?limit=1", timeout=3)
             fng_data = fng_resp.json()
-            if 'data' in fng_data and len(fng_data['data']) > 0:
+            if 'data' in fng_data:
                 fng_index = int(fng_data['data'][0]['value'])
-        except Exception:
-            fng_index = 50
+        except:
+            pass
+        
+        # Construct Result
+        # We use evaluate_market_gate for BTC metrics, but override Breadth
         
         result = evaluate_market_gate(
             btc_candles_1d=candles_1d,
             btc_candles_4h=[],
-            candles_map=candles_map,
-            alt_symbols=[t.replace("-USD", "") for t in alt_tickers],
+            candles_map={}, # Empty map
+            alt_symbols=[],
             funding_rate=funding_rate,
         )
         
-        if fng_index is not None:
-            result.metrics["fear_greed_index"] = fng_index
+        # OVERRIDE Breadth (Since we didn't provide candles map)
+        result.metrics["alt_breadth_above_ema50"] = breadth_ratio
+        
+        # Recalculate Score with new Breadth
+        # Breadth Score Logic:
+        breadth_score = 0.0
+        if breadth_ratio >= 0.65: breadth_score = 18.0
+        elif breadth_ratio >= 0.50: breadth_score = 12.0
+        elif breadth_ratio >= 0.35: breadth_score = 6.0
+        else: breadth_score = 2.0
+        
+        # Remove default '9.0' from breadth (which is added if map is empty)
+        base_score = result.score
+        # Re-sum components from metrics (safest)
+        comps = result.metrics['gate_score_components']
+        
+        # Update Components
+        comps['breadth'] = round(breadth_score, 1)
+        comps['participation'] = comps['participation'] # Keep
+        comps['trend'] = comps['trend'] # Keep
+        comps['volatility'] = comps['volatility'] # Keep
+        comps['leverage'] = comps['leverage'] # Keep
+        
+        # New Total
+        new_total = sum(comps.values())
+        result.score = int(min(100, max(0, new_total)))
+        
+        # Update Gate Color
+        if result.score >= 72: result.gate = "GREEN"
+        elif result.score >= 48: result.gate = "YELLOW"
+        else: result.gate = "RED"
+        
+        # Update metrics
+        result.metrics['fear_greed_index'] = fng_index
         
         return result
         
@@ -332,3 +394,4 @@ def run_market_gate_sync() -> MarketGateResult:
             gate="YELLOW", score=50,
             reasons=[f"분석 오류: {str(e)}"], metrics={}
         )
+

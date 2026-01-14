@@ -18,7 +18,8 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     // REWRITE: Vercel Frontend -> Render/Railway Backend
-    let backendUrl = process.env.BACKEND_URL || 'https://tokenpost-pro.onrender.com';
+    // Default to Railway if env var is missing (e.g. Local Dev)
+    let backendUrl = process.env.BACKEND_URL || 'https://tokenpostpro-production.up.railway.app';
 
     // Ensure protocol exists (Fix for Vercel Build Error)
     if (!backendUrl.startsWith('http')) {

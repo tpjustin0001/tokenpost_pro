@@ -12,7 +12,7 @@ class AIService:
         # In-memory Cache
         # Structure: { 'key': {'data': dict, 'timestamp': datetime} }
         self._cache = {}
-        self.CACHE_TTL_GLOBAL = 1800  # 30 minutes
+        self.CACHE_TTL_GLOBAL = 3600  # 1 hour
         self.CACHE_TTL_ASSET = 900    # 15 minutes
         
         if self.api_key:
@@ -106,7 +106,8 @@ class AIService:
             news_text = "\n".join([f"- [{item['source']}] {item['title']}" for item in news_list])
 
         system_prompt = f"""
-        You are a seasoned Macro Crypto Strategist. Analyze the global market structure.
+        You are a seasoned Macro Crypto Strategist (Tier 1 Institutional Analyst). 
+        Analyze the global crypto market structure based on the provided data and news.
         
         Recent Global News Headlines (English):
         {news_text}
@@ -114,31 +115,40 @@ class AIService:
         Instructions:
         1. Synthesize market data with global news sentiment.
         2. Provide a strategic outlook (Bullish/Neutral/Bearish) with clear reasoning.
-        3. Return the result in STRICT, PROFESSIONAL KOREAN.
+        3. Return the result in STRICT, PROFESSIONAL KOREAN (Economist Tone).
         
         CRITICAL STYLE GUIDELINES:
         - Glossary: Use "온체인" (not 온인), "이동평균선" (not 이동 평균), "상승세" (not 상상세).
         - Formatting: Always add leading zero for decimals (e.g., "0.86%" not ".86%").
         - Tone: Professional, authoritative, macro-focused.
-
-        JSON Structure:
+ 
+        JSON Structure (v3.0):
         {{
             "overallScore": float(0-100),
-            "marketPhase": "Accumulation | Markup | Distribution | Markdown",
-            "summary": "High-level market summary (1-2 sentences). Mention KEY NEWS.",
-            "sectorAnalysis": {{
-                "leading_sector": "e.g., AI, RWA, Meme",
-                "outlook": "brief outlook"
-            }},
-            "key_metrics": {{
-                "btc_dominance": "percentage or trend commentary",
-                "sentiment_index": "fear/greed context"
-            }},
-            "risks_opportunities": {{
-                "risks": ["risk1", "risk2"],
-                "opportunities": ["opp1", "opp2"]
-            }},
-            "trading_recommendation": "Aggressive Long | Conservative Long | Hold/Cash | Short"
+            "marketPhase": "Accumulation (매집) | Markup (상승) | Distribution (분산) | Markdown (하락)",
+            "summary": "High-level market summary (2-3 sentences). Mention KEY NEWS & MACRO IMPACT.",
+            "macro_factors": [
+                {{ "name": "e.g. Fed Policy / Inflation / ETF Flows", "impact": "Positive | Negative | Neutral", "detail": "Brief explanation" }},
+                {{ "name": "Global Liquidity", "impact": "...", "detail": "..." }}
+            ],
+            "radar_data": [
+                {{ "label": "Macro", "value": int(0-100) }},
+                {{ "label": "Technical", "value": int(0-100) }},
+                {{ "label": "On-Chain", "value": int(0-100) }},
+                {{ "label": "Sentiment", "value": int(0-100) }},
+                {{ "label": "Innovation", "value": int(0-100) }}
+            ],
+            "sectorAnalysis": [
+                {{ "name": "e.g. AI / RWA / Meme / L1", "signal": "bullish | bearish | neutral", "score": int(0-100), "insight": "Why?" }}
+            ],
+            "onchain_signals": [
+                {{ "metric": "e.g. Exchange Net Flow", "signal": "bullish | bearish", "value": "Low Inflow", "comment": "Whales accumulating" }},
+                {{ "metric": "MVRV Ratio", "signal": "...", "value": "1.8", "comment": "Undervalued zone" }}
+            ],
+            "risks": ["Specific Risk 1", "Specific Risk 2"],
+            "opportunities": ["Specific Opp 1", "Specific Opp 2"],
+            "recommendation": "Aggressive Long | Conservative Buy | Hold (Cash) | Short",
+            "actionable_insight_summary": "One sentence direct strategy advice."
         }}
         """
 

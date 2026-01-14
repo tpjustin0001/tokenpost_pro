@@ -7,22 +7,24 @@ interface MarketAnalysis {
     overallScore: number;
     marketPhase: string;
     summary: string;
-    marketHealth: { label: string; value: number }[];
+    radar_data: { label: string; value: number }[];
+    macro_factors: { name: string; impact: string; detail: string }[];
     sectorAnalysis: {
         name: string;
         signal: 'bullish' | 'bearish' | 'neutral';
         score: number;
         insight: string;
     }[];
-    keyMetrics: {
-        label: string;
-        value: string;
+    onchain_signals: {
+        metric: string;
         signal: 'bullish' | 'bearish' | 'neutral';
+        value: string;
         comment: string;
     }[];
     risks: string[];
     opportunities: string[];
     recommendation: string;
+    actionable_insight_summary: string;
     recent_news?: { title: string; link: string; pubDate: string; source: string }[];
 }
 
@@ -100,7 +102,7 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
             <div className={styles.leftCol}>
                 {/* Radar Chart for Market Health */}
                 <div className={styles.radarContainer}>
-                    <RadarChart data={analysis.marketHealth} color={mainColor} size={280} />
+                    <RadarChart data={analysis.radar_data} color={mainColor} size={280} />
                     <div className={styles.scoreOverlay}>
                         <span className={styles.scoreVal} style={{ color: mainColor }}>{analysis.overallScore}</span>
                         <span className={styles.scoreLabel}>Market Score</span>
@@ -118,8 +120,8 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
                 {/* Recommendation Short */}
                 <div className={styles.recommendationBox} style={{ marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
                     <div className={styles.signalLabel}>Investment Strategy</div>
-                    <p style={{ fontSize: '12px', lineHeight: '1.4', color: 'rgba(255,255,255,0.8)' }}>
-                        {analysis.recommendation?.split('.')[0] || 'Hold'}.
+                    <p style={{ fontSize: '13px', lineHeight: '1.4', color: 'rgba(255,255,255,0.9)', fontWeight: '500' }}>
+                        {analysis.actionable_insight_summary || analysis.recommendation}
                     </p>
                 </div>
             </div>
@@ -195,16 +197,32 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
                     </div>
                 </div>
 
-                {/* Key Metrics */}
+                {/* Macro Factors (New) */}
+                {analysis.macro_factors && (
+                    <div className={styles.section} style={{ marginBottom: '20px' }}>
+                        <h3 className={styles.sectionTitle}>⛓️ Macro & On-Chain Context</h3>
+                        <div className={styles.metricsGrid}>
+                            {analysis.macro_factors.map((m, i) => (
+                                <div key={i} className={styles.metricCard} style={{ borderLeft: m.impact === 'Positive' ? '3px solid #10b981' : m.impact === 'Negative' ? '3px solid #ef4444' : '3px solid #64748b' }}>
+                                    <div className={styles.mLabel}>{m.name}</div>
+                                    <div className={styles.mValue} style={{ fontSize: '14px', color: '#fff' }}>{m.impact}</div>
+                                    <div className={styles.metricComment}>{m.detail}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* On-Chain Signals (New) */}
                 <div className={styles.section} style={{ marginBottom: '20px' }}>
-                    <h3 className={styles.sectionTitle}>Key Indicators</h3>
+                    <h3 className={styles.sectionTitle}>📊 On-Chain Signals</h3>
                     <div className={styles.metricsGrid}>
-                        {analysis.keyMetrics && Array.isArray(analysis.keyMetrics) ? (
-                            analysis.keyMetrics.map((m, i) => (
+                        {analysis.onchain_signals && Array.isArray(analysis.onchain_signals) ? (
+                            analysis.onchain_signals.map((m, i) => (
                                 <div key={i} className={styles.metricCard}>
-                                    <div className={styles.mLabel}>{m.label}</div>
+                                    <div className={styles.mLabel}>{m.metric}</div>
                                     <div className={styles.mValue} style={{
-                                        color: m.signal === 'bullish' ? '#10b981' : m.signal === 'bearish' ? '#ef4444' : '#fbbf24'
+                                        color: m.signal === 'bullish' || m.signal === 'Positive' ? '#10b981' : m.signal === 'bearish' || m.signal === 'Negative' ? '#ef4444' : '#fbbf24'
                                     }}>
                                         {m.value}
                                     </div>
@@ -212,7 +230,7 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
                                 </div>
                             ))
                         ) : (
-                            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Key metrics data unavailable</div>
+                            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>On-chain data unavailable</div>
                         )}
                     </div>
                 </div>

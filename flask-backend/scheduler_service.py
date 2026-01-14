@@ -69,9 +69,17 @@ class SchedulerService:
         # Ideally, use a dedicated worker. For 'Hobby Plan', we accept slight redundancy or use a lock.
         # For simplicity: Add job interval=60 min.
         
-        self.scheduler.add_job(self.update_market_analysis, 'interval', minutes=60, id='global_analysis_job')
+        # Run every 4 hours (240 mins) to optimize cost for Grok 4.1
+        # Run immediately on startup to populate data
+        self.scheduler.add_job(
+            self.update_market_analysis, 
+            'interval', 
+            minutes=240, 
+            id='global_analysis_job',
+            next_run_time=datetime.now()
+        )
         self.scheduler.start()
-        logger.info("⏰ Scheduler Started (Interval: 60m)")
+        logger.info("⏰ Scheduler Started (Interval: 4h / 240m)")
 
 # Singleton
 scheduler_service = SchedulerService()

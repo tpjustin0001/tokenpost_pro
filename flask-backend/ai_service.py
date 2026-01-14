@@ -38,12 +38,12 @@ from openai import OpenAI
         
         try:
             response = self.client_grok.chat.completions.create(
-                model="grok-beta",
+                model="grok-beta", # Grok 4.1 (Beta)
                 messages=[
-                    {"role": "system", "content": "You are Grok, a real-time Social Sentiment Engine. Analyze the crypto news headlines. Output a brief, witty, uncensored paragraph about the current market 'vibe' and crowd psychology."},
+                    {"role": "system", "content": "You are Grok, a real-time Social Sentiment Engine (v4.1). Analyze the crypto news headlines. Output a brief, witty, uncensored, and slightly edgy paragraph about the current market 'vibe' and crowd psychology. Be bold."},
                     {"role": "user", "content": f"Headlines:\n{news_text}"}
                 ],
-                temperature=0.7 # High creativity for sentiment
+                temperature=0.8 # Higher creativity for sentiment intensity
             )
             return response.choices[0].message.content
         except Exception as e:

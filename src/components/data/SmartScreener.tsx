@@ -260,19 +260,19 @@ export default function SmartScreener() {
                         className={`${styles.tab} ${tab === 'breakout' ? styles.active : ''}`}
                         onClick={() => setTab('breakout')}
                     >
-                        🚀 급등 신호 포착
+                        🚀 돌파 (Breakout)
                     </button>
                     <button
                         className={`${styles.tab} ${tab === 'performance' ? styles.active : ''}`}
                         onClick={() => setTab('performance')}
                     >
-                        💎 저점 매수 기회
+                        💎 저점 (Bottom)
                     </button>
                     <button
                         className={`${styles.tab} ${tab === 'risk' ? styles.active : ''}`}
                         onClick={() => setTab('risk')}
                     >
-                        리스크 분석
+                        ⚠️ 리스크 (Risk)
                     </button>
                 </div>
             </div>

@@ -154,6 +154,7 @@ interface XRayTooltipProps {
 
 import { useXRay } from '@/context/XRayContext';
 import { BookOpen, HelpCircle } from 'lucide-react';
+import Xarrow, { useXarrow } from 'react-xarrows';
 
 export default function XRayTooltip({ dataKey, children }: XRayTooltipProps) {
     const [isOpen, setIsOpen] = useState(false);
@@ -183,7 +184,11 @@ export default function XRayTooltip({ dataKey, children }: XRayTooltipProps) {
                 }
             }}
         >
-            <div className={styles.trigger} onClick={() => !isXRayActive && setIsOpen(true)}>
+            <div
+                id={triggerId}
+                className={styles.trigger}
+                onClick={() => !isXRayActive && setIsOpen(true)}
+            >
                 {children}
                 {!isXRayActive && (
                     <span

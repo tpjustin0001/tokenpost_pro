@@ -449,7 +449,7 @@
     }
 }
 
-@keyframes spin {
+@keyframes xRaySpin {
     0% {
         transform: rotate(0deg);
     }
@@ -460,5 +460,6 @@
 }
 
 .spinner {
-    animation: spin 1s linear infinite;
+    animation: xRaySpin 1s linear infinite;
+    will-change: transform;
 }

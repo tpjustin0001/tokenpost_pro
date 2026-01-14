@@ -138,7 +138,7 @@ def index():
 def health():
     return jsonify({'status': 'ok'})
 
-@app.route('/api/admin/trigger-analysis', methods=['POST'])
+@app.route('/api/admin/trigger-analysis', methods=['POST'], strict_slashes=False)
 def trigger_analysis():
     """Manual trigger for analysis job"""
     try:
@@ -655,7 +655,7 @@ def ingest_external_content():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/api/external/markers', methods=['POST'])
+@app.route('/api/external/markers', methods=['POST'], strict_slashes=False)
 def ingest_markers():
     """
     Dedicated endpoint for News Markers on Charts.

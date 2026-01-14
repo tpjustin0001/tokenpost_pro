@@ -158,13 +158,31 @@ export default function AIXRay({ symbol, isOpen, onClose }: AIXRayProps) {
 
     const mainColor = getScoreColor(analysis.overallScore);
 
+    // Helper for icons (Same as SmartScreener)
+    const getCoinIconUrl = (symbol: string): string => {
+        let clean = symbol.toUpperCase();
+        clean = clean.replace('KRW-', '').replace('-KRW', '');
+        clean = clean.replace('USDT-', '').replace('-USDT', '');
+        clean = clean.replace('BTC-', '').replace('-BTC', '');
+        return `https://assets.coincap.io/assets/icons/${clean.toLowerCase()}@2x.png`;
+    };
+
     const modalContent = (
         <div className={styles.overlay} onClick={onClose}>
             <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                 {/* Header */}
                 <div className={styles.header}>
                     <div className={styles.headerContent}>
-                        <div className={styles.symbolBadge}>{symbol}</div>
+                        <div className={styles.symbolBadge} style={{ background: 'transparent', border: 'none', padding: 0 }}>
+                            <img
+                                src={getCoinIconUrl(symbol)}
+                                alt={symbol}
+                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                                onError={(e) => {
+                                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${symbol}&background=6366f1&color=fff&size=64&bold=true`;
+                                }}
+                            />
+                        </div>
                         <div className={styles.titleInfo}>
                             <h2 className={styles.title}>AI X-Ray 정밀 분석</h2>
                             <span className={styles.subtitle}>{analysis?.summary?.slice(0, 40) || 'Loading...'}...</span>

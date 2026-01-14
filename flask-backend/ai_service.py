@@ -26,8 +26,8 @@ class AIService:
 
         # In-memory Cache
         self._cache = {}
-        self.CACHE_TTL_GLOBAL = 3600
-        self.CACHE_TTL_ASSET = 900
+        self.CACHE_TTL_GLOBAL = 300 # Reduced to 5 mins for "live" feel
+        self.CACHE_TTL_ASSET = 300
 
     def _get_grok_sentiment(self, news_list):
         """
@@ -98,6 +98,7 @@ class AIService:
         TASK:
         Generate a "Social Pulse" report in STRICT JSON format.
         The content must be in KOREAN (except for usernames/handles and numbers).
+        ALL PRICES MUST BE IN USD (convert if necessary or strictly assume USD for global data).
         
         JSON Structure:
         {{
@@ -170,6 +171,7 @@ class AIService:
         JSON Structure:
         {{
             "assetName": "{symbol}",
+            "currency": "Use the currency provided in data (USD or KRW)",
             "category": "...",
             "overallScore": float(0-10),
             "summary": "...",

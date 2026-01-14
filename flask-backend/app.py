@@ -306,6 +306,7 @@ def api_lead_lag():
 # VCP SIGNALS API
 # ============================================================
 @app.route('/api/crypto/vcp-signals')
+@cache.cached(timeout=300)
 def api_vcp_signals():
     """VCP 패턴 감지 API"""
     try:
@@ -747,6 +748,7 @@ def api_xray_asset(symbol):
         data_summary = {
             "Symbol": data['symbol'],
             "Name": asset_name, # Pass name to AI too
+            "Currency": data.get('currency', 'USD'), # Explicit Currency Context
             "Source": data['source'],
             "Current Price": f"${data['current_price']:,.4f}" if data['current_price'] < 1 else f"${data['current_price']:,.2f}",
             "Change 24h": f"{data['change_24h']:.2f}%",

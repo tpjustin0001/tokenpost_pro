@@ -137,6 +137,17 @@ export default function SmartScreener() {
         }
     };
 
+    // Sorting & Filtering State
+    const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'change_1h', direction: 'desc' });
+    const [showGainersOnly, setShowGainersOnly] = useState(false);
+
+    const handleSort = (key: string) => {
+        setSortConfig(current => ({
+            key,
+            direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc'
+        }));
+    };
+
     const renderTable = () => {
         if (isLoading) return renderSkeleton();
 
@@ -151,148 +162,186 @@ export default function SmartScreener() {
             );
         }
 
-        const list = data.data as TickerData[];
+        let list = [...(data.data as TickerData[])];
+
+        // Filter
+        if (showGainersOnly) {
+            list = list.filter(item => (item.change_1h || 0) > 0);
+        }
+
+        // Sort
+        list.sort((a: any, b: any) => {
+            const aValue = a[sortConfig.key] || 0;
+            const bValue = b[sortConfig.key] || 0;
+            if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        // Helper to render sort arrow
+        const SortIcon = ({ column }: { column: string }) => {
+            if (sortConfig.key !== column) return <span style={{ opacity: 0.3, marginLeft: '4px' }}>⇅</span>;
+            return <span style={{ marginLeft: '4px', color: '#3b82f6' }}>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
+        };
+
+        const FilterControls = () => (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px', alignItems: 'center', gap: '8px' }}>
+                <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                    <input
+                        type="checkbox"
+                        checked={showGainersOnly}
+                        onChange={(e) => setShowGainersOnly(e.target.checked)}
+                        style={{ marginRight: '6px' }}
+                    />
+                    상승 코인만 보기 (+Return Only)
+                </label>
+            </div>
+        );
 
         if (tab === 'breakout' || tab === 'performance') {
             return (
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th>자산</th>
-                            <th>현재가</th>
-                            <th>변동률 (1시간)</th>
-                            <th>거래량 (24시간)</th>
-                            <th>상태</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {list.map(item => (
-                            <tr key={item.symbol}>
-                                <td>
-                                    <div className={styles.assetCell}>
-                                        <img src={getCoinIconUrl(item.symbol)} alt="" className={styles.coinIcon} />
-                                        <span className={styles.symbol}>{item.symbol}</span>
-                                        {item.is_breakout && <span className={styles.badge} style={{ backgroundColor: '#f59e0b', color: '#fff' }}>🔥 고점 근접</span>}
-                                    </div>
-                                </td>
-                                <td>${item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-                                <td style={{ color: (item.change_1h || 0) >= 0 ? '#10b981' : '#ef4444' }}>
-                                    {(item.change_1h || 0) >= 0 ? '+' : ''}{(item.change_1h || 0).toFixed(2)}%
-                                </td>
-                                <td>{(item.volume || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                                <td>
-                                    <span className={`${styles.badge} ${(item.change_1h || 0) >= 0 ? styles.bullish : styles.bearish}`}>
-                                        {(item.change_1h || 0) >= 0 ? '상승' : '하락'}
-                                    </span>
-                                </td>
+                <>
+                    <FilterControls />
+                    <table className={styles.table}>
+                        <thead>
+                            <tr>
+                                <th>자산</th>
+                                <th onClick={() => handleSort('price')} style={{ cursor: 'pointer' }}>현재가 <SortIcon column="price" /></th>
+                                <th onClick={() => handleSort('change_1h')} style={{ cursor: 'pointer' }}>변동률 (1시간) <SortIcon column="change_1h" /></th>
+                                <th onClick={() => handleSort('volume')} style={{ cursor: 'pointer' }}>거래량 (24시간) <SortIcon column="volume" /></th>
+                                <th>상태</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {list.map(item => (
+                                <tr key={item.symbol}>
+                                    <td>
+                                        <div className={styles.assetCell}>
+                                            <img src={getCoinIconUrl(item.symbol)} alt="" className={styles.coinIcon} />
+                                            <span className={styles.symbol}>{item.symbol}</span>
+                                            {item.is_breakout && <span className={styles.badge} style={{ backgroundColor: '#f59e0b', color: '#fff' }}>🔥 고점 근접</span>}
+                                        </div>
+                                    </td>
+                                    <td>${item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                                    <td style={{ color: (item.change_1h || 0) >= 0 ? '#10b981' : '#ef4444' }}>
+                                        {(item.change_1h || 0) >= 0 ? '+' : ''}{(item.change_1h || 0).toFixed(2)}%
+                                    </td>
+                                    <td>{(item.volume || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                                    <td>
+                                        <span className={`${styles.badge} ${(item.change_1h || 0) >= 0 ? styles.bullish : styles.bearish}`}>
+                                            {(item.change_1h || 0) >= 0 ? '상승' : '하락'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </>
             );
         }
 
         if (tab === 'risk') {
             return (
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th>자산</th>
-                            <th>현재가</th>
-                            <th>변동성 (등락폭)</th>
-                            <th>위험도 점수</th>
-                            <th>위험 등급</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {list.map(item => (
-                            <tr key={item.symbol} style={item.rating === 'Extreme' ? { background: 'rgba(239, 68, 68, 0.05)' } : {}}>
-                                <td>
-                                    <div className={styles.assetCell}>
-                                        <img src={getCoinIconUrl(item.symbol)} alt="" className={styles.coinIcon} />
-                                        <span className={styles.symbol}>{item.symbol}</span>
-                                    </div>
-                                </td>
-                                <td>${item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-                                <td>{item.volatility?.toFixed(2) || '-'}%</td>
-                                <td>{item.risk_score?.toFixed(1) || '-'}</td>
-                                <td>
-                                    <span className={styles[`risk${item.rating}`]}>
-                                        {item.rating === 'Low' && '🛡 안정'}
-                                        {item.rating === 'Medium' && '⚠️ 보통'}
-                                        {item.rating === 'Extreme' && '☢️ 위험'}
-                                    </span>
-                                </td>
+                <>
+                    <FilterControls />
+                    <table className={styles.table}>
+                        <thead>
+                            <tr>
+                                <th>자산</th>
+                                <th onClick={() => handleSort('volatility')} style={{ cursor: 'pointer' }}>변동성 (연율, %) <SortIcon column="volatility" /></th>
+                                <th onClick={() => handleSort('rating')} style={{ cursor: 'pointer' }}>위험 등급 <SortIcon column="rating" /></th>
+                                <th>상태</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            );
+                        </thead>
+                        <tbody>
+                            {list.map(item => (
+                                <tr key={item.symbol} style={item.rating === 'Extreme' ? { background: 'rgba(239, 68, 68, 0.05)' } : {}}>
+                                    <td>
+                                        <div className={styles.assetCell}>
+                                            <img src={getCoinIconUrl(item.symbol)} alt="" className={styles.coinIcon} />
+                                            <span className={styles.symbol}>{item.symbol}</span>
+                                        </div>
+                                    </td>
+                                    <td>${item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                                    <td>{item.volatility?.toFixed(2) || '-'}%</td>
+                                    <td>{item.risk_score?.toFixed(1) || '-'}</td>
+                                    <td>
+                                        <span className={styles[`risk${item.rating}`]}>
+                                            {item.rating === 'Low' && '🛡 안정'}
+                                            {item.rating === 'Medium' && '⚠️ 보통'}
+                                            {item.rating === 'Extreme' && '☢️ 위험'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    );
         }
     };
 
-    return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <div className={styles.titleGroup}>
-                    <h2 className={styles.title}>
-                        스마트 가상자산 스크리너
-                    </h2>
-                    <p className={styles.subtitle}>실시간 분석 · 1분 갱신</p>
-                </div>
+                    return (
+                    <div className={styles.container}>
+                        <div className={styles.header}>
+                            <div className={styles.titleGroup}>
+                                <h2 className={styles.title}>
+                                    스마트 가상자산 스크리너
+                                </h2>
+                                <p className={styles.subtitle}>실시간 분석 · 1분 갱신</p>
+                            </div>
 
-                <div className={styles.tabs}>
-                    <button
-                        className={`${styles.tab} ${tab === 'breakout' ? styles.active : ''}`}
-                        onClick={() => setTab('breakout')}
-                        title="주요 이동평균선(20/50/200일)을 상향 돌파하는 자산 포착"
-                    >
-                        🚀 돌파 (Breakout)
-                    </button>
-                    <button
-                        className={`${styles.tab} ${tab === 'performance' ? styles.active : ''}`}
-                        onClick={() => setTab('performance')}
-                        title="고점 대비 하락폭이 큰 자산을 찾아 저점 매수 기회 탐색"
-                    >
-                        💎 저점 (Bottom)
-                    </button>
-                    <button
-                        className={`${styles.tab} ${tab === 'risk' ? styles.active : ''}`}
-                        onClick={() => setTab('risk')}
-                        title="연환산 변동성을 기준으로 리스크 분석 (High Volatility = High Risk)"
-                    >
-                        ⚠️ 리스크 (Risk)
-                    </button>
-                </div>
-            </div>
+                            <div className={styles.tabs}>
+                                <button
+                                    className={`${styles.tab} ${tab === 'breakout' ? styles.active : ''}`}
+                                    onClick={() => setTab('breakout')}
+                                    title="주요 이동평균선(20/50/200일)을 상향 돌파하는 자산 포착"
+                                >
+                                    🚀 돌파 (Breakout)
+                                </button>
+                                <button
+                                    className={`${styles.tab} ${tab === 'performance' ? styles.active : ''}`}
+                                    onClick={() => setTab('performance')}
+                                    title="고점 대비 하락폭이 큰 자산을 찾아 저점 매수 기회 탐색"
+                                >
+                                    💎 저점 (Bottom)
+                                </button>
+                                <button
+                                    className={`${styles.tab} ${tab === 'risk' ? styles.active : ''}`}
+                                    onClick={() => setTab('risk')}
+                                    title="연환산 변동성을 기준으로 리스크 분석 (High Volatility = High Risk)"
+                                >
+                                    ⚠️ 리스크 (Risk)
+                                </button>
+                            </div>
+                        </div>
 
-            {/* Guide Section */}
-            <div style={{
-                background: 'rgba(59, 130, 246, 0.08)',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                fontSize: '13px',
-                color: 'var(--text-secondary)',
-                border: '1px solid rgba(59, 130, 246, 0.2)'
-            }}>
-                <span style={{ marginRight: '8px', fontSize: '16px' }}>💡</span>
-                {tab === 'breakout' && <span><strong>돌파 전략:</strong> 현재 가격이 20일/50일/200일 이동평균선을 강하게 뚫고 올라가는 '골든 크로스' 직전 혹은 직후의 자산을 찾습니다.</span>}
-                {tab === 'performance' && <span><strong>저점 공략:</strong> 역사적 고점(ATH) 대비 하락폭(Drawdown)이 큰 자산을 필터링하여, 펀더멘탈 대비 과매도된 저평가 구간을 탐색합니다.</span>}
-                {tab === 'risk' && <span><strong>리스크 분석:</strong> 자산의 가격 변동폭(Standard Deviation)을 연율화하여 계산합니다. 'Extreme' 등급은 하루에도 10% 이상 급등락할 수 있는 고위험 자산입니다.</span>}
-                <span style={{ marginTop: '8px', display: 'block', fontSize: '12px', color: '#3b82f6', fontWeight: 500 }}>
-                    ※ 분석 대상: 시가총액 상위 30개 주요 암호화폐 (실시간)
-                </span>
-            </div>
+                        {/* Guide Section */}
+                        <div style={{
+                            background: 'rgba(59, 130, 246, 0.08)',
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            marginBottom: '20px',
+                            fontSize: '13px',
+                            color: 'var(--text-secondary)',
+                            border: '1px solid rgba(59, 130, 246, 0.2)'
+                        }}>
+                            <span style={{ marginRight: '8px', fontSize: '16px' }}>💡</span>
+                            {tab === 'breakout' && <span><strong>돌파 전략:</strong> 현재 가격이 20일/50일/200일 이동평균선을 강하게 뚫고 올라가는 '골든 크로스' 직전 혹은 직후의 자산을 찾습니다.</span>}
+                            {tab === 'performance' && <span><strong>저점 공략:</strong> 역사적 고점(ATH) 대비 하락폭(Drawdown)이 큰 자산을 필터링하여, 펀더멘탈 대비 과매도된 저평가 구간을 탐색합니다.</span>}
+                            {tab === 'risk' && <span><strong>리스크 분석:</strong> 자산의 가격 변동폭(Standard Deviation)을 연율화하여 계산합니다. 'Extreme' 등급은 하루에도 10% 이상 급등락할 수 있는 고위험 자산입니다.</span>}
+                            <span style={{ marginTop: '8px', display: 'block', fontSize: '12px', color: '#3b82f6', fontWeight: 500 }}>
+                                ※ 분석 대상: 시가총액 상위 30개 주요 암호화폐 (실시간)
+                            </span>
+                        </div>
 
 
-            <div className={styles.summaryGrid}>
-                {summaryCards()}
-            </div>
+                        <div className={styles.summaryGrid}>
+                            {summaryCards()}
+                        </div>
 
-            <div className={styles.tableWrapper}>
-                {renderTable()}
-            </div>
-        </div >
-    );
+                        <div className={styles.tableWrapper}>
+                            {renderTable()}
+                        </div>
+                    </div >
+                    );
 }

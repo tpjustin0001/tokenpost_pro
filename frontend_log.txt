@@ -7227,3 +7227,6 @@
 [0] ✓ Compiled in 59ms
 [0]  GET /data 200 in 122ms (compile: 101ms, render: 21ms)
 [0]  GET /api/global 200 in 401ms (compile: 47ms, render: 354ms)
+[0]  GET /analysis 200 in 83ms (compile: 46ms, render: 36ms)
+[0] ✓ Compiled in 84ms
+[0] ✓ Compiled in 221ms

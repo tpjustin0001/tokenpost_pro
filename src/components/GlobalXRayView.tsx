@@ -84,7 +84,7 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
     if (!analysis) {
         return (
             <div className={styles.body} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: '400px', color: 'rgba(255,255,255,0.7)' }}>
-                Failed to load analysis.
+                분석 데이터를 불러오지 못했습니다.
             </div>
         );
     }
@@ -105,13 +105,13 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
                     <RadarChart data={analysis.radar_data} color={mainColor} size={280} />
                     <div className={styles.scoreOverlay}>
                         <span className={styles.scoreVal} style={{ color: mainColor }}>{analysis.overallScore}</span>
-                        <span className={styles.scoreLabel}>Market Score</span>
+                        <span className={styles.scoreLabel}>마켓 스코어</span>
                     </div>
                 </div>
 
                 {/* Market Phase */}
                 <div className={styles.signalBox} style={{ borderColor: mainColor }}>
-                    <div className={styles.signalLabel}>Current Cycle Phase</div>
+                    <div className={styles.signalLabel}>현재 시장 국면</div>
                     <div className={styles.signalValue} style={{ color: mainColor, fontSize: '14px' }}>
                         {analysis.marketPhase}
                     </div>
@@ -119,7 +119,7 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
 
                 {/* Recommendation Short */}
                 <div className={styles.recommendationBox} style={{ marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
-                    <div className={styles.signalLabel}>Investment Strategy</div>
+                    <div className={styles.signalLabel}>투자 대응 전략</div>
                     <p style={{ fontSize: '13px', lineHeight: '1.4', color: 'rgba(255,255,255,0.9)', fontWeight: '500' }}>
                         {analysis.actionable_insight_summary || analysis.recommendation}
                     </p>

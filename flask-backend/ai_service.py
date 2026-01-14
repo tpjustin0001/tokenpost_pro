@@ -89,9 +89,9 @@ class AIService:
     def analyze_global_market(self, market_data, news_list=[]):
         """
         Analyze the global crypto market using GPT-4o-mini.
-        Cache Key: 'GLOBAL_MARKET'
+        Cache Key: 'GLOBAL_MARKET_V3'
         """
-        cache_key = 'GLOBAL_MARKET'
+        cache_key = 'GLOBAL_MARKET_V3'
         
         cached = self._get_cached_data(cache_key, self.CACHE_TTL_GLOBAL)
         if cached:

@@ -129,7 +129,7 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
             <div className={styles.rightCol}>
                 {/* Summary */}
                 <div className={styles.section} style={{ marginBottom: '20px' }}>
-                    <h3 className={styles.sectionTitle}>Macro Summary</h3>
+                    <h3 className={styles.sectionTitle}>📉 거시 경제 요약 (Macro Summary)</h3>
                     <p className={styles.summaryText}>{analysis.summary}</p>
                 </div>
 
@@ -137,7 +137,7 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
                 {analysis.recent_news && analysis.recent_news.length > 0 && (
                     <div className={styles.section} style={{ marginBottom: '20px' }}>
                         <h3 className={styles.sectionTitle} style={{ color: '#3b82f6' }}>
-                            📰 Global Headlines
+                            📰 주요 글로벌 뉴스 (Global Headlines)
                         </h3>
                         <div className={styles.newsList} style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '150px', overflowY: 'auto' }}>
                             {analysis.recent_news.map((news, idx) => (
@@ -173,7 +173,7 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
 
                 {/* Sector Analysis */}
                 <div className={styles.section} style={{ marginBottom: '20px' }}>
-                    <h3 className={styles.sectionTitle}>Sector Rotation</h3>
+                    <h3 className={styles.sectionTitle}>🔄 섹터 로테이션 (Sector Rotation)</h3>
                     <div className={styles.sectorGrid}>
                         {analysis.sectorAnalysis && Array.isArray(analysis.sectorAnalysis) ? (
                             analysis.sectorAnalysis.map((sector) => (
@@ -192,7 +192,7 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
                                 </div>
                             ))
                         ) : (
-                            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Sector analysis data unavailable</div>
+                            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>섹터 분석 데이터 없음</div>
                         )}
                     </div>
                 </div>
@@ -200,7 +200,7 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
                 {/* Macro Factors (New) */}
                 {analysis.macro_factors && (
                     <div className={styles.section} style={{ marginBottom: '20px' }}>
-                        <h3 className={styles.sectionTitle}>⛓️ Macro & On-Chain Context</h3>
+                        <h3 className={styles.sectionTitle}>⛓️ 매크로 및 온체인 (Macro & On-Chain)</h3>
                         <div className={styles.metricsGrid}>
                             {analysis.macro_factors.map((m, i) => (
                                 <div key={i} className={styles.metricCard} style={{ borderLeft: m.impact === 'Positive' ? '3px solid #10b981' : m.impact === 'Negative' ? '3px solid #ef4444' : '3px solid #64748b' }}>
@@ -215,7 +215,7 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
 
                 {/* On-Chain Signals (New) */}
                 <div className={styles.section} style={{ marginBottom: '20px' }}>
-                    <h3 className={styles.sectionTitle}>📊 On-Chain Signals</h3>
+                    <h3 className={styles.sectionTitle}>📊 온체인 시그널 (On-Chain Context)</h3>
                     <div className={styles.metricsGrid}>
                         {analysis.onchain_signals && Array.isArray(analysis.onchain_signals) ? (
                             analysis.onchain_signals.map((m, i) => (
@@ -230,7 +230,7 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
                                 </div>
                             ))
                         ) : (
-                            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>On-chain data unavailable</div>
+                            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>온체인 데이터 없음</div>
                         )}
                     </div>
                 </div>
@@ -238,13 +238,13 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
                 {/* Risks & Opps */}
                 <div className={styles.columns}>
                     <div className={styles.col}>
-                        <h4 className={styles.colTitle} style={{ color: '#ef4444' }}>Major Risks</h4>
+                        <h4 className={styles.colTitle} style={{ color: '#ef4444' }}>⚠️ 주요 리스크 (Risks)</h4>
                         <ul className={styles.list}>
                             {analysis.risks?.map((r, i) => <li key={i}>{r}</li>)}
                         </ul>
                     </div>
                     <div className={styles.col}>
-                        <h4 className={styles.colTitle} style={{ color: '#10b981' }}>Strategic Opps</h4>
+                        <h4 className={styles.colTitle} style={{ color: '#10b981' }}>🚀 투자 기회 (Opportunities)</h4>
                         <ul className={styles.list}>
                             {analysis.opportunities?.map((o, i) => <li key={i}>{o}</li>)}
                         </ul>

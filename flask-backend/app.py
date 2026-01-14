@@ -138,6 +138,16 @@ def index():
 def health():
     return jsonify({'status': 'ok'})
 
+@app.route('/api/admin/trigger-analysis', methods=['POST', 'GET'])
+def trigger_analysis():
+    """Manual trigger for the scheduler to save analysis to Supabase."""
+    try:
+        from scheduler_service import scheduler_service
+        scheduler_service.update_market_analysis()
+        return jsonify({'success': True, 'message': 'Analysis triggered and saved to Supabase'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/test/hello')
 def api_test_hello():
     """Dependency-free test route"""

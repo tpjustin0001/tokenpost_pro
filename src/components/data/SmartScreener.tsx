@@ -15,6 +15,10 @@ interface TickerData {
     volatility?: number;
     risk_score?: number;
     rating?: 'Low' | 'Medium' | 'Extreme';
+    rsi?: number;
+    rvol?: number;
+    ai_insight?: string;
+    drawdown?: number;
 }
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
@@ -198,7 +202,7 @@ export default function SmartScreener() {
             </div>
         );
 
-        if (tab === 'breakout' || tab === 'performance') {
+        if (tab === 'breakout') {
             return (
                 <>
                     <FilterControls />
@@ -207,9 +211,9 @@ export default function SmartScreener() {
                             <tr>
                                 <th>자산</th>
                                 <th onClick={() => handleSort('price')} style={{ cursor: 'pointer' }}>현재가 <SortIcon column="price" /></th>
-                                <th onClick={() => handleSort('change_1h')} style={{ cursor: 'pointer' }}>변동률 (1시간) <SortIcon column="change_1h" /></th>
-                                <th onClick={() => handleSort('volume')} style={{ cursor: 'pointer' }}>거래량 (24시간) <SortIcon column="volume" /></th>
-                                <th>상태</th>
+                                <th onClick={() => handleSort('ai_insight')} style={{ cursor: 'pointer' }}>AI 분석 (Insight) <SortIcon column="ai_insight" /></th>
+                                <th onClick={() => handleSort('rsi')} style={{ cursor: 'pointer' }}>RSI (14) <SortIcon column="rsi" /></th>
+                                <th onClick={() => handleSort('rvol')} style={{ cursor: 'pointer' }}>거래강도 (RVol) <SortIcon column="rvol" /></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -219,18 +223,81 @@ export default function SmartScreener() {
                                         <div className={styles.assetCell}>
                                             <img src={getCoinIconUrl(item.symbol)} alt="" className={styles.coinIcon} />
                                             <span className={styles.symbol}>{item.symbol}</span>
-                                            {item.is_breakout && <span className={styles.badge} style={{ backgroundColor: '#f59e0b', color: '#fff' }}>🔥 고점 근접</span>}
+                                            {item.is_breakout && <span className={styles.badge} style={{ backgroundColor: '#f59e0b', color: '#fff' }}>🔥 돌파</span>}
                                         </div>
                                     </td>
                                     <td>${item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-                                    <td style={{ color: (item.change_1h || 0) >= 0 ? '#10b981' : '#ef4444' }}>
-                                        {(item.change_1h || 0) >= 0 ? '+' : ''}{(item.change_1h || 0).toFixed(2)}%
+                                    <td style={{ fontWeight: 600, color: item.ai_insight?.includes('Strong') ? '#10b981' : '#374151' }}>
+                                        {item.ai_insight || '-'}
                                     </td>
-                                    <td>{(item.volume || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                                     <td>
-                                        <span className={`${styles.badge} ${(item.change_1h || 0) >= 0 ? styles.bullish : styles.bearish}`}>
-                                            {(item.change_1h || 0) >= 0 ? '상승' : '하락'}
+                                        <span style={{
+                                            padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
+                                            background: (item.rsi || 50) > 70 ? '#fee2e2' : (item.rsi || 50) < 30 ? '#d1fae5' : '#f3f4f6',
+                                            color: (item.rsi || 50) > 70 ? '#ef4444' : (item.rsi || 50) < 30 ? '#059669' : '#6b7280'
+                                        }}>
+                                            {item.rsi || '-'}
                                         </span>
+                                    </td>
+                                    <td>
+                                        {item.rvol ? `x${item.rvol.toFixed(1)}` : '-'}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </>
+            );
+        }
+
+        if (tab === 'performance') {
+            return (
+                <>
+                    <FilterControls />
+                    <table className={styles.table}>
+                        <thead>
+                            <tr>
+                                <th>자산</th>
+                                <th onClick={() => handleSort('price')} style={{ cursor: 'pointer' }}>현재가 <SortIcon column="price" /></th>
+                                <th onClick={() => handleSort('drawdown')} style={{ cursor: 'pointer' }}>고점 대비 할인 (MDD) <SortIcon column="drawdown" /></th>
+                                <th onClick={() => handleSort('rsi')} style={{ cursor: 'pointer' }}>RSI (14) <SortIcon column="rsi" /></th>
+                                <th onClick={() => handleSort('ai_insight')} style={{ cursor: 'pointer' }}>저평가 분석 <SortIcon column="ai_insight" /></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {list.map(item => (
+                                <tr key={item.symbol}>
+                                    <td>
+                                        <div className={styles.assetCell}>
+                                            <img src={getCoinIconUrl(item.symbol)} alt="" className={styles.coinIcon} />
+                                            <span className={styles.symbol}>{item.symbol}</span>
+                                        </div>
+                                    </td>
+                                    <td>${item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                                    <td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <div style={{ flex: 1, height: '6px', background: '#e5e7eb', borderRadius: '3px', maxWidth: '60px' }}>
+                                                <div style={{
+                                                    width: `${Math.min(Math.abs(item.drawdown || 0), 100)}%`,
+                                                    height: '100%', background: '#10b981', borderRadius: '3px'
+                                                }} />
+                                            </div>
+                                            <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 600 }}>
+                                                {item.drawdown?.toFixed(1)}%
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span style={{
+                                            padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
+                                            background: (item.rsi || 50) > 70 ? '#fee2e2' : (item.rsi || 50) < 30 ? '#d1fae5' : '#f3f4f6',
+                                            color: (item.rsi || 50) > 70 ? '#ef4444' : (item.rsi || 50) < 30 ? '#059669' : '#6b7280'
+                                        }}>
+                                            {item.rsi || '-'}
+                                        </span>
+                                    </td>
+                                    <td style={{ fontWeight: 600, color: item.ai_insight?.includes('Deep') || item.ai_insight?.includes('Value') ? '#10b981' : '#374151' }}>
+                                        {item.ai_insight || '-'}
                                     </td>
                                 </tr>
                             ))}

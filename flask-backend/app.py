@@ -327,8 +327,9 @@ SCREENER_SYMBOLS = [
 @app.route('/api/screener/breakout')
 @cache.cached(timeout=60)
 def api_screener_breakout():
-    """Tab 1: Breakout Hunter - Parallel Fetch"""
+    """Tab 1: Breakout Scanner - Parallel"""
     from market_provider import market_data_service
+    from crypto_market.indicators import rsi, relative_volume
     
     results = []
     
@@ -340,13 +341,11 @@ def api_screener_breakout():
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         futures = {executor.submit(fetch_data, sym): sym for sym in SCREENER_SYMBOLS}
-        
         for future in concurrent.futures.as_completed(futures):
             item = future.result()
             if not item: continue
             
             try:
-                # Logic (same as before)
                 df = item['raw_df']
                 current_price = item['current_price']
                 if df is None or df.empty: continue
@@ -354,6 +353,10 @@ def api_screener_breakout():
                 sma20 = item['ma_20']
                 sma50 = df['Close'].tail(50).mean()
                 sma200 = df['Close'].tail(200).mean()
+                
+                # Technicals
+                rsi_val = float(rsi(df['Close'], 14).iloc[-1])
+                rvol = float(relative_volume(df['Volume'], 20))
                 
                 status_20 = 'Bullish' if current_price > sma20 else 'Bearish'
                 status_50 = 'Bullish' if current_price > sma50 else 'Bearish'
@@ -364,6 +367,19 @@ def api_screener_breakout():
                     prev_close = df['Close'].iloc[-2]
                     is_fresh_breakout = (prev_close < sma200 * 0.99) and (current_price > sma200)
 
+                # AI Insight Generation
+                insight = "Neutral"
+                if is_fresh_breakout and rvol > 1.5:
+                    insight = "🔥 Golden Cross (Strong Buy)"
+                elif current_price > sma200 and rvol > 1.2:
+                    insight = "🚀 Trend Follow (Accumulate)"
+                elif rsi_val > 75:
+                    insight = "⚠️ Overheated (Take Profit)"
+                elif current_price > sma50:
+                    insight = "📈 Bullish Trend"
+                else:
+                    insight = "❄️ Cooling Off"
+
                 results.append({
                     'symbol': item['symbol'],
                     'price': current_price,
@@ -373,6 +389,9 @@ def api_screener_breakout():
                     'sma20': sma20,
                     'sma50': sma50,
                     'sma200': sma200,
+                    'rsi': round(rsi_val, 1),
+                    'rvol': round(rvol, 2),
+                    'ai_insight': insight,
                     'status_20': status_20,
                     'status_50': status_50,
                     'status_200': status_200,
@@ -395,6 +414,7 @@ def api_screener_breakout():
 def api_screener_real():
     """Tab 2: Price Performance - Parallel"""
     from market_provider import market_data_service
+    from crypto_market.indicators import rsi
     
     results = []
     
@@ -422,6 +442,22 @@ def api_screener_real():
                 drawdown = ((current_price - ath) / ath) * 100 if ath > 0 else 0
                 from_atl = ((current_price - atl) / atl) * 100 if atl > 0 else 0
                 
+                # RSI
+                rsi_val = float(rsi(df['Close'], 14).iloc[-1])
+
+                # AI Insight
+                insight = "Neutral"
+                if drawdown < -70 and rsi_val < 30:
+                    insight = "💎 Deep Value (Oversold)"
+                elif drawdown < -50 and rsi_val < 40:
+                    insight = "🛒 Value Zone (Accumulate)"
+                elif rsi_val > 70:
+                    insight = "⚠️ Top Signal (Risky)"
+                elif from_atl > 200:
+                    insight = "🚀 High Flyer"
+                else:
+                    insight = "📉 Correction Phase"
+
                 results.append({
                     'symbol': item['symbol'],
                     'price': current_price,
@@ -431,7 +467,9 @@ def api_screener_real():
                     'ath': ath,
                     'atl': atl,
                     'drawdown': drawdown,
-                    'from_atl': from_atl
+                    'from_atl': from_atl,
+                    'rsi': round(rsi_val, 1),
+                    'ai_insight': insight
                 })
             except:
                 continue

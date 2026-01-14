@@ -76,8 +76,8 @@ export default function VCPScanner() {
     );
     const [filter, setFilter] = useState<'ALL' | 'A' | 'B' | 'C'>('ALL');
 
-    // Use API data if available, otherwise use fallback
-    const rawSignals = data?.signals && data.signals.length > 0 ? data.signals : FALLBACK_SIGNALS;
+    // Use API data
+    const rawSignals = data?.signals || [];
 
     const signals: VCPSignal[] = rawSignals.map((s: any) => ({
         symbol: s.symbol,

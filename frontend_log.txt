@@ -7199,3 +7199,13 @@
 [0]  GET /news 200 in 504ms (compile: 18ms, render: 485ms)
 [0]  GET / 200 in 505ms (compile: 69ms, render: 435ms)
 [0]  GET /analysis 200 in 559ms (compile: 193ms, render: 365ms)
+[0]  GET / 200 in 85ms (compile: 30ms, render: 55ms)
+[0]  GET /api/kimchi/upbit 200 in 181ms (compile: 10ms, render: 171ms)
+[0]  GET /api/global 200 in 324ms (compile: 4ms, render: 320ms)
+[0]  GET /api/markets 200 in 384ms (compile: 4ms, render: 380ms)
+[0]  GET /data 200 in 75ms (compile: 34ms, render: 40ms)
+[0]  GET /api/global 200 in 14ms (compile: 9ms, render: 5ms)
+[0]  GET /analysis 200 in 33ms (compile: 13ms, render: 19ms)
+[0]  GET /news 200 in 61ms (compile: 27ms, render: 33ms)
+[0]  GET /research 200 in 133ms (compile: 100ms, render: 33ms)
+[0] ✓ Compiled in 166ms

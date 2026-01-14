@@ -167,5 +167,6 @@ export default function HomePage() {
           onClose={() => setGlobalXRayOpen(false)}
         />
       </div>
-      );
+    </LoginGate>
+  );
 }

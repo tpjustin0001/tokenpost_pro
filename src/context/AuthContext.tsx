@@ -25,8 +25,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<TokenPostUser | null>(null);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
+
+    // Prevent hydration mismatch by only running on client
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
+        if (!mounted) return;
+
         // Check for existing session on mount
         const initAuth = async () => {
             const token = getAccessToken();
@@ -50,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
 
         initAuth();
-    }, []);
+    }, [mounted]);
 
     const login = () => {
         initiateLogin();
@@ -74,6 +82,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    // Don't render until mounted to prevent hydration mismatch
+    if (!mounted) {
+        return null;
+    }
+
     return (
         <AuthContext.Provider value={{
             user,
@@ -95,3 +108,4 @@ export function useAuth() {
     }
     return context;
 }
+

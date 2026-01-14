@@ -1,11 +1,11 @@
 'use client';
 
-// TokenPost OAuth 2.0 Configuration (Updated)
+// TokenPost OAuth 2.0 Configuration (PRO)
 export const OAUTH_CONFIG = {
-    CLIENT_ID: 'SaOvfXcB39qBajLd5wTpMg14X6k9HdCi',
-    CLIENT_SECRET: 'QjLMXfJ6baEv1EVFby5SrAbs47LPn1lJShIVZKzBakWMk18Vg1UXFQxoP3DL52VAgZ4hALt1zFaBK7q3U5Ub1oqWcKpHAeRVOLu5Xxu1o7JXlcwLQCsgXd3xCZgw8rDY',
+    CLIENT_ID: 's5ViDSauo8wENm2AgqPK39J2oI13PbVn',
+    CLIENT_SECRET: 'xE4mNc8XQBHU3CNWrj3ci9HlFzbHXYdlot73EygyMEg54cKb9uK54X9DE130k08it2heu0B9703Ef701Y6ooOiSK67wrXn0yZ0DaEuG1N1iw3afJtN7QbnLdZm7FTfaa',
     REDIRECT_URI: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '',
-    AUTH_URL: 'https://www.tokenpost.kr/oauth/login',
+    AUTH_URL: 'https://accounts.tokenpost.kr/login',
     TOKEN_URL: 'https://oapi.tokenpost.kr/oauth/v1/token',
     USER_INFO_URL: 'https://oapi.tokenpost.kr/oauth/v1/userInfo',
     SCOPE: 'email,uid,grade,nickname',

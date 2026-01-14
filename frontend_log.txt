@@ -8046,3 +8046,6 @@
 [0]     1: Unable to open static sorted file referenced from 00005768.meta
 [0]     2: Unable to open static sorted file 00005764.sst
 [0]     3: No such file or directory (os error 2)
+[0] Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+[0] [Next.js Rewrite] Proxying /api/python to: http://127.0.0.1:5001
+[0] Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)

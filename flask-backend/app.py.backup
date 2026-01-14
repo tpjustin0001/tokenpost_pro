@@ -574,7 +574,7 @@ if SUPABASE_URL and SUPABASE_KEY:
 # ============================================================
 # EXTERNAL INGEST API (Protected)
 # ============================================================
-@app.route('/api/external/ingest', methods=['POST'], strict_slashes=False)
+@app.route('/api/external/ingest', methods=['POST'])
 def ingest_external_content():
     """
     Secure endpoint for external content injection (News & Research).

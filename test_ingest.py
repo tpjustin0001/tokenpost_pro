@@ -15,7 +15,7 @@ if not api_key:
     exit(1)
 
 print(f"🔑 API Key found: {api_key[:5]}...")
-print(f"🌐 Target: {base_url}/api/external/ingest")
+print(f"🌐 Target: {base_url}/api/external/ingest/")
 
 payload = {
     "type": "research",
@@ -36,7 +36,7 @@ headers = {
 }
 
 try:
-    res = requests.post(f"{base_url}/api/external/ingest", json=payload, headers=headers)
+    res = requests.post(f"{base_url}/api/external/ingest/", json=payload, headers=headers)
     print(f"📡 Status: {res.status_code}")
     print(f"📄 Response: {res.text}")
 except Exception as e:

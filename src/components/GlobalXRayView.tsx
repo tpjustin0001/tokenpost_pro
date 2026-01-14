@@ -17,7 +17,7 @@ interface MarketAnalysis {
     }[];
     onchain_signals: {
         metric: string;
-        signal: 'bullish' | 'bearish' | 'neutral';
+        signal: string;
         value: string;
         comment: string;
     }[];

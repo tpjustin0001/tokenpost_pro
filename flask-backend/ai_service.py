@@ -4,283 +4,174 @@ import json
 from datetime import datetime
 from openai import OpenAI
 
-class AIService:
     def __init__(self):
         self.xai_key = os.environ.get("XAI_API_KEY")
         self.openai_key = os.environ.get("OPENAI_API_KEY")
-        self.client = None
-        self.model = "gpt-4o-mini" # Default fallback
         
-        # In-memory Cache
-        # Structure: { 'key': {'data': dict, 'timestamp': datetime} }
-        self._cache = {}
-        self.CACHE_TTL_GLOBAL = 3600  # 1 hour
-        self.CACHE_TTL_ASSET = 900    # 15 minutes
+        self.client_gpt = None
+        self.client_grok = None
         
-        # 1. Prefer xAI (Grok)
+        # 1. Init OpenAI (Main Processor)
+        if self.openai_key:
+            self.client_gpt = OpenAI(api_key=self.openai_key)
+        
+        # 2. Init xAI (Sentiment Engine)
         if self.xai_key:
-            print("🚀 AI Service: Switched to xAI (Grok)")
-            self.client = OpenAI(
+            self.client_grok = OpenAI(
                 api_key=self.xai_key,
                 base_url="https://api.x.ai/v1"
             )
-            self.model = "grok-beta" # Grok 2 / 4.1 equivalent
-        # 2. Fallback to OpenAI
-        elif self.openai_key:
-            print("ℹ️ AI Service: Using OpenAI (GPT-4o)")
-            self.client = OpenAI(api_key=self.openai_key)
-            self.model = "gpt-4o-mini"
-        else:
-            print("⚠️ WARNING: No AI API Key found. AI features will use mock data.")
 
-    def _get_cached_data(self, key, ttl_seconds):
-        """Retrieve data from cache if valid"""
-        if key in self._cache:
-            cached = self._cache[key]
-            age = (datetime.now() - cached['timestamp']).total_seconds()
-            if age < ttl_seconds:
-                return cached['data']
-        return None
+        # In-memory Cache
+        self._cache = {}
+        self.CACHE_TTL_GLOBAL = 3600
+        self.CACHE_TTL_ASSET = 900
 
-    def _set_cache_data(self, key, data):
-        """Store data in cache"""
-        self._cache[key] = {
-            'data': data,
-            'timestamp': datetime.now()
-        }
+    def _get_grok_sentiment(self, news_list):
+        """
+        Use Grok to extract deep social sentiment from news.
+        """
+        if not self.client_grok or not news_list:
+            return "Grok AI: No sentiment data available."
 
-    def _get_mock_global_analysis(self):
-        """Fallback mock data for global analysis"""
-        return {
-            'overallScore': 0,
-            'marketPhase': 'AI 연결 실패',
-            'summary': '⚠️ AI 분석 서버에 연결할 수 없거나 API 키가 유효하지 않습니다. .env 설정을 확인해주세요.',
-            'marketHealth': [
-                {'label': '펀더멘탈', 'value': 50},
-                {'label': '기술적', 'value': 50},
-                {'label': '온체인', 'value': 50},
-                {'label': '센티멘트', 'value': 50},
-                {'label': '혁신성', 'value': 50}
-            ],
-            'sectorAnalysis': [],
-            'keyMetrics': [],
-            'risks': ['AI Service Unavailable'],
-            'opportunities': [],
-            'recommendation': '시스템 관리자에게 문의하세요.',
-            'timestamp': datetime.now().isoformat()
-        }
-
-    def _get_mock_asset_analysis(self, symbol, error_message=None):
-        """Fallback mock data for asset analysis"""
-        if not error_message:
-            error_message = f'⚠️ {symbol}에 대한 AI 분석을 생성할 수 없습니다. (API Key Error or Quota Exceeded)'
-            
-        return {
-            'assetName': symbol,
-            'category': 'Example',
-            'overallScore': 0,
-            'summary': error_message,
-            'detailed_analysis': {
-                'market_context': '데이터 없음',
-                'technical_outlook': '데이터 없음',
-                'on_chain_verdict': '데이터 없음'
-            },
-            'radarData': [
-                {'label': '펀더멘탈', 'value': 0},
-                {'label': '기술적', 'value': 0},
-                {'label': '온체인', 'value': 0},
-                {'label': '센티멘트', 'value': 0},
-                {'label': '혁신성', 'value': 0}
-            ],
-            'metrics': [],
-            'risks': [],
-            'opportunities': [],
-            'recommendation': 'N/A',
-            'timestamp': datetime.now().isoformat()
-        }
+        news_text = "\n".join([f"- {item['title']} ({item['source']})" for item in news_list])
+        
+        try:
+            response = self.client_grok.chat.completions.create(
+                model="grok-beta",
+                messages=[
+                    {"role": "system", "content": "You are Grok, a real-time Social Sentiment Engine. Analyze the crypto news headlines. Output a brief, witty, uncensored paragraph about the current market 'vibe' and crowd psychology."},
+                    {"role": "user", "content": f"Headlines:\n{news_text}"}
+                ],
+                temperature=0.7 # High creativity for sentiment
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            print(f"Grok Sentiment Failed: {e}")
+            return "Grok analysis failed."
 
     def analyze_global_market(self, market_data, news_list=[]):
-        """
-        Analyze the global crypto market using GPT-4o-mini.
-        Cache Key: 'GLOBAL_MARKET_V3'
-        """
         cache_key = 'GLOBAL_MARKET_V3'
-        
         cached = self._get_cached_data(cache_key, self.CACHE_TTL_GLOBAL)
-        if cached:
-            return cached
+        if cached: return cached
 
-        if not self.client:
+        if not self.client_gpt:
             return self._get_mock_global_analysis()
 
-        # Format News
-        news_text = "No recent news found."
-        if news_list:
-            news_text = "\n".join([f"- [{item['source']}] {item['title']}" for item in news_list])
+        # Step 1: Get Grok Sentiment
+        grok_sentiment = self._get_grok_sentiment(news_list)
 
+        # Step 2: GPT Main Analysis
         system_prompt = f"""
-        You are a seasoned Macro Crypto Strategist (Tier 1 Institutional Analyst). 
-        Analyze the global crypto market structure based on the provided data and news.
+        You are a Macro Crypto Strategist.
         
-        Recent Global News Headlines (English):
-        {news_text}
+        INPUT CONTEXT:
+        1. Market Data (Technical/Macro)
+        2. Social Sentiment (provided by Grok AI): "{grok_sentiment}"
         
         Instructions:
-        1. Synthesize market data with global news sentiment.
-        2. Provide a strategic outlook (Bullish/Neutral/Bearish) with clear reasoning.
-        3. Return the result in STRICT, PROFESSIONAL KOREAN (Economist Tone).
+        1. Synthesize the Technical Data with Grok's Sentiment.
+        2. Return the result in STRICT, PROFESSIONAL KOREAN.
         
         CRITICAL STYLE GUIDELINES:
-        - Glossary: Use "온체인" (not 온인), "이동평균선" (not 이동 평균), "상승세" (not 상상세).
-        - Formatting: Always add leading zero for decimals (e.g., "0.86%" not ".86%").
-        - Tone: Professional, authoritative, macro-focused.
- 
+        - Glossary: Use "온체인" (not 온인), "이동평균선".
+        - Formatting: Leading zeros for decimals.
+        - Tone: Professional, authoritative.
+  
         JSON Structure (v3.0):
         {{
             "overallScore": float(0-100),
-            "marketPhase": "Accumulation (매집) | Markup (상승) | Distribution (분산) | Markdown (하락)",
-            "summary": "High-level market summary (2-3 sentences). Mention KEY NEWS & MACRO IMPACT.",
-            "macro_factors": [
-                {{ "name": "e.g. Fed Policy / Inflation / ETF Flows", "impact": "Positive | Negative | Neutral", "detail": "Brief explanation" }},
-                {{ "name": "Global Liquidity", "impact": "...", "detail": "..." }}
-            ],
+            "marketPhase": "Accumulation | Markup | Distribution | Markdown",
+            "summary": "Summary integrating Data & Social Vibe.",
+            "macro_factors": [ {{ "name": "...", "impact": "...", "detail": "..." }} ],
             "radar_data": [
-                {{ "label": "Macro", "value": int(0-100) }},
-                {{ "label": "Technical", "value": int(0-100) }},
-                {{ "label": "On-Chain", "value": int(0-100) }},
-                {{ "label": "Sentiment", "value": int(0-100) }},
-                {{ "label": "Innovation", "value": int(0-100) }}
+                 {{ "label": "Macro", "value": int }},
+                 {{ "label": "Technical", "value": int }},
+                 {{ "label": "On-Chain", "value": int }},
+                 {{ "label": "Sentiment", "value": int }},
+                 {{ "label": "Innovation", "value": int }}
             ],
-            "sectorAnalysis": [
-                {{ "name": "e.g. AI / RWA / Meme / L1", "signal": "bullish | bearish | neutral", "score": int(0-100), "insight": "Why?" }}
-            ],
-            "onchain_signals": [
-                {{ "metric": "e.g. Exchange Net Flow", "signal": "bullish | bearish", "value": "Low Inflow", "comment": "Whales accumulating" }},
-                {{ "metric": "MVRV Ratio", "signal": "...", "value": "1.8", "comment": "Undervalued zone" }}
-            ],
-            "risks": ["Specific Risk 1", "Specific Risk 2"],
-            "opportunities": ["Specific Opp 1", "Specific Opp 2"],
-            "recommendation": "Aggressive Long | Conservative Buy | Hold (Cash) | Short",
-            "actionable_insight_summary": "One sentence direct strategy advice."
+            "sectorAnalysis": [ {{ "name": "...", "signal": "...", "score": int, "insight": "..." }} ],
+            "onchain_signals": [ {{ "metric": "...", "signal": "...", "value": "...", "comment": "..." }} ],
+            "risks": [], "opportunities": [],
+            "recommendation": "...",
+            "actionable_insight_summary": "..."
         }}
         """
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
+            response = self.client_gpt.chat.completions.create(
+                model="gpt-4o-mini",
                 response_format={"type": "json_object"},
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Global Market Data:\n{str(market_data)}"}
-                ],
-                temperature=0.2
+                    {"role": "user", "content": f"Market Data: {str(market_data)}"}
+                ]
             )
             
             result_json = response.choices[0].message.content
             parsed_result = json.loads(result_json)
             parsed_result['timestamp'] = datetime.now().isoformat()
-            
-            # Attach news to result for Frontend
             parsed_result['recent_news'] = news_list
+            parsed_result['grok_sentiment_raw'] = grok_sentiment # Store raw Grok output if needed
             
             self._set_cache_data(cache_key, parsed_result)
             return parsed_result
 
         except Exception as e:
-            print(f"AI Global Analysis Failed: {e}")
+            print(f"Hybrid Analysis Failed: {e}")
             return self._get_mock_global_analysis()
 
     def analyze_asset(self, symbol, asset_data_summary, news_list=[]):
-        """
-        Analyze a specific asset using GPT-4o-mini.
-        Cache Key: 'ASSET_{SYMBOL}'
-        """
         cache_key = f'ASSET_{symbol}'
-        
-        # 1. Check Cache (Skip if news is critical? No, cache news too effectively)
-        # Simplification: We cache the *result* which includes news insights.
-        # But if news updates, we might want fresh data. 
-        # For now, keep 15m cache.
         cached = self._get_cached_data(cache_key, self.CACHE_TTL_ASSET)
-        if cached:
-            return cached
+        if cached: return cached
 
-        if not self.client:
+        if not self.client_gpt:
             return self._get_mock_asset_analysis(symbol)
 
-        # Format News for Prompt
-        news_text = "No recent news found."
-        if news_list:
-            news_text = "\n".join([f"- [{item['source']}] {item['title']}" for item in news_list])
+        # Step 1: Grok Sentiment
+        grok_sentiment = self._get_grok_sentiment(news_list)
 
+        # Step 2: GPT Analysis
         system_prompt = f"""
-        You are an expert crypto analyst. Analyze {symbol} based on market data AND recent news.
+        Analyze {symbol}.
         
-        Recent News Headlines (Global/English):
-        {news_text}
+        Social Sentiment (Grok): "{grok_sentiment}"
         
-        Instructions:
-        1. Read the English news headlines to understand global sentiment.
-        2. Synthesize this with technical data.
-        3. Return the final analysis in STRICT, PROFESSIONAL KOREAN.
-        
-        CRITICAL STYLE GUIDELINES:
-        - Glossary: Use "온체인" (not 온인), "이동평균선" (not 이동 평균), "상승세" (not 상상세).
-        - Formatting: Always add leading zero for decimals (e.g., "0.86%" not ".86%").
-        - Tone: Professional, objective, financial analyst tone.
+        Return STRICT KOREAN JSON.
         
         JSON Structure:
         {{
             "assetName": "{symbol}",
-            "category": "Determine likely category (L1, L2, DeFi, AI, Meme, etc.)",
+            "category": "...",
             "overallScore": float(0-10),
-            "summary": "1-2 sentence summary. MENTION BIG NEWS IF ANY.",
-            "detailed_analysis": {{
-                "market_context": "Explain the price action and NEWS IMPACT.",
-                "technical_outlook": "...",
-                "on_chain_verdict": "..."
-            }},
-            "radarData": [
-                {{"label": "펀더멘탈", "value": int(0-100)}},
-                {{"label": "기술적", "value": int(0-100)}},
-                {{"label": "온체인", "value": int(0-100)}},
-                {{"label": "센티멘트", "value": int(0-100)}},
-                {{"label": "혁신성", "value": int(0-100)}}
-            ],
-            "metrics": [
-                {{"label": "Metric Name", "value": "...", "signal": "bullish"|"neutral"|"bearish", "comment": "..."}}
-            ],
-            "risks": ["...", "..."],
-            "opportunities": ["...", "..."],
-            "recommendation": "Strong Buy | Buy | Hold | Neutral | Sell"
+            "summary": "...",
+            "detailed_analysis": {{ "market_context": "...", "technical_outlook": "...", "on_chain_verdict": "..." }},
+            "radarData": [ {{ "label": "펀더멘탈", "value": int }} ... ],
+            "metrics": [], "risks": [], "opportunities": [], "recommendation": "..."
         }}
         """
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
+            response = self.client_gpt.chat.completions.create(
+                model="gpt-4o-mini", # Use GPT for structure
                 response_format={"type": "json_object"},
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Asset Data for {symbol}:\n{str(asset_data_summary)}"}
-                ],
-                temperature=0.2 # Minimized for consistency
+                    {"role": "user", "content": f"Data: {str(asset_data_summary)}"}
+                ]
             )
             
             result_json = response.choices[0].message.content
             parsed_result = json.loads(result_json)
             parsed_result['timestamp'] = datetime.now().isoformat()
-            
-            # Attach the raw news list to the result so frontend can display it
             parsed_result['recent_news'] = news_list
             
-            # Save to Cache
             self._set_cache_data(cache_key, parsed_result)
-            
             return parsed_result
-
         except Exception as e:
-            print(f"AI Asset Analysis Failed: {e}")
+            print(f"Asset Analysis Failed: {e}")
             return self._get_mock_asset_analysis(symbol)
 
 # Singleton instance

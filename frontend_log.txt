@@ -6337,3 +6337,19 @@
 [0] ✓ Compiled in 102ms
 [0] ⚠ Fast Refresh had to perform a full reload due to a runtime error.
 [0] ✓ Compiled in 595ms
+[0] ⨯ ReferenceError: triggerId is not defined
+[0]     at XRayTooltip (src/components/XRayTooltip.tsx:188:21)
+[0]   186 |         >
+[0]   187 |             <div
+[0] > 188 |                 id={triggerId}
+[0]       |                     ^
+[0]   189 |                 className={styles.trigger}
+[0]   190 |                 onClick={() => !isXRayActive && setIsOpen(true)}
+[0]   191 |             > {
+[0]   digest: '3961062077'
+[0] }
+[0]  GET / 500 in 1431ms (compile: 560ms, render: 871ms)
+[0] ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[0] ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[0] ✓ Compiled in 78ms
+[0]  GET / 200 in 599ms (compile: 172ms, render: 427ms)

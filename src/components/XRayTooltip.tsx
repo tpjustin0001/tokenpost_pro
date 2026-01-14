@@ -160,6 +160,9 @@ export default function XRayTooltip({ dataKey, children }: XRayTooltipProps) {
     const [isOpen, setIsOpen] = useState(false);
     const { isXRayActive } = useXRay();
     const data = XRAY_DATABASE[dataKey];
+    const updateXarrow = useXarrow();
+    const triggerId = `xray-trigger-${dataKey}`;
+    const modalId = `xray-modal-${dataKey}`;
 
     if (!data) return <>{children}</>;
 

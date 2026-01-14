@@ -176,7 +176,9 @@ class MarketDataService:
             "current_price": current,
             "change_24h": change_24h,
             "change_1h": change_1h,
-            "ma_20": current, # Mock
+            "change_1h": change_1h,
+            "ma_20": None, # Cannot calculate without history
+            "trend": trend,
             "trend": trend,
             "volume_status": "N/A",
             "raw_df": None # Signal to AI that technicals are limited
@@ -297,13 +299,7 @@ class MarketDataService:
             
         except Exception as e:
             print(f"CMC Global Metrics Error: {e}")
-            # Fallback Mock
-            return {
-                "total_market_cap": 2000000000000,
-                "total_volume_24h": 80000000000,
-                "btc_dominance": 52.5,
-                "eth_dominance": 17.2,
-                "market_cap_change_24h": 0.5
-            }
+            print(f"CMC Global Metrics Error: {e}")
+            raise e
 
 market_data_service = MarketDataService()

@@ -54,13 +54,16 @@ class SchedulerService:
                 
                 # Option A: Insert new row (Historical log)
                 data, count = self.supabase.table("global_market_snapshots").insert(payload).execute()
-                logger.info("✅ Successfully saved analysis to Supabase.")
+                
+                return result # Return result for API response
                 
             else:
                 logger.info("ℹ️ Skipping DB Save (No Supabase Creds). Analysis Result: OK")
+                return result
                 
         except Exception as e:
             logger.error(f"❌ Scheduler Job Failed: {e}")
+            raise e
 
     def start(self):
         """Start the scheduler"""

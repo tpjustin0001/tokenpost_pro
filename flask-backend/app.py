@@ -143,8 +143,9 @@ def trigger_analysis():
     """Manual trigger for analysis job"""
     try:
         from scheduler_service import scheduler_service
-        scheduler_service.update_market_analysis()
-        return jsonify({"success": True, "message": "Analysis triggered and saved to Supabase"})
+        from scheduler_service import scheduler_service
+        result = scheduler_service.update_market_analysis()
+        return jsonify({"success": True, "message": "Analysis triggered and saved", "data": result})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -220,17 +221,9 @@ def api_market_gate():
 
     except Exception as e:
         print(f"Market Gate Fallback Triggered: {e}")
-        return jsonify({
-            'gate_color': 'YELLOW',
-            'score': 50,
-            'summary': "데이터 연결 지연 (Fallback Mode)",
-            'components': {
-                "trend": 0, "volatility": 0, "participation": 0, "breadth": 0, "leverage": 0
-            },
-            'indicators': [],
-            'top_reasons': ["시스템 점검 중", "잠시 후 다시 시도해주세요"],
-            'timestamp': datetime.now().isoformat()
-        })
+    except Exception as e:
+        print(f"Market Gate Fallback Triggered: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 # ============================================================
@@ -655,7 +648,7 @@ def ingest_external_content():
         inserted_id = inserted_data[0]['id'] if inserted_data else 'unknown'
         
         print(f"📥 Supabase Ingest ({content_type}): ID {inserted_id}")
-        return jsonify({'success': True, 'id': inserted_id, 'message': 'Content saved to Supabase'})
+        return jsonify({'success': True, 'id': inserted_id, 'data': inserted_data[0] if inserted_data else None, 'message': 'Content saved to Supabase'})
         
     except Exception as e:
         print(f"Ingest Error: {e}")
@@ -711,7 +704,7 @@ def ingest_markers():
         inserted_id = inserted_data[0]['id'] if inserted_data else 'unknown'
 
         print(f"📍 Marker Ingest: Saved to Supabase ID {inserted_id}")
-        return jsonify({'success': True, 'id': inserted_id, 'message': 'Marker stored successfully'})
+        return jsonify({'success': True, 'id': inserted_id, 'data': inserted_data[0] if inserted_data else None, 'message': 'Marker stored successfully'})
         
     except Exception as e:
         print(f"Marker Ingest Error: {e}")
@@ -815,7 +808,7 @@ def api_xray_global():
         
     except Exception as e:
         print(f"Global X-Ray Error: {e}")
-        return jsonify(ai_service._get_mock_global_analysis())
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/crypto/listings')

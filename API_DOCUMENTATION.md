@@ -33,6 +33,21 @@ General crypto news with sentiment analysis fields.
   - `sentiment_score`: Float between -1.0 (Bad) and 1.0 (Good).
   - `show_on_chart`: Set to `true` to display as a marker on the trading chart.
 
+### Response (Success)
+```json
+{
+  "success": true,
+  "id": 123,
+  "data": {
+    "id": 123,
+    "title": "Crypto Market Report",
+    "summary": "...",
+    "category": "MARKER",
+    "show_on_chart": true
+  },
+  "message": "Marker stored successfully"
+}
+```
 ```json
 {
   "type": "news",

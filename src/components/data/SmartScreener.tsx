@@ -267,9 +267,9 @@ export default function SmartScreener() {
             </div>
 
             {/* Guide Section */}
-            <div style={{ 
-                background: 'rgba(59, 130, 246, 0.08)', 
-                padding: '12px 16px', 
+            <div style={{
+                background: 'rgba(59, 130, 246, 0.08)',
+                padding: '12px 16px',
                 borderRadius: '8px',
                 marginBottom: '20px',
                 fontSize: '13px',
@@ -281,7 +281,7 @@ export default function SmartScreener() {
                 {tab === 'performance' && <span><strong>저점 공략:</strong> 역사적 고점(ATH) 대비 하락폭(Drawdown)이 큰 자산을 필터링하여, 펀더멘탈 대비 과매도된 저평가 구간을 탐색합니다.</span>}
                 {tab === 'risk' && <span><strong>리스크 분석:</strong> 자산의 가격 변동폭(Standard Deviation)을 연율화하여 계산합니다. 'Extreme' 등급은 하루에도 10% 이상 급등락할 수 있는 고위험 자산입니다.</span>}
             </div>
-            </div>
+
 
             <div className={styles.summaryGrid}>
                 {summaryCards()}

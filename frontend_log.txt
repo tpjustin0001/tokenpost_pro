@@ -7135,3 +7135,10 @@
 [0]  GET /api/kimchi/upbit 200 in 282ms (compile: 92ms, render: 191ms)
 [0]  GET /api/global 200 in 42ms (compile: 13ms, render: 30ms)
 [0] ✓ Compiled in 312ms
+[0]  GET /api/global 500 in 375ms (compile: 212ms, render: 163ms)
+[0]  GET /api/global 500 in 57ms (compile: 34ms, render: 23ms)
+[0]  GET /api/global 500 in 54ms (compile: 40ms, render: 14ms)
+[0] ✓ Compiled in 123ms
+[0]  GET /data 200 in 329ms (compile: 150ms, render: 179ms)
+[0]  GET /news 200 in 335ms (compile: 194ms, render: 141ms)
+[0]  GET / 200 in 174ms (compile: 82ms, render: 92ms)

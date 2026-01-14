@@ -321,9 +321,10 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             // Find news within this candle's duration [clickTime, clickTime + interval)
             // Reverse search to find the most "recent" or relevant one if multiple? 
             // Or just find ANY. Let's find the one closest to the center or just the first one.
+            // Added 1 min buffer for safety
             const marker = newsMarkers.find(m => {
                 const diff = (m.time as number) - clickTime;
-                return diff >= 0 && diff < intervalSeconds;
+                return diff >= -60 && diff < (intervalSeconds + 60);
             });
 
             if (marker && marker.id && newsMapRef.current[marker.id]) {

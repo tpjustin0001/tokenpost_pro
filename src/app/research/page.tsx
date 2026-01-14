@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
+import ContentModal from '@/components/ContentModal';
 // import MarketPulse from '@/components/MarketPulse';
 import { supabase } from '@/lib/supabase';
 import { flaskApi } from '@/services/flaskApi';
@@ -28,6 +29,7 @@ export default function ResearchPage() {
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState<FilterType>('ALL');
     const [showProOnly, setShowProOnly] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<any>(null); // State for modal
 
     useEffect(() => {
         async function fetchInsights() {
@@ -165,7 +167,12 @@ export default function ResearchPage() {
                     <h2 className={styles.sectionHeading}>최신 인사이트 (Latest Insights)</h2>
                     <div className={styles.feedList}>
                         {filteredInsights.map((insight) => (
-                            <div key={insight.id} className={styles.feedItem}>
+                            <div
+                                key={insight.id}
+                                className={styles.feedItem}
+                                onClick={() => setSelectedItem(insight)}
+                                style={{ cursor: 'pointer' }}
+                            >
                                 <div className={styles.cardHeader}>
                                     <div className={styles.feedHeaderLeft}>
                                         <span className={styles.typeBadge} style={{
@@ -192,6 +199,17 @@ export default function ResearchPage() {
                     </div>
                 </main>
             </div>
+
+            {/* Modal */}
+            <ContentModal
+                contentData={selectedItem ? {
+                    ...selectedItem,
+                    time: selectedItem.date, // Map date to time for modal
+                    thumbnail: selectedItem.image // Map image props
+                } : null}
+                isOpen={!!selectedItem}
+                onClose={() => setSelectedItem(null)}
+            />
         </div>
     );
 }

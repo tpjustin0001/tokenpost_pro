@@ -20,30 +20,16 @@ interface TickerData {
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 // Helper for icons
+// Helper for icons
 function getCoinIconUrl(symbol: string): string {
-    const urls: Record<string, string> = {
-        'BTC': 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
-        'ETH': 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
-        'SOL': 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
-        'BNB': 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
-        'XRP': 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
-        'ADA': 'https://assets.coingecko.com/coins/images/975/small/cardano.png',
-        'DOGE': 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png',
-        'AVAX': 'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png',
-        'SHIB': 'https://assets.coingecko.com/coins/images/11939/small/shiba.png',
-        'DOT': 'https://assets.coingecko.com/coins/images/12171/small/polkadot.png',
-        'LINK': 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
-        'MATIC': 'https://assets.coingecko.com/coins/images/4713/small/polygon.png',
-        'ATOM': 'https://assets.coingecko.com/coins/images/1481/small/cosmos_hub.png',
-        'LTC': 'https://assets.coingecko.com/coins/images/2/small/litecoin.png',
-        'UNI': 'https://assets.coingecko.com/coins/images/12504/small/uniswap.png',
-        'SUI': 'https://assets.coingecko.com/coins/images/28464/small/sui-ocean-square.png',
-        'NEAR': 'https://assets.coingecko.com/coins/images/10365/small/near_icon.png',
-        'APT': 'https://assets.coingecko.com/coins/images/26455/small/aptos_round.png',
-        'ARB': 'https://assets.coingecko.com/coins/images/16547/small/arbitrum.png',
-        'OP': 'https://assets.coingecko.com/coins/images/25244/small/Optimism.png',
-    };
-    return urls[symbol.toUpperCase()] || `https://ui-avatars.com/api/?name=${symbol}&background=6366f1&color=fff&size=64&bold=true`;
+    // Normalize symbol: remove -USDT, -KRW, etc.
+    let clean = symbol.toUpperCase();
+    clean = clean.replace('KRW-', '').replace('-KRW', '');
+    clean = clean.replace('USDT-', '').replace('-USDT', '');
+    clean = clean.replace('BTC-', '').replace('-BTC', '');
+
+    // Use CoinCap assets (High coverage)
+    return `https://assets.coincap.io/assets/icons/${clean.toLowerCase()}@2x.png`;
 }
 
 export default function SmartScreener() {

@@ -179,13 +179,13 @@ export default function AIXRay({ symbol, isOpen, onClose }: AIXRayProps) {
                             <RadarChart data={analysis?.radarData || []} color={mainColor} size={260} />
                             <div className={styles.scoreOverlay}>
                                 <span className={styles.scoreVal} style={{ color: mainColor }}>{analysis?.overallScore}</span>
-                                <span className={styles.scoreLabel}>AI Score</span>
+                                <span className={styles.scoreLabel}>AI 스코어</span>
                             </div>
                         </div>
 
                         {/* Recommendation Box */}
                         <div className={styles.recommendationBox} style={{ borderColor: mainColor }}>
-                            <div className={styles.signalLabel}>AI Recommendation</div>
+                            <div className={styles.signalLabel}>AI 매매 전략</div>
                             <div className={styles.signalValue} style={{ color: mainColor }}>
                                 {analysis?.recommendation.split('(')[0]}
                             </div>
@@ -194,7 +194,7 @@ export default function AIXRay({ symbol, isOpen, onClose }: AIXRayProps) {
 
                     <div className={styles.rightCol}>
                         <div className={styles.section} style={{ marginBottom: '20px' }}>
-                            <h3 className={styles.sectionTitle}>Analysis Summary</h3>
+                            <h3 className={styles.sectionTitle}>핵심 요약 (Summary)</h3>
                             <p className={styles.summaryText}>{analysis?.summary}</p>
                         </div>
 
@@ -216,7 +216,7 @@ export default function AIXRay({ symbol, isOpen, onClose }: AIXRayProps) {
                         {analysis?.recent_news && analysis.recent_news.length > 0 && (
                             <div className={styles.section} style={{ marginBottom: '20px' }}>
                                 <h3 className={styles.sectionTitle} style={{ color: '#3b82f6' }}>
-                                    📰 Latest News
+                                    📰 관련 최신 뉴스 (News)
                                 </h3>
                                 <div className={styles.newsList} style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '150px', overflowY: 'auto' }}>
                                     {analysis.recent_news.map((news, idx) => (
@@ -254,16 +254,16 @@ export default function AIXRay({ symbol, isOpen, onClose }: AIXRayProps) {
                         {analysis?.detailed_analysis && (
                             <div className={styles.section} style={{ marginBottom: '20px' }}>
                                 <h3 className={styles.sectionTitle} style={{ color: 'var(--accent-purple)' }}>
-                                    ✨ PRO Generative Insight
+                                    ✨ PRO 심층 인사이트 (Deep Dive)
                                 </h3>
                                 <div className={styles.generativeBox}>
-                                    <h4 className={styles.genTitle}>Market Context</h4>
+                                    <h4 className={styles.genTitle}>시장 상황 (Market Context)</h4>
                                     <TypewriterText text={analysis.detailed_analysis.market_context} />
                                     <div style={{ height: '12px' }} />
-                                    <h4 className={styles.genTitle}>Technical Outlook</h4>
+                                    <h4 className={styles.genTitle}>기술적 전망 (Technical Outlook)</h4>
                                     <TypewriterText text={analysis.detailed_analysis.technical_outlook} delay={5} />
                                     <div style={{ height: '12px' }} />
-                                    <h4 className={styles.genTitle}>On-Chain Verdict</h4>
+                                    <h4 className={styles.genTitle}>온체인 분석 (On-CHain Verdict)</h4>
                                     <TypewriterText text={analysis.detailed_analysis.on_chain_verdict} delay={5} />
                                 </div>
                             </div>
@@ -271,13 +271,13 @@ export default function AIXRay({ symbol, isOpen, onClose }: AIXRayProps) {
 
                         <div className={styles.columns}>
                             <div className={styles.col}>
-                                <h4 className={styles.colTitle} style={{ color: '#ef4444' }}>Risk Factors</h4>
+                                <h4 className={styles.colTitle} style={{ color: '#ef4444' }}>리스크 요인 (Risks)</h4>
                                 <ul className={styles.list}>
                                     {analysis?.risks.map((r, i) => <li key={i}>{r}</li>)}
                                 </ul>
                             </div>
                             <div className={styles.col}>
-                                <h4 className={styles.colTitle} style={{ color: '#10b981' }}>Opportunities</h4>
+                                <h4 className={styles.colTitle} style={{ color: '#10b981' }}>상승 기회 (Opportunities)</h4>
                                 <ul className={styles.list}>
                                     {analysis?.opportunities.map((o, i) => <li key={i}>{o}</li>)}
                                 </ul>

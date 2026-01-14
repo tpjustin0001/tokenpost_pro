@@ -15,8 +15,14 @@ interface MarketData {
 // Helper to get reliable icon URLs
 // Helper to get reliable icon URLs
 function getCoinIconUrl(symbol: string): string {
-    // Use SpotHQ's high-quality icon set (covers most assets)
-    return `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${symbol.toLowerCase()}.png`;
+    // Normalize symbol: remove -USDT, -KRW, etc.
+    let clean = symbol.toUpperCase();
+    clean = clean.replace('KRW-', '').replace('-KRW', '');
+    clean = clean.replace('USDT-', '').replace('-USDT', '');
+    clean = clean.replace('BTC-', '').replace('-BTC', '');
+
+    // Use CoinCap assets (High coverage)
+    return `https://assets.coincap.io/assets/icons/${clean.toLowerCase()}@2x.png`;
 }
 
 export function usePricePerformance() {

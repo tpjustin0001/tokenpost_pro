@@ -6438,3 +6438,4 @@
 [0]  GET /api/kimchi/upbit 200 in 100ms (compile: 12ms, render: 88ms)
 [0]  GET /api/kimchi/upbit 200 in 100ms (compile: 17ms, render: 83ms)
 [0]  GET /api/kimchi/upbit 200 in 115ms (compile: 33ms, render: 82ms)
+[0] ✓ Compiled in 119ms

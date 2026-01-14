@@ -50,7 +50,7 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
                     backdropFilter: 'blur(2px)',
                     color: '#fff'
                 }}>
-                    <div className={styles.spinner} style={{ marginBottom: '16px', width: '30px', height: '30px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#3b82f6', borderRadius: '50%' }} />
+                    <div className={styles.spinner} style={{ marginBottom: '16px', width: '30px', height: '30px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                     <div style={{ fontSize: '15px', fontWeight: '500', color: '#e2e8f0' }}>AI가 최신 시장 데이터를 분석 중입니다...</div>
                     <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>실시간 뉴스 및 온체인 데이터 수집 중</div>
                 </div>

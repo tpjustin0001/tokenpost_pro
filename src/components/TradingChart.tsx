@@ -306,14 +306,32 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
     // 7. Click Handler with Refs
     useEffect(() => {
         clickHandlerRef.current = (clickTime: number) => {
-            // Find news with this EXACT candle time
-            const marker = newsMarkers.find(m => Math.abs((m.time as number) - clickTime) < 1);
+            // Helper to get seconds from interval string
+            const getIntervalSeconds = (intStr: string) => {
+                const num = parseInt(intStr);
+                if (intStr.endsWith('m')) return num * 60;
+                if (intStr.endsWith('h')) return num * 3600;
+                if (intStr.endsWith('d')) return num * 86400;
+                if (intStr.endsWith('w')) return num * 604800; // Rare but possible
+                return 900; // Default 15m
+            };
+
+            const intervalSeconds = getIntervalSeconds(interval);
+
+            // Find news within this candle's duration [clickTime, clickTime + interval)
+            // Reverse search to find the most "recent" or relevant one if multiple? 
+            // Or just find ANY. Let's find the one closest to the center or just the first one.
+            const marker = newsMarkers.find(m => {
+                const diff = (m.time as number) - clickTime;
+                return diff >= 0 && diff < intervalSeconds;
+            });
+
             if (marker && marker.id && newsMapRef.current[marker.id]) {
                 const news = newsMapRef.current[marker.id];
                 setSelectedNews(news);
             }
         };
-    }, [newsMarkers]);
+    }, [newsMarkers, interval]);
 
     // Attach listener
     useEffect(() => {

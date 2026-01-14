@@ -7133,3 +7133,5 @@
 [0]  GET /api/global 200 in 29ms (compile: 24ms, render: 6ms)
 [0]  GET /api/markets 200 in 130ms (compile: 60ms, render: 70ms)
 [0]  GET /api/kimchi/upbit 200 in 282ms (compile: 92ms, render: 191ms)
+[0]  GET /api/global 200 in 42ms (compile: 13ms, render: 30ms)
+[0] ✓ Compiled in 312ms

@@ -130,6 +130,31 @@ export default function VCPScanner() {
                     ))}
                 </div>
             </div>
+        </div>
+
+            {/* VCP Logic Guide */ }
+            <div style={{ 
+                background: 'rgba(16, 185, 129, 0.08)', 
+                padding: '12px 16px', 
+                borderRadius: '8px', 
+                marginBottom: '20px',
+                fontSize: '13px',
+                color: 'var(--text-secondary)',
+                border: '1px solid rgba(16, 185, 129, 0.2)'
+            }}>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '16px' }}>📉</span>
+                    <div>
+                        <strong>VCP (Volatility Contraction Pattern)란?</strong><br/>
+                        가격 파동이 점차 줄어들며(C1→C2→C3) 힘을 응축하다가, 저항선을 뚫고 폭발적으로 상승하기 직전의 차트 패턴입니다. (마크 미너비니 전략)
+                    </div>
+                </div>
+                <div style={{ marginTop: '8px', paddingLeft: '24px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span>• <strong>등급(Grade):</strong> 패턴의 완성도입니다. A등급일수록 변동성 축소가 뚜렷하고 이평선 정배열 상태가 좋습니다.</span>
+                    <span>• <strong>돌파(Breakout):</strong> 52주 신고가 근처에서 저항선을 뚫어낸 상태입니다. 거래량이 동반되면 강력한 매수 신호입니다.</span>
+                    <span>• <strong>축소(Contraction):</strong> 30일/20일/10일 간의 가격 진폭이 줄어드는 것을 의미합니다. (예: 28% → 18% → 12%)</span>
+                </div>
+            </div>
 
             <div className={styles.content}>
                 {isLoading ? (
@@ -199,6 +224,6 @@ export default function VCPScanner() {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

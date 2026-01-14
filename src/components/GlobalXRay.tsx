@@ -60,26 +60,32 @@ export default function GlobalXRay({ isOpen, onClose }: GlobalXRayProps) {
                         .limit(1)
                         .single();
 
-                    if (data && data.data && 'overallScore' in data.data) {
-                        setAnalysis(data.data);
+                    if (data && data.data && ('overallScore' in data.data || 'atmosphere_score' in data.data || 'radar_data' in data.data)) {
+                        // Handle new format by mapping atmosphere_score to overallScore if needed
+                        const analysisData = { ...data.data };
+                        if (!analysisData.overallScore && analysisData.atmosphere_score) {
+                            analysisData.overallScore = analysisData.atmosphere_score;
+                        }
+                        setAnalysis(analysisData);
                     } else {
-                        // If no data in DB, fallback or show empty
-                        console.log("No valid analysis snapshot found in Supabase.");
+                        console.warn("No valid analysis snapshot found in Supabase. Using defaults.");
                     }
                 } catch (e) {
                     console.error("Failed to fetch from Supabase:", e);
                 }
                 setLoading(false);
             } else if (isOpen) {
-                // Fallback for when Supabase is not configured locally
+                setLoading(true);
                 const data = await flaskApi.getXRayGlobal();
-                console.log("Global X-Ray Data:", data); // Debugging
 
-                if (data && typeof data === 'object' && 'overallScore' in data) {
-                    setAnalysis(data);
+                if (data && typeof data === 'object' && ('overallScore' in data || 'atmosphere_score' in data || 'radar_data' in data)) {
+                    const analysisData = { ...data };
+                    if (!analysisData.overallScore && analysisData.atmosphere_score) {
+                        analysisData.overallScore = analysisData.atmosphere_score;
+                    }
+                    setAnalysis(analysisData);
                 } else {
-                    console.error("Invalid Global X-Ray data format:", data);
-                    // Optional: Set a flag to show error UI
+                    console.warn("GlobalXRay: Using cached data or defaults. API returned:", data);
                 }
                 setLoading(false);
             }

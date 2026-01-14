@@ -11,22 +11,25 @@ interface MarketAnalysis {
     overallScore: number;
     marketPhase: string;
     summary: string;
-    marketHealth: { label: string; value: number }[];
+    radar_data: { label: string; value: number }[];
+    macro_factors: { name: string; impact: string; detail: string }[];
     sectorAnalysis: {
         name: string;
         signal: 'bullish' | 'bearish' | 'neutral';
         score: number;
         insight: string;
     }[];
-    keyMetrics: {
-        label: string;
+    onchain_signals: {
+        metric: string;
+        signal: string;
         value: string;
-        signal: 'bullish' | 'bearish' | 'neutral';
         comment: string;
     }[];
     risks: string[];
     opportunities: string[];
     recommendation: string;
+    actionable_insight_summary: string;
+    recent_news?: { title: string; link: string; pubDate: string; source: string }[];
 }
 
 export default function XRayPage() {

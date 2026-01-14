@@ -19,6 +19,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 app = Flask(__name__)
 # Load Env
 load_dotenv()
+print("----------------------------------------------------------------")
+print(f"🚀 [DEBUG] APP STARTING...")
+print(f"🚀 [DEBUG] ENV PORT: {os.environ.get('PORT')}")
+print(f"🚀 [DEBUG] CWD: {os.getcwd()}")
+print("----------------------------------------------------------------")
 CORS(app)
 
 # Cache Config

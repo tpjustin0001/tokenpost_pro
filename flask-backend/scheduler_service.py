@@ -71,12 +71,15 @@ class SchedulerService:
         
         # Run every 4 hours (240 mins) to optimize cost for Grok 4.1
         # Run immediately on startup to populate data
+        from datetime import timedelta
+        # Run every 4 hours (240 mins) to optimize cost for Grok 4.1
+        # Delay initial run by 2 mins to allow server to boot safely
         self.scheduler.add_job(
             self.update_market_analysis, 
             'interval', 
             minutes=240, 
             id='global_analysis_job',
-            next_run_time=datetime.now()
+            next_run_time=datetime.now() + timedelta(minutes=2)
         )
         self.scheduler.start()
         logger.info("⏰ Scheduler Started (Interval: 4h / 240m)")

@@ -6411,3 +6411,27 @@
 [0]  GET /api/kimchi/upbit 200 in 103ms (compile: 10ms, render: 93ms)
 [0]  GET /api/kimchi/upbit 200 in 85ms (compile: 6ms, render: 80ms)
 [0]  GET /api/kimchi/upbit 200 in 136ms (compile: 4ms, render: 131ms)
+[0] ⨯ ./src/app/globals.css:816:13
+[0] Parsing CSS source code failed
+[0] [0m [90m 814 |[39m }
+[0]  [90m 815 |[39m
+[0] [31m[1m>[22m[39m[90m 816 |[39m background[33m:[39m [36mvar[39m([33m--[39maccent[33m-[39mred[33m-[39mdim)[33m;[39m
+[0]  [90m     |[39m             [31m[1m^[22m[39m
+[0]  [90m 817 |[39m color[33m:[39m [36mvar[39m([33m--[39maccent[33m-[39mred)[33m;[39m
+[0]  [90m 818 |[39m }
+[0]  [90m 819 |[39m[0m
+[0] 
+[0] Invalid token in pseudo element: WhiteSpace(" ")
+[0] 
+[0] Import trace:
+[0]   Client Component Browser:
+[0]     ./src/app/globals.css [Client Component Browser]
+[0]     ./src/app/layout.tsx [Server Component]
+[0] 
+[0] 
+[0]  GET / 500 in 144ms (compile: 123ms, render: 21ms)
+[0] ✓ Compiled in 74ms
+[0]  GET / 200 in 643ms (compile: 257ms, render: 386ms)
+[0]  GET /api/kimchi/upbit 200 in 273ms (compile: 19ms, render: 255ms)
+[0]  GET /api/global 200 in 401ms (compile: 2ms, render: 399ms)
+[0]  GET /api/markets 200 in 554ms (compile: 23ms, render: 531ms)

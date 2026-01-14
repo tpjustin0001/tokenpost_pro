@@ -813,10 +813,6 @@ a:focus-visible {
   }
 }
 
-background: var(--accent-red-dim);
-color: var(--accent-red);
-}
-
 .neutral {
   background: rgba(251, 191, 36, 0.15);
   color: var(--accent-yellow);

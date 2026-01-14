@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 // import MarketPulse from '@/components/MarketPulse';
+import { supabase } from '@/lib/supabase';
 import { flaskApi } from '@/services/flaskApi';
 import styles from './page.module.css';
 

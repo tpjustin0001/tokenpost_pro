@@ -97,6 +97,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
         if (!supabase) return;
 
         async function fetchMarkers() {
+            if (!supabase) return;
             // Get news for this coin (e.g. BTC) or generic Market news
             const targetCoin = symbol.replace('USDT', '').replace('USD', '');
 
@@ -149,7 +150,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             .subscribe();
 
         return () => {
-            supabase.removeChannel(channel);
+            supabase?.removeChannel(channel);
         };
     }, [symbol]);
 

@@ -16,6 +16,12 @@ interface IntelItem {
     isPro?: boolean;
     isBreaking?: boolean;
     thumbnail?: string;
+    // Added fields for detail view
+    summary?: string;
+    content?: string;
+    tags?: string[];
+    readTime?: string;
+    date?: string;
 }
 
 type TabType = 'ALL' | 'PRO' | 'NEWS';
@@ -101,7 +107,13 @@ export default function ResearchIntel() {
             time: getTimeAgo(row.created_at),
             isPro,
             isBreaking: type === 'BREAKING',
-            thumbnail: row.image_url || undefined
+            thumbnail: row.thumbnail_url || row.image_url || undefined,
+            // Map detail fields
+            summary: row.summary || row.title,
+            content: row.content || '내용이 없습니다.',
+            tags: row.tags || [],
+            readTime: '3분', // Estimate or stored
+            date: new Date(row.created_at).toLocaleDateString()
         };
     }
 
@@ -109,9 +121,10 @@ export default function ResearchIntel() {
         ? data
         : activeTab === 'PRO'
             ? data.filter(item => item.isPro)
-            : data.filter(item => item.type === 'NEWS' || item.type === 'BREAKING'); // Assuming NEWS category exists or logic needs tweak
+            : data.filter(item => item.type === 'NEWS' || item.type === 'BREAKING');
 
     const breakingCount = data.filter(item => item.isBreaking).length;
+    const selectedItem = data.find(item => item.id === selectedId);
 
     const getTypeColor = (type: string) => {
         switch (type) {
@@ -177,12 +190,21 @@ export default function ResearchIntel() {
                                 </div>
                             )}
                             <div className={styles.contentWrapper}>
-                                <span
-                                    className={styles.typeBadge}
-                                    style={{ color: getTypeColor(item.type), borderLeft: `2px solid ${getTypeColor(item.type)}` }}
-                                >
-                                    {item.typeKo}
-                                </span>
+                                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px' }}>
+                                    <span
+                                        className={styles.typeBadge}
+                                        style={{ color: getTypeColor(item.type), borderLeft: `2px solid ${getTypeColor(item.type)}` }}
+                                    >
+                                        {item.typeKo}
+                                    </span>
+                                    {/* Show tags in list as requested by user */}
+                                    {item.tags && item.tags.length > 0 && (
+                                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '2px 4px', borderRadius: '4px' }}>
+                                            #{item.tags[0]}
+                                        </span>
+                                    )}
+                                </div>
+
                                 <div className={styles.content}>
                                     <div className={styles.titleRow}>
                                         <span className={styles.title}>{item.title}</span>
@@ -201,7 +223,7 @@ export default function ResearchIntel() {
             </div>
 
             <ContentModal
-                contentId={selectedId}
+                contentData={selectedItem}
                 isOpen={!!selectedId}
                 onClose={() => setSelectedId(null)}
             />

@@ -75,7 +75,7 @@ export default function AuthCallbackPage() {
                 <>
                     <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
                     <h2>로그인 성공!</h2>
-                    <p style={{ color: 'var(--text-muted)' }}>홈으로 이동합니다...</p>
+                    <p style={{ color: 'var(--text-muted)' }}>Redirecting...</p>
                 </>
             )}
 

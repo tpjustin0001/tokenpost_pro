@@ -138,15 +138,32 @@ def index():
 def health():
     return jsonify({'status': 'ok'})
 
-@app.route('/api/admin/trigger-analysis', methods=['POST', 'GET'])
+@app.route('/api/admin/trigger-analysis', methods=['POST'])
 def trigger_analysis():
-    """Manual trigger for the scheduler to save analysis to Supabase."""
+    """Manual trigger for analysis job"""
     try:
         from scheduler_service import scheduler_service
         scheduler_service.update_market_analysis()
-        return jsonify({'success': True, 'message': 'Analysis triggered and saved to Supabase'})
+        return jsonify({"success": True, "message": "Analysis triggered and saved to Supabase"})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/analysis/latest', methods=['GET'])
+def get_latest_analysis():
+    """Get latest analysis directly from AI Service (bypassing Supabase RLS)"""
+    try:
+        from market_provider import market_data_service
+        from ai_service import ai_service
+        
+        # 1. Get Market Data
+        market_data = market_data_service.get_global_metrics()
+        
+        # 2. Get Analysis (Cached or New)
+        result = ai_service.analyze_global_market(market_data)
+        
+        return jsonify({"success": True, "data": result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/test/hello')
 def api_test_hello():

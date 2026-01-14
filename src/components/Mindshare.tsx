@@ -43,6 +43,16 @@ export default function Mindshare() {
 
                     if (snaps && snaps.length > 0) {
                         setData(snaps[0].data);
+                    } else {
+                        // Fallback: Fetch directly from Backend API (Bypasses RLS)
+                        console.log("Supabase empty, trying backend API...");
+                        const res = await fetch('/api/python/analysis/latest');
+                        if (res.ok) {
+                            const json = await res.json();
+                            if (json.success && json.data) {
+                                setData(json.data);
+                            }
+                        }
                     }
                 }
             } catch (error) {

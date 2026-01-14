@@ -111,11 +111,23 @@ export default function VCPScanner() {
         RETEST_OK: '리테스트 확인',
     };
 
+    // Signal counts for HUD
+    const countA = signals.filter(s => s.grade === 'A').length;
+    const countB = signals.filter(s => s.grade === 'B').length;
+    const countC = signals.filter(s => s.grade === 'C').length;
+    const totalSignals = signals.length;
+
     return (
         <div className="card">
             <div className="card-header">
                 <div>
-                    <span className="card-title">VCP 스캐너</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="card-title">VCP 스캐너</span>
+                        <span style={{
+                            fontSize: '9px', padding: '2px 6px', background: 'rgba(16, 185, 129, 0.15)',
+                            color: '#10b981', borderRadius: '4px', fontWeight: 600
+                        }}>TOP 30 대상</span>
+                    </div>
                     <p className={styles.subtitle}>VCP 패턴 탐지 (A/B/C/D 등급)</p>
                 </div>
                 <div className={styles.tabs}>
@@ -128,6 +140,28 @@ export default function VCPScanner() {
                             {tab}
                         </button>
                     ))}
+                </div>
+            </div>
+
+            {/* Scanner HUD */}
+            <div style={{
+                display: 'flex', gap: '12px', padding: '12px 16px', background: 'var(--bg-secondary)',
+                borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>스캔 결과:</span>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{totalSignals}개</span>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <span style={{ fontSize: '11px', padding: '2px 8px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', borderRadius: '4px', fontWeight: 600 }}>
+                        A등급: {countA}
+                    </span>
+                    <span style={{ fontSize: '11px', padding: '2px 8px', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', borderRadius: '4px', fontWeight: 600 }}>
+                        B등급: {countB}
+                    </span>
+                    <span style={{ fontSize: '11px', padding: '2px 8px', background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', borderRadius: '4px', fontWeight: 600 }}>
+                        C등급: {countC}
+                    </span>
                 </div>
             </div>
             {/* VCP Logic Guide */}
@@ -170,8 +204,8 @@ export default function VCPScanner() {
                             <span>시그널</span>
                             <span>점수</span>
                             <span>돌파율</span>
-                            <span>Contraction</span>
-                            <span>Vol Ratio</span>
+                            <span>축소율 (C1→C3)</span>
+                            <span>거래강도</span>
                         </div>
                         {filteredSignals.map((signal) => (
                             <div key={signal.symbol} className={styles.tableRow}>

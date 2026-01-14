@@ -680,6 +680,52 @@ def ingest_external_content():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/external/markers', methods=['POST'])
+def ingest_markers():
+    """
+    Dedicated endpoint for News Markers on Charts.
+    Automatically sets type='news' and show_on_chart=True.
+    Requires Header: X-API-KEY
+    """
+    # 1. Security Check
+    msg_api_key = request.headers.get('X-API-KEY')
+    server_api_key = os.getenv('EXTERNAL_API_KEY')
+    
+    if not server_api_key:
+        return jsonify({'error': 'Server configuration error: EXTERNAL_API_KEY not set'}), 500
+        
+    if not msg_api_key or msg_api_key != server_api_key:
+        return jsonify({'error': 'Unauthorized: Invalid API Key'}), 401
+    
+    # 2. Parse Payload
+    data = request.json
+    if not data:
+        return jsonify({'error': 'No JSON payload provided'}), 400
+        
+    # Force marker attributes
+    payload = data.get('data', data) # Support both wrapped 'data' and direct payload
+    payload['show_on_chart'] = True
+    
+    # 3. Process & Store
+    try:
+        new_item = {
+            'id': str(uuid.uuid4()),
+            'source': 'External Marker API',
+            'published_at': datetime.now().isoformat(),
+            **payload
+        }
+        
+        # Insert into NEWS list (Markers are a subset of news)
+        CONTENT_STORE['news'].insert(0, new_item)
+        
+        print(f"📍 Marker Ingest: Received 1 chart marker.")
+        return jsonify({'success': True, 'id': new_item['id'], 'message': 'Marker stored successfully'})
+        
+    except Exception as e:
+        print(f"Marker Ingest Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 # ============================================================
 # X-RAY ANALYSIS API (AI Powered)
 # ============================================================

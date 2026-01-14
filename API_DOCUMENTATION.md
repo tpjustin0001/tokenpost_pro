@@ -6,7 +6,7 @@ This API allows external systems (scrapers, CMS, partner feeds) to securely push
 
 ### **1. Configuration**
 
-- **Base URL:** `https://tokenpost-pro-seven.vercel.app` (Production)
+- **Base URL:** `https://pro.tokenpost.kr` (Production)
 - **Endpoint:** `/api/external/ingest`
 - **Method:** `POST`
 - **Content-Type:** `application/json`
@@ -77,19 +77,19 @@ In-depth reports and analysis with tags.
 #### **C. News Markers (뉴스 마커)**
 Short news items specifically designed to appear on price charts.
 
-- **Type:** `news` (Same as news, but with specific chart fields enabled)
+- **Endpoint:** `/api/external/markers` (Dedicated)
+- **Method:** `POST`
+- **Type:** Enforced as `news`.
 - **Key Fields:**
-  - `show_on_chart`: **MUST** be `true`.
   - `related_coin`: Symbol of the coin (e.g., "BTC", "ETH").
+  - `sentiment_score`: Score for coloring (Positive/Negative).
 
 ```json
 {
-  "type": "news",
   "data": {
     "title": "SEC Approval Rumors",
     "summary": "Market volatility expected.",
     "sentiment_score": 0.9,
-    "show_on_chart": true,
     "related_coin": "BTC",
     "published_at": "2024-01-15T10:30:00Z"
   }
@@ -125,7 +125,7 @@ Short news items specifically designed to appear on price charts.
 ```python
 import requests
 
-url = "https://tokenpost-pro-seven.vercel.app/api/external/ingest"
+url = "https://pro.tokenpost.kr/api/external/ingest"
 headers = {
     "Content-Type": "application/json",
     "X-API-KEY": "tokenpost_secure_2025_x9z"

@@ -41,8 +41,8 @@ export default function AuthCallbackPage() {
 
                 // Redirect to home after short delay
                 setTimeout(() => {
-                    router.push('/');
-                }, 1000);
+                    window.location.href = '/';
+                }, 500);
             } catch (err) {
                 console.error('OAuth callback error:', err);
                 setStatus('error');

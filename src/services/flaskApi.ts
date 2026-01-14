@@ -54,17 +54,8 @@ export const flaskApi = {
             }
             throw new Error('API Error');
         } catch (error) {
-            console.warn('Lead-Lag API failed, using fallback mock data:', error);
-            // Fallback mock data
-            return {
-                target: 'BTC_MoM',
-                timestamp: new Date().toISOString(),
-                leading_indicators: [
-                    { variable: 'M2 Supply (YoY)', lag: 3, p_value: 0.02, correlation: 0.85, interpretation: 'Global M2 expansion leads BTC price actions by ~3 months.' },
-                    { variable: 'DXY (Inverse)', lag: 1, p_value: 0.04, correlation: -0.78, interpretation: 'Dollar weakness often precedes crypto rallies.' },
-                    { variable: 'NASDAQ 100', lag: 0, p_value: 0.01, correlation: 0.92, interpretation: 'High correlation with tech equities.' },
-                ]
-            };
+            console.warn('Lead-Lag API failed:', error);
+            return null;
         }
     },
 

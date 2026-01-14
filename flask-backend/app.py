@@ -288,17 +288,10 @@ def api_lead_lag():
         print(f"Lead-Lag API Error: {e}")
         # Fallback Data (Mock) to ensure UI is not empty
         return jsonify({
-            'target': 'BTC_MoM',
-            'leading_indicators': [
-                {'variable': 'M2_MoM', 'lag': 3, 'p_value': 0.012, 'correlation': 0.65, 'interpretation': '💸 M2 통화량 상승 시, 비트코인도 3개월 뒤 상승 경향'},
-                {'variable': 'TNX_MoM', 'lag': 2, 'p_value': 0.034, 'correlation': -0.58, 'interpretation': '🇺🇸 국채 금리 변화율 상승 시, 비트코인은 2개월 뒤 하락 경향'},
-                {'variable': 'VIX_MoM', 'lag': 1, 'p_value': 0.045, 'correlation': -0.42, 'interpretation': '🫣 공포지수 변화율 상승 시, 비트코인은 1개월 뒤 하락 경향'},
-                {'variable': 'SPY_MoM', 'lag': 0, 'p_value': 0.001, 'correlation': 0.78, 'interpretation': '🇺🇸 S&P 500 변화율 상승 시, 비트코인도 동행성 보임'},
-                {'variable': 'DXY_MoM', 'lag': 4, 'p_value': 0.022, 'correlation': -0.61, 'interpretation': '💵 달러 인덱스 변화율 상승 시, 비트코인은 4개월 뒤 하락 경향'},
-                {'variable': 'GOLD_MoM', 'lag': 6, 'p_value': 0.080, 'correlation': 0.35, 'interpretation': '🥇 금 변화율 상승 시, 비트코인도 6개월 뒤 상승 경향'}
-            ],
+            'target': target if 'target' in locals() else 'BTC_MoM',
+            'leading_indicators': [],
             'timestamp': datetime.now().isoformat(),
-            'is_fallback': True
+            'error': "Analysis unavailable (Optimization Mode)"
         })
 
 

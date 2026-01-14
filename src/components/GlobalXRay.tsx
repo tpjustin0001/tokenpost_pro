@@ -60,11 +60,11 @@ export default function GlobalXRay({ isOpen, onClose }: GlobalXRayProps) {
                         .limit(1)
                         .single();
 
-                    if (data && data.data) {
+                    if (data && data.data && 'overallScore' in data.data) {
                         setAnalysis(data.data);
                     } else {
                         // If no data in DB, fallback or show empty
-                        console.log("No analysis snapshot found in Supabase.");
+                        console.log("No valid analysis snapshot found in Supabase.");
                     }
                 } catch (e) {
                     console.error("Failed to fetch from Supabase:", e);
@@ -73,7 +73,14 @@ export default function GlobalXRay({ isOpen, onClose }: GlobalXRayProps) {
             } else if (isOpen) {
                 // Fallback for when Supabase is not configured locally
                 const data = await flaskApi.getXRayGlobal();
-                if (data) setAnalysis(data);
+                console.log("Global X-Ray Data:", data); // Debugging
+
+                if (data && typeof data === 'object' && 'overallScore' in data) {
+                    setAnalysis(data);
+                } else {
+                    console.error("Invalid Global X-Ray data format:", data);
+                    // Optional: Set a flag to show error UI
+                }
                 setLoading(false);
             }
         };

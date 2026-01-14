@@ -260,7 +260,7 @@ def run_market_gate_sync() -> MarketGateResult:
                 raise ValueError("Insufficient BTC Data")
                 
             candles_1d = [Candle(
-                ts=int(idx.timestamp() * 1000),
+                ts=int(row['timestamp']),
                 open=float(row['Open']),
                 high=float(row['High']),
                 low=float(row['Low']),

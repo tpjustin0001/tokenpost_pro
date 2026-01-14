@@ -22,10 +22,21 @@ load_dotenv()
 CORS(app)
 
 # Cache Config
-from flask_caching import Cache
 import concurrent.futures
 
-cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache'})
+try:
+    from flask_caching import Cache
+    cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache'})
+    print("✅ Flask-Caching loaded successfully.")
+except ImportError:
+    print("⚠️ Flask-Caching module not found. Caching disabled.")
+    # Mock Cache to prevent crash
+    class MockCache:
+        def cached(self, timeout=60):
+            def decorator(f):
+                return f
+            return decorator
+    cache = MockCache()
 
 # DEBUG: Version Check
 API_VERSION = "1.0.2-fix-gitignore-env"

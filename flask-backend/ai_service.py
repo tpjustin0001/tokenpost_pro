@@ -31,28 +31,47 @@ class AIService:
 
     def _get_grok_sentiment(self, news_list):
         """
-        Use AI (OpenAI) to extract deep social sentiment from news.
-        (Previously used Grok, now migrated to OpenAI for stability)
+        Use Grok (xAI) to extract deep social sentiment from news.
         """
-        client = self.client_gpt  # Use OpenAI instead of Grok
-        if not client or not news_list:
-            return "AI Analysis: No sentiment data available."
+        if not self.client_grok or not news_list:
+            if not self.client_grok:
+                print("⚠️ xAI Client not initialized (Missing XAI_API_KEY)")
+            return "Grok AI: No sentiment data available."
 
         news_text = "\n".join([f"- {item['title']} ({item['source']})" for item in news_list])
         
         try:
-            response = client.chat.completions.create(
-                model="gpt-4o-mini", 
+            # Using 'grok-beta' (or 'grok-2-latest' if beta is deprecated)
+            response = self.client_grok.chat.completions.create(
+                model="grok-beta", 
                 messages=[
-                    {"role": "system", "content": "You are a real-time Social Sentiment Engine. Analyze the crypto news headlines. Output a brief, witty, uncensored, and slightly edgy paragraph about the current market 'vibe' and crowd psychology. Be bold. Output in KOREAN."},
+                    {"role": "system", "content": "You are Grok, a real-time Social Sentiment Engine. Analyze the crypto news headlines. Output a brief, witty, uncensored, and slightly edgy paragraph about the current market 'vibe' and crowd psychology. Be bold. Output in KOREAN."},
                     {"role": "user", "content": f"Headlines:\n{news_text}"}
                 ],
-                temperature=0.8 
+                temperature=0.9
             )
             return response.choices[0].message.content
         except Exception as e:
-            print(f"Sentiment Analysis Failed: {e}")
-            return "Analysis failed."
+            print(f"❌ Grok Sentiment Failed: {e}")
+            # Fallback to OpenAI if Grok fails key/quota
+            return self._get_openai_sentiment_fallback(news_list)
+
+    def _get_openai_sentiment_fallback(self, news_list):
+        """Fallback to OpenAI if Grok fails"""
+        try:
+            print("🔄 Falling back to OpenAI for sentiment...")
+            news_text = "\n".join([f"- {item['title']} ({item['source']})" for item in news_list])
+            response = self.client_gpt.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a crypto sentiment analyzer. Output a witty, edgy paragraph about market vibe in Korean."},
+                    {"role": "user", "content": f"Headlines:\n{news_text}"}
+                ],
+                temperature=0.8
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            return "Data analysis failed."
 
     def analyze_global_market(self, market_data, news_list=[]):
         cache_key = 'GLOBAL_MARKET_V3'

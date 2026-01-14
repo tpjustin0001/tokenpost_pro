@@ -367,18 +367,18 @@ def api_screener_breakout():
                     prev_close = df['Close'].iloc[-2]
                     is_fresh_breakout = (prev_close < sma200 * 0.99) and (current_price > sma200)
 
-                # AI Insight Generation
-                insight = "Neutral"
+                # AI Insight Generation (Korean)
+                insight = "중립"
                 if is_fresh_breakout and rvol > 1.5:
-                    insight = "🔥 Golden Cross (Strong Buy)"
+                    insight = "🔥 골든크로스 (강력 매수)"
                 elif current_price > sma200 and rvol > 1.2:
-                    insight = "🚀 Trend Follow (Accumulate)"
+                    insight = "🚀 추세 추종 (매집)"
                 elif rsi_val > 75:
-                    insight = "⚠️ Overheated (Take Profit)"
+                    insight = "⚠️ 과열 주의 (익절)"
                 elif current_price > sma50:
-                    insight = "📈 Bullish Trend"
+                    insight = "📈 상승 추세"
                 else:
-                    insight = "❄️ Cooling Off"
+                    insight = "❄️ 조정구간"
 
                 results.append({
                     'symbol': item['symbol'],
@@ -445,18 +445,18 @@ def api_screener_real():
                 # RSI
                 rsi_val = float(rsi(df['Close'], 14).iloc[-1])
 
-                # AI Insight
-                insight = "Neutral"
+                # AI Insight (Korean)
+                insight = "중립"
                 if drawdown < -70 and rsi_val < 30:
-                    insight = "💎 Deep Value (Oversold)"
+                    insight = "💎 역대급 저평가 (바닥 매수)"
                 elif drawdown < -50 and rsi_val < 40:
-                    insight = "🛒 Value Zone (Accumulate)"
+                    insight = "🛒 가치 투자 구간 (매집)"
                 elif rsi_val > 70:
-                    insight = "⚠️ Top Signal (Risky)"
+                    insight = "⚠️ 고점 경고 (위험)"
                 elif from_atl > 200:
-                    insight = "🚀 High Flyer"
+                    insight = "🚀 고공행진 중"
                 else:
-                    insight = "📉 Correction Phase"
+                    insight = "📉 조정 구간"
 
                 results.append({
                     'symbol': item['symbol'],

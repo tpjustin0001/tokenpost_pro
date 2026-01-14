@@ -24,42 +24,24 @@ function getCoinIconUrl(symbol: string): string {
 
 export default function Mindshare() {
     const [loading, setLoading] = useState(true);
-    const [items, setItems] = useState<MindshareItem[]>([]);
-    const [globalSentiment, setGlobalSentiment] = useState<string>('Neutral');
-    const [sentimentScore, setSentimentScore] = useState<number>(50);
+    const [data, setData] = useState<any>(null);
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // 1. Get Global Sentiment from Supabase (Grok Analysis)
                 if (supabase) {
-                    const { data } = await supabase
+                    const { data: snap } = await supabase
                         .from('global_market_snapshots')
                         .select('data')
                         .order('created_at', { ascending: false })
                         .limit(1)
                         .single();
 
-                    if (data?.data?.radar_data) {
-                        const sentObj = data.data.radar_data.find((r: any) => r.label === 'Sentiment' || r.label === '센티멘트');
-                        const score = sentObj ? sentObj.value : 50;
-                        setSentimentScore(score);
-                        setGlobalSentiment(score >= 60 ? 'Bullish' : score <= 40 ? 'Bearish' : 'Neutral');
+                    if (snap?.data) {
+                        setData(snap.data);
                     }
                 }
-
-                // 2. Get Top Coins by Volume (Proxy for "Mindshare/Attention")
-                const listings = await flaskApi.getListings(5);
-                const mapped: MindshareItem[] = listings.map((coin: any) => ({
-                    symbol: coin.symbol,
-                    mindshare: 'High', // Top 5 volume = High Attention
-                    change1M: `${coin.change24h >= 0 ? '+' : ''}${coin.change24h.toFixed(2)}%`,
-                    isPositive: coin.change24h >= 0,
-                    volume: `$${(coin.volume24h / 1000000).toFixed(0)}M`
-                }));
-                setItems(mapped);
-
             } catch (error) {
                 console.error("Mindshare Load Failed:", error);
             } finally {
@@ -75,75 +57,90 @@ export default function Mindshare() {
         return '#fbbf24';
     };
 
+    if (loading) return <TableSkeleton rows={3} />;
+
+    const sentimentScore = data?.atmosphere_score || 50;
+    const sentimentLabel = data?.atmosphere_label || 'Neutral';
+    const grokSaying = data?.grok_saying || "시장 데이터를 분석 중입니다...";
+    const keywords = data?.market_keywords || [];
+    const tweets = data?.top_tweets || [];
+
     return (
         <div className={styles.widget}>
             <div className={styles.header}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <h3 className={styles.title}>소셜 센티멘트 (Social Vibe)</h3>
-                    {!loading && (
-                        <span style={{
-                            fontSize: '11px',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            background: getScoreColor(sentimentScore) + '20',
-                            color: getScoreColor(sentimentScore),
-                            fontWeight: 'bold'
-                        }}>
-                            {globalSentiment} ({sentimentScore})
-                        </span>
-                    )}
+                    <h3 className={styles.title}>🤖 Grok Market Pulse</h3>
+                    <span className={styles.liveBadge}>LIVE</span>
                 </div>
             </div>
 
-            <div className={styles.tableHeader}>
-                <span className={styles.th}>자산</span>
-                <span className={`${styles.th} ${styles.thCenter}`}>주목도 (Vol)</span>
-                <span className={`${styles.th} ${styles.thCenter}`}>변동 (24H)</span>
-                <span className={styles.th}></span>
+            {/* 1. Grok Insight Card */}
+            <div className={styles.insightCard}>
+                <div className={styles.insightHeader}>
+                    <span style={{ fontSize: '18px' }}>🧠</span>
+                    <span style={{ fontWeight: 600, color: '#e5e7eb' }}>Grok's Insight</span>
+                </div>
+                <p className={styles.insightText}>
+                    "{grokSaying}"
+                </p>
             </div>
 
-            <div className={styles.list}>
-                {loading ? (
-                    <TableSkeleton rows={5} />
-                ) : items.length === 0 ? (
-                    <EmptyState
-                        icon={<MessageCircle size={32} />}
-                        title="데이터 수집 중"
-                        description="Grok AI가 소셜 데이터를 분석하고 있습니다."
+            {/* 2. Atmosphere Gauge */}
+            <div className={styles.section} style={{ marginTop: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '12px' }}>
+                    <span style={{ color: '#ef4444' }}>😨 공포 (Fear)</span>
+                    <span style={{ color: getScoreColor(sentimentScore), fontWeight: 'bold' }}>{sentimentLabel} ({sentimentScore})</span>
+                    <span style={{ color: '#10b981' }}>🤑 탐욕 (Greed)</span>
+                </div>
+                <div className={styles.phBarBg}>
+                    <div
+                        className={styles.phBarFill}
+                        style={{
+                            width: `${sentimentScore}%`,
+                            background: `linear-gradient(90deg, #ef4444 0%, #fbbf24 50%, #10b981 100%)`
+                        }}
                     />
-                ) : (
-                    items.map((item) => (
-                        <div key={item.symbol} className={styles.row}>
-                            <div className={styles.colAsset}>
-                                <img
-                                    src={getCoinIconUrl(item.symbol)}
-                                    alt={item.symbol}
-                                    className={styles.assetIcon}
-                                    onError={(e) => e.currentTarget.src = `https://ui-avatars.com/api/?name=${item.symbol}&background=333&color=fff`}
-                                />
-                                <span className={styles.assetName}>{item.symbol}</span>
-                            </div>
-                            <div className={styles.colCenter}>
-                                <span className={styles.badge} style={{ background: '#3b82f620', color: '#3b82f6' }}>
-                                    {item.volume}
-                                </span>
-                            </div>
-                            <div className={styles.colCenter}>
-                                <span className={item.isPositive ? styles.textGreen : styles.textRed}>
-                                    {item.change1M}
-                                </span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', opacity: 0.5 }}>
-                                <BarChart2 size={14} />
-                            </div>
-                        </div>
-                    ))
-                )}
+                    <div
+                        className={styles.phIndicator}
+                        style={{ left: `${sentimentScore}%` }}
+                    />
+                </div>
             </div>
-            {/* Grok Branding */}
-            <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '6px' }}>
+
+            {/* 3. Trending Keywords */}
+            {keywords.length > 0 && (
+                <div className={styles.section} style={{ marginTop: '16px' }}>
+                    <h4 className={styles.sectionTitle}>🔥 Trending Keywords</h4>
+                    <div className={styles.keywordGrid}>
+                        {keywords.map((k: string, i: number) => (
+                            <span key={i} className={styles.keywordTag}>{k}</span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* 4. Live X Feed */}
+            {tweets.length > 0 && (
+                <div className={styles.section} style={{ marginTop: '16px' }}>
+                    <h4 className={styles.sectionTitle}>🐦 Real-time X Feed (Top 5)</h4>
+                    <div className={styles.feedList}>
+                        {tweets.map((t: any, i: number) => (
+                            <div key={i} className={styles.tweetItem}>
+                                <div className={styles.tweetHeader}>
+                                    <span className={styles.tweetAuthor}>{t.author}</span>
+                                    <span className={styles.tweetHandle}>{t.handle}</span>
+                                    <span className={styles.tweetTime}>· {t.time}</span>
+                                </div>
+                                <p className={styles.tweetContent}>{t.content}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            <div style={{ padding: '12px 0 0', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '6px', opacity: 0.6 }}>
                 <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Powered by</span>
-                <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-primary)' }}>xAI Grok</span>
+                <span style={{ fontSize: '10px', fontWeight: 'bold' }}>xAI Grok 4.1</span>
             </div>
         </div>
     );

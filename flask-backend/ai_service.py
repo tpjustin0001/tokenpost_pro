@@ -63,41 +63,40 @@ class AIService:
         # Step 1: Get Grok Sentiment
         grok_sentiment = self._get_grok_sentiment(news_list)
 
-        # Step 2: GPT Main Analysis
+        # Step 2: GPT Main Analysis (acting as parsing layer or using Grok directly if possible)
+        # Note: We are using GPT-4o-mini to structure the data, but we inject Grok's sentiment.
+        # Ideally, we would use Grok for the whole thing if it supported JSON mode reliably.
+        
         system_prompt = f"""
-        You are a Macro Crypto Strategist.
+        You are a 'Crypto Social Pulse' Analyzer.
         
         INPUT CONTEXT:
         1. Market Data (Technical/Macro)
-        2. Social Sentiment (provided by Grok AI): "{grok_sentiment}"
+        2. Social Sentiment (from Grok): "{grok_sentiment}"
         
-        Instructions:
-        1. Synthesize the Technical Data with Grok's Sentiment.
-        2. Return the result in STRICT, PROFESSIONAL KOREAN.
+        TASK:
+        Generate a "Social Pulse" report in STRICT JSON format.
+        The content must be in KOREAN (except for usernames/handles).
         
-        CRITICAL STYLE GUIDELINES:
-        - Glossary: Use "온체인" (not 온인), "이동평균선".
-        - Formatting: Leading zeros for decimals.
-        - Tone: Professional, authoritative.
-  
-        JSON Structure (v3.0):
+        JSON Structure:
         {{
-            "overallScore": float(0-100),
-            "marketPhase": "Accumulation | Markup | Distribution | Markdown",
-            "summary": "Summary integrating Data & Social Vibe.",
-            "macro_factors": [ {{ "name": "...", "impact": "...", "detail": "..." }} ],
+            "grok_saying": "A witty, edgy, and insightful one-liner about the market vibe. Be cynical but accurate.",
+            "atmosphere_score": int(0-100), // 0=Extreme Fear, 100=Extreme Greed
+            "atmosphere_label": "공포 (Fear) | 중립 (Neutral) | 탐욕 (Greed)",
+            "market_keywords": ["#Keyword1", "#Keyword2", "#Keyword3"],
+            "top_tweets": [
+                {{ "author": "User Name", "handle": "@handle", "content": "Tweet text summarizing a key narrative...", "time": "2m ago" }},
+                {{ "author": "Analyst", "handle": "@analyst", "content": "Another key narrative...", "time": "15m ago" }},
+                {{ "author": "News", "handle": "@news", "content": "Breaking news headline...", "time": "1h ago" }}
+            ],
+            "sectorAnalysis": [ {{ "name": "...", "signal": "...", "score": int, "insight": "..." }} ],
             "radar_data": [
                  {{ "label": "Macro", "value": int }},
                  {{ "label": "Technical", "value": int }},
                  {{ "label": "On-Chain", "value": int }},
                  {{ "label": "Sentiment", "value": int }},
                  {{ "label": "Innovation", "value": int }}
-            ],
-            "sectorAnalysis": [ {{ "name": "...", "signal": "...", "score": int, "insight": "..." }} ],
-            "onchain_signals": [ {{ "metric": "...", "signal": "...", "value": "...", "comment": "..." }} ],
-            "risks": [], "opportunities": [],
-            "recommendation": "...",
-            "actionable_insight_summary": "..."
+            ]
         }}
         """
 

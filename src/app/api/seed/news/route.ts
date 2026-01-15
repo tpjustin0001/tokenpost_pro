@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
             show_on_chart: body.show_on_chart ?? true,
             source: body.source || 'External API',
             published_at: body.published_at || new Date().toISOString(),
-            url: body.url || null,
         };
 
         console.log('[News API] Received:', JSON.stringify(newsData, null, 2));

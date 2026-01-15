@@ -150,30 +150,41 @@ export const fetchProfile = async (token: string): Promise<TokenPostUser> => {
     const url = `${OAUTH_CONFIG.USER_INFO_URL}?scope=${encodeURIComponent(OAUTH_CONFIG.USER_INFO_SCOPE)}`;
 
     const response = await fetch(withProxy(url), {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
     });
 
     if (!response.ok) {
-        throw new Error('Failed to fetch user profile');
+        const errorText = await response.text();
+        console.error('UserInfo API Error:', response.status, errorText);
+        throw new Error(`Failed to fetch user profile: ${response.status}`);
     }
 
-    // API returns nested structure, we flatten it for app use
-    const data: TokenPostUserResponse = await response.json();
+    // Parse response
+    const data = await response.json();
+    console.log('UserInfo API Response:', JSON.stringify(data, null, 2));
 
-    // Transform to flat structure
+    // Handle both nested and flat response structures
+    // API might return { user: {...}, grade: {...} } or flat { uuid, nickname, ... }
+    const userData = data.user || data;
+
+    // Transform to flat structure with null-safe access
     const user: TokenPostUser = {
-        uuid: data.user.uuid,
-        nickname: data.user.nickname,
-        email: data.user.email,
-        profile_image: data.user.profile_image,
-        grade_name: data.grade?.name,
-        grade_icon: data.grade?.icon_url,
-        grade_exp: data.grade?.exp,
-        subscription_plan: data.subscription?.plan,
-        subscription_status: data.subscription?.status,
-        point_tpc: data.point?.tpc
+        uuid: userData.uuid || userData.uid || '',
+        nickname: userData.nickname || '',
+        email: userData.email || '',
+        profile_image: userData.profile_image || '',
+        grade_name: data.grade?.name || userData.grade || '',
+        grade_icon: data.grade?.icon_url || '',
+        grade_exp: data.grade?.exp || 0,
+        subscription_plan: data.subscription?.plan || '',
+        subscription_status: data.subscription?.status || '',
+        point_tpc: data.point?.tpc || 0
     };
 
+    console.log('Parsed User:', user);
     return user;
 };
 

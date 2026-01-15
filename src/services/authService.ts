@@ -6,10 +6,10 @@ export const OAUTH_CONFIG = {
     CLIENT_ID: process.env.NEXT_PUBLIC_TP_CLIENT_ID || 's5ViDSauo8wENm2AgqPK39J2oI13PbVn',
     CLIENT_SECRET: process.env.NEXT_PUBLIC_TP_CLIENT_SECRET || 'xE4mNc8XQBHU3CNWrj3ci9HlFzbHXYdlot73EygyMEg54cKb9uK54X9DE130k08it2heu0B9703Ef701Y6ooOiSK67wrXn0yZ0DaEuG1N1iw3afJtN7QbnLdZm7FTfaa',
 
-    // Callback URL (개발/배포 환경 분기)
+    // Callback URL (개발/배포 환경 분기) - Academy처럼 루트 URL 사용
     REDIRECT_URI: typeof window !== 'undefined' && window.location.origin.includes('localhost')
-        ? 'http://localhost:3000/auth/callback'
-        : 'https://pro.tokenpost.kr/auth/callback',
+        ? 'http://localhost:3000/'
+        : 'https://pro.tokenpost.kr/',
 
     // 인증 페이지 (www.tokenpost.kr)
     AUTH_URL: 'https://www.tokenpost.kr/oauth/login',

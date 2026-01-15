@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { motion, Variants } from 'framer-motion';
 import Sidebar from '@/components/Sidebar';
@@ -10,6 +11,7 @@ import Mindshare from '@/components/Mindshare';
 import KimchiPremium from '@/components/KimchiPremium';
 import PricePerformance from '@/components/PricePerformance';
 import LoginGate from '@/components/LoginGate';
+import { handleCallback, saveTokens, fetchProfile, saveUserProfile } from '@/services/authService';
 
 import { StablecoinInterestChart, BlockchainRevChart, ETFFlowsChart } from '@/components/DataWidgets';
 import NewsFeed from '@/components/NewsFeed';
@@ -70,9 +72,62 @@ const itemVariants: Variants = {
 };
 
 export default function HomePage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [globalXRayOpen, setGlobalXRayOpen] = useState(false);
   const [activeSymbol, setActiveSymbol] = useState('BTC');
   const [activeInterval, setActiveInterval] = useState('15m');
+  const [isProcessingAuth, setIsProcessingAuth] = useState(false);
+
+  // OAuth Callback Handler - 루트 URL로 콜백받을 때 처리
+  useEffect(() => {
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+
+    if (code && state && !isProcessingAuth) {
+      setIsProcessingAuth(true);
+      console.log('[OAuth] Callback detected, processing...');
+
+      (async () => {
+        try {
+          console.log('[OAuth] Step 1: Exchanging code for tokens...');
+          const tokens = await handleCallback(code, state);
+          console.log('[OAuth] Step 2: Tokens received');
+          saveTokens(tokens.access_token, tokens.refresh_token);
+
+          console.log('[OAuth] Step 3: Fetching user profile...');
+          const profile = await fetchProfile(tokens.access_token);
+          console.log('[OAuth] Step 4: Profile received:', profile);
+          saveUserProfile(profile);
+
+          console.log('[OAuth] ✅ Complete! Refreshing page...');
+          // Remove code/state from URL and reload
+          window.location.href = '/';
+        } catch (err) {
+          console.error('[OAuth] ❌ Error:', err);
+          setIsProcessingAuth(false);
+        }
+      })();
+    }
+  }, [searchParams, isProcessingAuth]);
+
+  // Show processing state while handling OAuth
+  if (isProcessingAuth) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        background: 'var(--bg-primary)',
+        color: 'var(--text-primary)'
+      }}>
+        <div style={{ fontSize: '24px', marginBottom: '16px' }}>로그인 처리 중...</div>
+        <p style={{ color: 'var(--text-muted)' }}>잠시만 기다려주세요</p>
+      </div>
+    );
+  }
 
   // Import motion dynamically to avoid SSR mismatch if needed, but 'use client' handles it usually.
   // We need to use valid motion components.

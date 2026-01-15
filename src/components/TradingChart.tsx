@@ -127,9 +127,8 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                             position: isBullish ? 'belowBar' : 'aboveBar',
                             color: isBullish ? '#00E396' : '#FF4560',
                             shape: isBullish ? 'arrowUp' : 'arrowDown',
-                            text: 'NEWS',
                             id: item.id,
-                            size: 1, // default is 1
+                            size: 0.5,
                         };
                     });
 

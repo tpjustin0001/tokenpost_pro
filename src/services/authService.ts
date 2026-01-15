@@ -21,7 +21,7 @@ export const OAUTH_CONFIG = {
     // [수정됨] 로그인 요청 Scope - Academy 형식에 맞춤 (공백으로 구분)
     SCOPE: 'email nickname grade uid point subscription',
 
-    // UserInfo API Scope - user. 접두어 형식 (API 문서 기준)
+    // UserInfo API Scope - TokenPost API 문서 기준 (user. 접두어 필요)
     USER_INFO_SCOPE: 'user.email,user.nickname,subscription,grade,point.tpc'
 };
 

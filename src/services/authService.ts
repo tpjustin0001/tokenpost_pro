@@ -18,8 +18,8 @@ export const OAUTH_CONFIG = {
     TOKEN_URL: 'https://oapi.tokenpost.kr/oauth/v1/token',
     USER_INFO_URL: 'https://oapi.tokenpost.kr/oauth/v1/userInfo',
 
-    // [수정됨] 로그인 요청 Scope - Academy 형식에 맞춤 (공백으로 구분)
-    SCOPE: 'email nickname grade uid point subscription',
+    // [수정됨] 로그인 요청 Scope - TokenPost 설정과 일치
+    SCOPE: 'email nickname grade uid point.tpc subscription',
 
     // UserInfo API Scope - TokenPost API 문서 기준 (user. 접두어 필요)
     USER_INFO_SCOPE: 'user.email,user.nickname,subscription,grade,point.tpc'

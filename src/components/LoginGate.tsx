@@ -8,6 +8,48 @@ interface LoginGateProps {
 }
 
 export default function LoginGate({ children }: LoginGateProps) {
-    // Completely bypass login check for deployment
+    const { user, isLoggedIn, loading, login } = useAuth();
+
+    // Show loading spinner while checking auth status
+    if (loading) {
+        return (
+            <div className={styles.loadingContainer}>
+                <div className={styles.spinner}></div>
+                <p>로딩 중...</p>
+            </div>
+        );
+    }
+
+    // If not logged in, show login modal
+    if (!isLoggedIn || !user) {
+        return (
+            <div className={styles.gateContainer}>
+                <div className={styles.overlay}>
+                    <div className={styles.modal}>
+                        <div className={styles.logo}>
+                            TokenPost<span>PRO</span>
+                        </div>
+                        <div className={styles.modalIcon}>🔒</div>
+                        <h2 className={styles.modalTitle}>로그인이 필요합니다</h2>
+                        <p className={styles.modalDescription}>
+                            TokenPost PRO는 프리미엄 암호화폐 분석 서비스입니다.<br />
+                            서비스를 이용하시려면 TokenPost 계정으로 로그인해주세요.
+                        </p>
+                        <button className={styles.loginButton} onClick={login}>
+                            TokenPost 계정으로 로그인
+                        </button>
+                        <p className={styles.signupHint}>
+                            아직 계정이 없으신가요?{' '}
+                            <a href="https://www.tokenpost.kr/join" target="_blank" rel="noopener noreferrer">
+                                회원가입
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // User is logged in, render children
     return <>{children}</>;
 }

@@ -22,7 +22,7 @@ export const OAUTH_CONFIG = {
     SCOPE: 'email,uid,grade,nickname',
 
     // UserInfo API Scope - user. 접두어 형식 (API 문서 기준)
-    USER_INFO_SCOPE: 'user.nickname,subscription,grade,point.tpc'
+    USER_INFO_SCOPE: 'user.email,user.nickname,subscription,grade,point.tpc'
 };
 
 // CORS Proxy Helper

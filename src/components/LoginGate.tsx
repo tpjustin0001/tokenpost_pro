@@ -55,7 +55,7 @@ export default function LoginGate({ children }: LoginGateProps) {
     // Admin whitelist - always grant PRO access
     const ADMIN_WHITELIST = ['justin@tokenpost.kr'];
     const isWhitelisted = ADMIN_WHITELIST.includes(user.email || '');
-    
+
     // API returns status: "Y"/"N", Plan: "Plus"/"Free"
     const hasPROAccess = isWhitelisted ||  // 화이트리스트 계정
         user.subscription_status === 'Y' ||  // status가 'Y'면 구독자
@@ -63,6 +63,8 @@ export default function LoginGate({ children }: LoginGateProps) {
         user.grade_name;  // 등급이 있으면 구독자로 간주 (fallback)
 
     console.log('[LoginGate] PRO Check:', {
+        email: user.email,
+        isWhitelisted,
         subscription_plan: user.subscription_plan,
         subscription_status: user.subscription_status,
         grade_name: user.grade_name,

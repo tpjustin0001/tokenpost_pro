@@ -40,7 +40,7 @@ export default function RootLayout({
         </a>
         <ThemeProvider>
           <AuthProvider>
-            <Header />
+            {/* Header removed - logout now in Sidebar */}
             <XRayProvider>
               <div className="page-wrapper">
                 {children}

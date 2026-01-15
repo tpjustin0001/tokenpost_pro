@@ -25,7 +25,7 @@ export default function Sidebar() {
     const pathname = usePathname();
     const { theme, toggleTheme } = useTheme();
     const { isXRayActive, toggleXRay } = useXRay();
-    const { user } = useAuth();
+    const { user, login, logout } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Close mobile menu on route change
@@ -131,6 +131,27 @@ export default function Sidebar() {
                         <span className={styles.themeIcon}>{theme === 'dark' ? '☀️' : '🌙'}</span>
                         <span>{theme === 'dark' ? '라이트 모드' : '다크 모드'}</span>
                     </button>
+
+                    {/* Login/Logout Button */}
+                    {user ? (
+                        <button
+                            className={styles.themeBtn}
+                            onClick={logout}
+                            style={{ marginTop: '8px', color: '#ef4444' }}
+                        >
+                            <span>🚪</span>
+                            <span>로그아웃</span>
+                        </button>
+                    ) : (
+                        <button
+                            className={styles.themeBtn}
+                            onClick={login}
+                            style={{ marginTop: '8px', color: '#10b981' }}
+                        >
+                            <span>🔑</span>
+                            <span>로그인</span>
+                        </button>
+                    )}
                 </div>
             </aside>
         </>

@@ -77,35 +77,10 @@ export default function NewsPage() {
                         <div className={styles.loading}>뉴스 로딩 중...</div>
                     ) : (
                         <>
-                            {/* Spotlight Section (Outside Timeline) */}
-                            {filteredNews.length > 0 && activeCategory === '전체' && (
-                                <>
-                                    <h2 className={styles.sectionHeading}>헤드라인 뉴스 (Headline)</h2>
-                                    <article
-                                        className={styles.spotlightItem}
-                                        onClick={() => setSelectedItem(filteredNews[0])}
-                                    >
-                                        <div className={styles.spotlightHeader}>
-                                            <span className={styles.sourceBadge}>{filteredNews[0].source || 'TokenPost'}</span>
-                                            <span className={styles.time}>{filteredNews[0].published_at ? new Date(filteredNews[0].published_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : getTimeAgo(filteredNews[0].created_at || new Date().toISOString())}</span>
-                                        </div>
-                                        <h3 className={styles.spotlightTitle}>{filteredNews[0].title}</h3>
-                                        <p className={styles.spotlightSummary}>{filteredNews[0].summary || filteredNews[0].content?.substring(0, 150) + '...'}</p>
-                                        <div className={styles.spotlightMeta}>
-                                            {filteredNews[0].category && <span className={styles.tag}>{filteredNews[0].category}</span>}
-                                            {filteredNews[0].sentiment_score > 0 && <span className={styles.tag} style={{ color: 'var(--accent-green)' }}>Positive</span>}
-                                        </div>
-                                    </article>
-                                </>
-                            )}
-
-                            {/* Timeline Feed (Remaining Items) */}
+                            {/* Timeline Feed */}
                             <h2 className={styles.sectionHeading}>실시간 타임라인 (Timeline)</h2>
                             <div className={styles.timelineFeed}>
-                                {filteredNews.map((item, index) => {
-                                    // Skip the first item if it was already shown as Spotlight
-                                    if (activeCategory === '전체' && index === 0) return null;
-
+                                {filteredNews.map((item) => {
                                     return (
                                         <article
                                             key={item.id}

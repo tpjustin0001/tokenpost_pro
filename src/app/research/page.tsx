@@ -140,29 +140,6 @@ export default function ResearchPage() {
                         ))}
                     </div>
 
-                    {/* Featured Section */}
-                    {activeFilter === 'ALL' && !showProOnly && insights.length > 0 && (
-                        <section className={styles.featured}>
-                            <div className={styles.featuredCard}>
-                                <span className={styles.featuredBadge}>오늘의 추천</span>
-                                <h2 className={styles.featuredTitle}>{insights[0].title}</h2>
-                                <p className={styles.featuredSummary}>{insights[0].summary}</p>
-                                <div className={styles.featuredMeta}>
-                                    <span>{insights[0].author}</span>
-                                    <span>·</span>
-                                    <span>{insights[0].date}</span>
-                                    <span>·</span>
-                                    <span>{insights[0].readTime} 읽기</span>
-                                </div>
-                                <div className={styles.featuredTags}>
-                                    {insights[0].tags && insights[0].tags.map(tag => (
-                                        <span key={tag} className={styles.tag}>{tag}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        </section>
-                    )}
-
                     {/* Feed List (formerly Grid) */}
                     <h2 className={styles.sectionHeading}>최신 인사이트 (Latest Insights)</h2>
                     <div className={styles.feedList}>

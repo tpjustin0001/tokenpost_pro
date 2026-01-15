@@ -18,11 +18,11 @@ export const OAUTH_CONFIG = {
     TOKEN_URL: 'https://oapi.tokenpost.kr/oauth/v1/token',
     USER_INFO_URL: 'https://oapi.tokenpost.kr/oauth/v1/userInfo',
 
-    // [중요] 로그인 요청 Scope - 인증 페이지에 전달
-    SCOPE: 'user.email,user.nickname,user.profile_image,grade,subscription,point.tpc',
+    // [수정됨] 로그인 요청 Scope - academy.tokenpost.kr 형식에 맞춤 (공백으로 구분, user. 접두어 없음)
+    SCOPE: 'email nickname grade uid point subscription',
 
-    // UserInfo API Scope - 동일하게 사용
-    USER_INFO_SCOPE: 'user.email,user.nickname,user.profile_image,grade,subscription,point.tpc'
+    // UserInfo API Scope - user. 접두어 형식 (API 문서 기준)
+    USER_INFO_SCOPE: 'user.nickname,subscription,grade,point.tpc'
 };
 
 // CORS Proxy Helper

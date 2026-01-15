@@ -14,8 +14,6 @@
 .content {
     flex: 1;
     padding: 20px 24px;
-    max-width: 1400px;
-    margin: 0 auto;
     width: 100%;
 }
 
@@ -202,7 +200,6 @@
 .feedList {
     display: flex;
     flex-direction: column;
-    max-width: 840px;
     margin: 0;
 }
 

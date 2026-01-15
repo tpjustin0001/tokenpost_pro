@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
+from services.calendar_service import fetch_investing_calendar
+
 # Add crypto_market to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -864,6 +866,53 @@ def api_kimchi_upbit():
     except Exception as e:
         print(f"Kimchi Premium Error: {e}")
         return jsonify({'error': str(e)}), 500
+
+# ============================================================
+# CALENDAR SYNC API
+# ============================================================
+@app.route('/api/calendar/sync', methods=['POST'])
+def sync_calendar():
+    """
+    Sync Investing.com economic calendar to Supabase.
+    Recommend calling this once per day via Scheduler or Cron.
+    """
+    # Simply check API Key like ingest
+    msg_api_key = request.headers.get('X-API-KEY')
+    server_api_key = os.getenv('EXTERNAL_API_KEY')
+    
+    if not server_api_key or msg_api_key != server_api_key:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    if not supabase:
+        return jsonify({'error': 'Supabase not configured'}), 500
+
+    try:
+        # 1. Fetch from Investing.com (Korea)
+        events = fetch_investing_calendar()
+        
+        if not events:
+            return jsonify({'message': 'No events found or crawl failed', 'count': 0}), 200
+
+        # 2. Save to Supabase
+        # Strategy: Delete today's events first to avoid duplicates, then insert.
+        today_date = events[0]['event_date']
+        
+        # Delete existing events for this date
+        supabase.table('calendar_events').delete().eq('event_date', today_date).execute()
+        
+        # Insert new events
+        res = supabase.table('calendar_events').insert(events).execute()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Synced {len(events)} events for {today_date}',
+            'data': res.data
+        })
+
+    except Exception as e:
+        print(f"Calendar Sync Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 # ============================================================
 # MAIN

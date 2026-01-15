@@ -179,8 +179,9 @@ export const fetchProfile = async (token: string): Promise<TokenPostUser> => {
         grade_name: data.grade?.name || userData.grade || '',
         grade_icon: data.grade?.icon_url || '',
         grade_exp: data.grade?.exp || 0,
-        subscription_plan: data.subscription?.plan || '',
-        subscription_status: data.subscription?.status || '',
+        // API returns "Plan" with capital P, and "status" as "Y"/"N"
+        subscription_plan: data.subscription?.Plan || data.subscription?.plan || '',
+        subscription_status: data.subscription?.status || '',  // "Y" = subscribed, "N" = not subscribed
         point_tpc: data.point?.tpc || 0
     };
 

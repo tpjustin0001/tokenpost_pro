@@ -52,16 +52,16 @@ export default function LoginGate({ children }: LoginGateProps) {
     }
 
     // 3. Check PRO subscription
-    // grade_name 있으면 PRO로 간주 (TokenPost에서 등급이 있으면 구독자)
-    const hasPROAccess = user.subscription_plan ||
-        user.subscription_status === 'active' ||
-        user.grade_name;  // 등급이 있으면 구독자로 간주
+    // API returns status: "Y"/"N", Plan: "Plus"/"Free"
+    const hasPROAccess = user.subscription_status === 'Y' ||  // status가 'Y'면 구독자
+        (user.subscription_plan && user.subscription_plan !== 'Free') ||  // Plan이 Free가 아니면 구독자
+        user.grade_name;  // 등급이 있으면 구독자로 간주 (fallback)
 
     console.log('[LoginGate] PRO Check:', {
         subscription_plan: user.subscription_plan,
         subscription_status: user.subscription_status,
         grade_name: user.grade_name,
-        hasPROAccess
+        hasPROAccess: !!hasPROAccess
     });
 
     if (!hasPROAccess) {
@@ -78,7 +78,7 @@ export default function LoginGate({ children }: LoginGateProps) {
                             TokenPost PRO는 프리미엄 구독 회원 전용 서비스입니다.
                         </p>
                         <a
-                            href="https://www.tokenpost.kr/pro"
+                            href="https://www.tokenpost.kr/membership"
                             target="_blank"
                             rel="noopener noreferrer"
                             className={styles.loginButton}

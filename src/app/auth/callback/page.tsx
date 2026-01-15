@@ -29,14 +29,22 @@ export default function AuthCallbackPage() {
             }
 
             try {
+                console.log('[Auth Callback] Step 1: Exchanging code for tokens...');
                 // Exchange code for tokens
                 const tokens = await handleCallback(code, state);
+                console.log('[Auth Callback] Step 2: Tokens received:', {
+                    access_token: tokens.access_token ? '✅ Present' : '❌ Missing',
+                    refresh_token: tokens.refresh_token ? '✅ Present' : '❌ Missing'
+                });
                 saveTokens(tokens.access_token, tokens.refresh_token);
 
+                console.log('[Auth Callback] Step 3: Fetching user profile...');
                 // Fetch and save user profile
                 const profile = await fetchProfile(tokens.access_token);
+                console.log('[Auth Callback] Step 4: Profile received:', profile);
                 saveUserProfile(profile);
 
+                console.log('[Auth Callback] ✅ Complete! Redirecting to home...');
                 setStatus('success');
 
                 // Redirect to home after short delay
@@ -44,7 +52,7 @@ export default function AuthCallbackPage() {
                     window.location.href = '/';
                 }, 500);
             } catch (err) {
-                console.error('OAuth callback error:', err);
+                console.error('[Auth Callback] ❌ Error:', err);
                 setStatus('error');
                 setErrorMessage(err instanceof Error ? err.message : 'Unknown error occurred');
             }

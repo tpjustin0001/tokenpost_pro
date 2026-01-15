@@ -51,10 +51,11 @@ export async function DELETE(request: NextRequest) {
         console.log(`[Clear API] Cleared: news=${newsCount}, research=${researchCount}`);
         return NextResponse.json({
             success: true,
-            message: 'All test data cleared',
+            message: 'Clear operation completed',
             deleted: {
-                news: newsCount || 'all',
-                research: researchCount || 'all'
+                news: newsCount ?? 0,
+                research: researchCount ?? 0,
+                usingServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
             }
         });
 

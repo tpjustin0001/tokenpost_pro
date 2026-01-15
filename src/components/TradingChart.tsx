@@ -309,52 +309,57 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
     // 7. Click Handler with Refs
     useEffect(() => {
-        clickHandlerRef.current = (clickTime: number) => {
+        clickHandlerRef.current = (params: MouseEventParams) => {
+            if (!params.point || !params.time || !chartRef.current) return;
+
+            // Get exact time from X coordinate (Interpolated) for better precision
+            const timeScale = chartRef.current.timeScale();
+            const coordinate = params.point.x;
+            const exactTime = timeScale.coordinateToTime(coordinate) as number;
+
+            if (!exactTime) return;
+
             // Helper to get seconds from interval string
             const getIntervalSeconds = (intStr: string) => {
                 const num = parseInt(intStr);
                 if (intStr.endsWith('m')) return num * 60;
                 if (intStr.endsWith('h')) return num * 3600;
                 if (intStr.endsWith('d')) return num * 86400;
-                if (intStr.endsWith('w')) return num * 604800; // Rare but possible
-                return 900; // Default 15m
+                return 900;
             };
-
             const intervalSeconds = getIntervalSeconds(interval);
 
-            // Find news within this candle's duration [clickTime, clickTime + interval)
-            // Reverse search to find the most "recent" or relevant one if multiple? 
-            // Or just find ANY. Let's find the one closest to the center or just the first one.
-            // Added 1 min buffer for safety
-            // 클릭 위치에서 가장 가까운 마커 찾기
+            // Allow larger hit area relative to interval (e.g. 10% of interval or fixed 5 mins, whichever is larger?)
+            // Actually, we want the "visually closest" marker.
+            // Since we have exactTime now, just finding the closest marker locally is enough.
+            // Limit the search radius to prevent clicking valid markers far away.
+            // Radius: 5% of visible range? OR just interval / 4
+
+            const searchRadius = Math.max(intervalSeconds / 4, 300); // Min 5 min radius, max 1/4 of candle
+
             let closestMarker = null;
             let minDiff = Infinity;
 
             for (const m of newsMarkers) {
-                const diff = Math.abs((m.time as number) - clickTime);
+                const diff = Math.abs((m.time as number) - exactTime);
                 if (diff < minDiff) {
                     minDiff = diff;
                     closestMarker = m;
                 }
             }
 
-            // 300초(5분) 이내의 마커만 클릭 인정
-            const marker = (minDiff < 300) ? closestMarker : null;
+            const marker = (minDiff < searchRadius) ? closestMarker : null;
 
-            console.log('[NewsMarker] Click detected!', {
-                clickTime,
-                intervalSeconds,
-                markersCount: newsMarkers.length,
-                foundMarker: marker,
-                newsMapKeys: Object.keys(newsMapRef.current)
+            console.log('[NewsMarker] ExactClick!', {
+                exactTime,
+                barTime: params.time,
+                minDiff,
+                searchRadius,
+                found: !!marker
             });
 
             if (marker && marker.id && newsMapRef.current[marker.id]) {
-                const news = newsMapRef.current[marker.id];
-                console.log('[NewsMarker] Setting selectedNews:', news);
-                setSelectedNews(news);
-            } else {
-                console.log('[NewsMarker] No matching marker found');
+                setSelectedNews(newsMapRef.current[marker.id]);
             }
         };
     }, [newsMarkers, interval]);
@@ -363,8 +368,8 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
     useEffect(() => {
         if (chartRef.current) {
             const handler = (p: MouseEventParams) => {
-                if (p.time) {
-                    clickHandlerRef.current(p.time as number);
+                if (clickHandlerRef.current) {
+                    clickHandlerRef.current(p);
                 }
             };
             chartRef.current.subscribeClick(handler);

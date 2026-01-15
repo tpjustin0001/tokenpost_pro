@@ -50,10 +50,14 @@ class MarketDataService:
         if self.cmc_api_key:
             try:
                 # print(f"Attempting CMC fetch for {symbol}...")
-                return self._fetch_cmc_quote(base_symbol) 
+                # First try to get OHLCV (Rich Data)
+                return self._fetch_cmc_ohlcv(base_symbol)
             except Exception as e:
-                # print(f"CMC fetch failed: {e}")
-                pass
+                # print(f"CMC OHLCV failed ({e}), falling back to Quote endpoints...")
+                try:
+                    return self._fetch_cmc_quote(base_symbol) 
+                except Exception as e2:
+                    pass
         
         raise ValueError(f"Failed to fetch data from Upbit, Binance, AND CoinMarketCap for {symbol}")
 
@@ -182,6 +186,80 @@ class MarketDataService:
             "trend": trend,
             "volume_status": "N/A",
             "raw_df": None # Signal to AI that technicals are limited
+        }
+
+    def _fetch_cmc_ohlcv(self, symbol):
+        """
+        Fetch Historical Data from CMC (Requires Standard Plan or higher).
+        Endpoint: /v2/cryptocurrency/ohlcv/historical
+        """
+        url = f"{self.cmc_base_url}/v2/cryptocurrency/ohlcv/historical"
+        parameters = {
+            'symbol': symbol,
+            'convert': 'USD',
+            'count': '200', # 200 days
+            'interval': 'daily'
+        }
+        headers = {
+            'Accepts': 'application/json',
+            'X-CMC_PRO_API_KEY': self.cmc_api_key,
+        }
+        
+        session = requests.Session()
+        response = session.get(url, headers=headers, params=parameters)
+        data = response.json()
+        
+        if data['status']['error_code'] != 0:
+            raise ValueError(data['status']['error_message'])
+            
+        # CMC v2 Structure: data -> symbol -> [0] -> quotes
+        if symbol not in data['data']:
+             raise ValueError(f"No OHLCV data found for {symbol}")
+
+        quotes = data['data'][symbol][0]['quotes']
+        
+        rows = []
+        for q in quotes:
+            quote = q['quote']['USD']
+            rows.append({
+                'timestamp': quote['timestamp'],
+                'Open': quote['open'],
+                'High': quote['high'],
+                'Low': quote['low'],
+                'Close': quote['close'],
+                'Volume': quote['volume']
+            })
+            
+        df = pd.DataFrame(rows)
+        if df.empty:
+            raise ValueError("Empty OHLCV dataframe from CMC")
+
+        # Normalize Columns if needed (already standard)
+        
+        # Calculate Metrics similar to other sources
+        current = df['Close'].iloc[-1]
+        prev = df['Close'].iloc[-2]
+        change_24h = ((current - prev) / prev) * 100
+        ma_20 = df['Close'].tail(20).mean()
+        vol_avg = df['Volume'].tail(20).mean()
+        
+        # Get Name context from first response meta if possible, or fallback
+        # CMC OHLCV doesn't give name easily in quotes items, but data[symbol][0] has 'name'?
+        # Actually v2 structure: data: { "BTC": [ { "id": 1, "name": "Bitcoin", "symbol": "BTC", "quotes": [...] } ] }
+        name = data['data'][symbol][0].get('name', symbol)
+        
+        return {
+            "symbol": symbol,
+            "name": name,
+            "source": "CMC (Historical)",
+            "currency": "USD",
+            "current_price": current,
+            "change_24h": change_24h,
+            "change_1h": 0, # OHLCV Daily doesn't have 1h change, set 0
+            "ma_20": ma_20,
+            "trend": "Bullish" if current > ma_20 else "Bearish",
+            "volume_status": "High" if df['Volume'].iloc[-1] > vol_avg else "Normal",
+            "raw_df": df
         }
 
     def get_crypto_listings(self, limit=30):

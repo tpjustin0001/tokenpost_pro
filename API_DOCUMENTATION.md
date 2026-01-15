@@ -9,7 +9,7 @@ This API allows external systems (scrapers, CMS, partner feeds) to securely push
 - **Base URL:** `https://pro.tokenpost.kr` (Production)
 - **Endpoint:** `/api/external/ingest`
 - **Method:** `POST`
-- **Content-Type:** `application/json`
+- **Content-Type:** `application/json` 또는 `multipart/form-data`
 
 ### **2. Authentication**
 
@@ -22,6 +22,9 @@ Security is handled via a shared secret API Key.
 ---
 
 ### **3. Request Payload & Examples**
+
+> [!TIP]
+> **Make.com 연동 시**: JSON 생성이 어렵다면 `multipart/form-data`를 사용하세요. 배열 필드(예: `tags`)는 `tags[]` 키를 여러 번 사용하여 전송할 수 있습니다.
 
 The API supports three main content types: **News**, **Insights (Research)**, and **News Markers**.
 
@@ -65,6 +68,21 @@ General crypto news with sentiment analysis fields.
 }
 ```
 
+**Form Data 예시 (Make.com)**:
+```bash
+curl -X POST "https://tokenpostpro-production.up.railway.app/api/external/ingest" \
+  -H "X-API-KEY: YOUR_EXTERNAL_API_KEY" \
+  -F "type=news" \
+  -F "title=비트코인 10만달러 돌파" \
+  -F "summary=역사적인 순간" \
+  -F "show_on_chart=true" \
+  -F "related_coin=BTC" \
+  -F "image_url=https://example.com/btc_chart.jpg"
+```
+
+> [!NOTE]
+> **Image Upload**: 직접 파일 업로드는 지원하지 않으며, **호스팅된 이미지 URL**을 `image_url` 필드에 문자열로 전달해야 합니다. Make.com 등을 사용할 때 이미지 링크를 넣어주세요.
+
 #### **B. Insights (리서치/인사이트)**
 In-depth reports and analysis with tags.
 
@@ -92,12 +110,13 @@ In-depth reports and analysis with tags.
 #### **C. News Markers (뉴스 마커)**
 Short news items specifically designed to appear on price charts.
 
-- **Endpoint:** `/api/external/markers` (Dedicated)
+- **Endpoint:** `/api/external/ingest` (Same as News)
 - **Method:** `POST`
-- **Type:** Enforced as `news`.
+- **Type:** `news`
 - **Key Fields:**
-  - `related_coin`: Symbol of the coin (e.g., "BTC", "ETH").
-  - `sentiment_score`: Score for coloring (Positive/Negative).
+  - `show_on_chart`: **Must be `true`**
+  - `related_coin`: Symbol of the coin (e.g., "BTC").
+  - `sentiment_score`: Score for coloring.
 
 ```json
 {
@@ -110,6 +129,7 @@ Short news items specifically designed to appear on price charts.
   }
 }
 ```
+> **Date Format**: ISO 8601 (`YYYY-MM-DDTHH:mm:ssZ`) 권장. (예: `2024-01-15T10:30:00Z`)
 
 ---
 

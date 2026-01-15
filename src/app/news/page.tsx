@@ -8,7 +8,21 @@ import { flaskApi } from '@/services/flaskApi';
 import styles from './page.module.css';
 
 // Fallback mock data (Supabase 연결 전)
-const CATEGORIES = ['전체', '규제', '시장', 'DeFi', '정책', 'Layer2', 'NFT'];
+const CATEGORY_MAP: Record<string, string> = {
+    ALL: '전체',
+    REGULATION: '규제',
+    MARKET: '시장',
+    DEFI: 'DeFi',
+    POLICY: '정책',
+    LAYER2: 'Layer2',
+    NFT: 'NFT',
+    GENERAL: '일반',
+    MACRO: '거시경제',
+    EXCHANGE: '거래소',
+    AI: 'AI'
+};
+
+const CATEGORY_KEYS = Object.keys(CATEGORY_MAP);
 
 function getTimeAgo(dateString: string): string {
     const diff = Date.now() - new Date(dateString).getTime();
@@ -22,7 +36,7 @@ function getTimeAgo(dateString: string): string {
 export default function NewsPage() {
     const [news, setNews] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeCategory, setActiveCategory] = useState('전체');
+    const [activeCategory, setActiveCategory] = useState('ALL');
     const [selectedItem, setSelectedItem] = useState<any>(null); // Store full object
 
     useEffect(() => {
@@ -46,9 +60,13 @@ export default function NewsPage() {
         fetchNews();
     }, []);
 
-    const filteredNews = activeCategory === '전체'
+    const filteredNews = activeCategory === 'ALL'
         ? news
-        : news.filter(item => item.category === activeCategory);
+        : news.filter(item => {
+            // Case-insensitive match for category keys
+            const itemCat = item.category?.toUpperCase();
+            return itemCat === activeCategory;
+        });
 
     return (
         <div className={styles.appLayout}>
@@ -62,13 +80,13 @@ export default function NewsPage() {
                     </div>
 
                     <div className={styles.categories}>
-                        {CATEGORIES.map(cat => (
+                        {CATEGORY_KEYS.map(key => (
                             <button
-                                key={cat}
-                                className={`${styles.categoryBtn} ${activeCategory === cat ? styles.active : ''}`}
-                                onClick={() => setActiveCategory(cat)}
+                                key={key}
+                                className={`${styles.categoryBtn} ${activeCategory === key ? styles.active : ''}`}
+                                onClick={() => setActiveCategory(key)}
                             >
-                                {cat}
+                                {CATEGORY_MAP[key]}
                             </button>
                         ))}
                     </div>
@@ -96,7 +114,7 @@ export default function NewsPage() {
                                             <p className={styles.summary}>{item.summary || item.content?.substring(0, 100) + '...'}</p>
 
                                             <div className={styles.tags}>
-                                                {item.category && <span className={styles.tag}>{item.category}</span>}
+                                                {item.category && <span className={styles.tag}>{CATEGORY_MAP[item.category?.toUpperCase()] || item.category}</span>}
                                                 {item.sentiment_score > 0 && <span className={styles.tag} style={{ color: 'var(--accent-green)' }}>Positive</span>}
                                                 {item.sentiment_score < 0 && <span className={styles.tag} style={{ color: 'var(--accent-red)' }}>Negative</span>}
                                             </div>

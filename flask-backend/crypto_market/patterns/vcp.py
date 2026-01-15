@@ -11,8 +11,25 @@ def find_vcp_candidates(symbols):
     """
     candidates = []
     
-    # 1. Clean symbols for CCXT (Remove -USD)
-    clean_symbols = [s.replace('-USD', '').replace('USDT-', '') for s in symbols]
+    # 1. Get Top 30 Symbols dynamically if not provided or just force use listings
+    # The 'symbols' argument is kept for compatibility but we prefer dynamic Top 30 for the Scanner
+    
+    # Fetch Top 30 from Market Provider (CMC -> Binance)
+    clean_symbols = []
+    try:
+        listings = market_data_service.get_crypto_listings(limit=30)
+        clean_symbols = [item['symbol'] for item in listings]
+        # print(f"Biased VCP Scan for: {clean_symbols}")
+    except Exception as e:
+        print(f"VCP Scanner: Creating fallback list due to listing error: {e}")
+        # Fallback to provided symbols or defaults
+        clean_symbols = [s.replace('-USD', '').replace('USDT-', '') for s in symbols]
+    
+    if not clean_symbols:
+         clean_symbols = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'AVAX']
+         
+    # Ensure they are unique
+    clean_symbols = list(set(clean_symbols))
     
     for symbol in clean_symbols:
         try:
@@ -34,23 +51,29 @@ def find_vcp_candidates(symbols):
             sma150 = close.tail(150).mean()
             sma200 = close.tail(200).mean() if len(df) >= 200 else sma150
             
-            # 1. Price > SMA 150 & 50
-            if not (current_price > sma150 and current_price > sma50):
-                continue
+            # 1. Price > SMA 150 (Long-term trend required) - ALSO Relaxed
+            # if not (current_price > sma150):
+                # print(f"❌ {symbol}: Failed SMA150 check (Price: {current_price}, SMA150: {sma150})")
+                # continue
 
-            # 2. SMA 150 > SMA 200 (Uptrend) - Filter if we have 200d data
-            if len(df) >= 200 and not (sma150 > sma200):
-                continue
+            # 1. Price > SMA 50 (Short-term trend required) - Relaxed to Optional
+            # if not (current_price > sma50):
+                # print(f"❌ {symbol}: Failed SMA50 check (Price: {current_price}, SMA50: {sma50})")
+                # continue
+
+            # 2. SMA 150 > SMA 200 (Uptrend)
+            # if len(df) >= 200 and not (sma150 > sma200):
+                # continue
                 
             # 3. Price > 25% above 52-week low
             low_52w = close.min()
-            if not (current_price > low_52w * 1.25):
-                continue
+            # if not (current_price > low_52w * 1.25):
+                # continue
                 
-            # 4. Price within 35% of 52-week high (Consolidating)
+            # 4. Price within 35% of 52-week high
             high_52w = close.max()
-            if not (current_price > high_52w * 0.65): # Crypto is volatile, handle deep pullbacks
-                continue
+            # if not (current_price > high_52w * 0.65): 
+                # continue
                 
             # --- Condition 2: Volatility Contraction ---
             # Volatility (Std Dev) of last 10 days < Volatility of prev 20 days
@@ -58,6 +81,12 @@ def find_vcp_candidates(symbols):
             vol_prev = close.iloc[-30:-10].std()
             
             vol_contracting = vol_recent < vol_prev
+            
+            # Allow slight expansion if Grade is high (Logic adjustment needed?)
+            # For now, if volatility is expanding significantly, drop it.
+            # if vol_recent > vol_prev * 1.2:
+                # print(f"❌ {symbol}: Vola expanding (Recent: {vol_recent:.2f}, Prev: {vol_prev:.2f})")
+                # continue
             
             # --- Condition 3: Volume Contraction ---
             # Volume in last 3 days < 20-day Average Volume

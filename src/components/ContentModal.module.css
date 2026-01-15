@@ -236,5 +236,50 @@
     left: 0;
     width: 100%;
     height: 100%;
-    border: none;
-}
+
+    /* Code Blocks */
+    .codeBlock {
+        background: var(--bg-tertiary);
+        padding: 16px;
+        border-radius: 8px;
+        margin: 16px 0;
+        overflow-x: auto;
+        font-family: 'Fira Code', 'Roboto Mono', monospace;
+        font-size: 13px;
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+    }
+
+    /* Collapsible Details */
+    .details {
+        margin: 16px 0;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-tertiary);
+        overflow: hidden;
+    }
+
+    .summary {
+        cursor: pointer;
+        padding: 12px 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        background: var(--bg-secondary);
+        user-select: none;
+        transition: background 0.2s;
+    }
+
+    .summary:hover {
+        background: var(--bg-hover);
+    }
+
+    .summary::marker {
+        color: var(--text-muted);
+    }
+
+    .detailsContent {
+        padding: 16px;
+        border-top: 1px solid var(--border-color);
+        background: var(--bg-card);
+    }

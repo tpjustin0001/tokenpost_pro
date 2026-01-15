@@ -213,6 +213,9 @@ export default function HomePage() {
                 </div>
                 <span className={styles.chartLabel}>
                   {activeSymbol}/USDT · {CHART_INTERVALS.find(i => i.id === activeInterval)?.label}
+                  <span style={{ fontSize: '11px', color: '#ef4444', marginLeft: '12px', fontWeight: 500 }}>
+                    ※ 정확한 뉴스 확인은 1분봉 권장
+                  </span>
                 </span>
               </div>
               <TradingChart symbol={activeSymbol} interval={activeInterval} />

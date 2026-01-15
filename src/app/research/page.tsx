@@ -20,6 +20,7 @@ interface InsightItem {
     isPro: boolean;
     tags: string[];
     image?: string;
+    content?: string;
 }
 
 type FilterType = 'ALL' | 'REPORT' | 'ANALYSIS' | 'KPI' | 'NEWS';
@@ -37,29 +38,14 @@ export default function ResearchPage() {
             try {
                 const { data, error } = await supabase
                     .from('research')
-                    .select('*')
+                    .select('id, title, summary, content, author, created_at, category, is_premium, tags, thumbnail_url, image_url')
                     .order('created_at', { ascending: false })
                     .limit(50);
 
                 if (error) throw error;
 
                 if (data) {
-                    const formattedDetails = data.map(item => ({
-                        id: item.id.toString(),
-                        type: item.category === 'KPI' ? 'KPI' :
-                            item.category === 'BREAKING' ? 'NEWS' :
-                                item.is_premium ? 'ANALYSIS' : 'REPORT', // Simple mapping
-                        title: item.title,
-                        summary: item.summary || item.title,
-                        author: item.author || 'TokenPost',
-                        source: 'TokenPost PRO',
-                        date: new Date(item.created_at).toLocaleDateString(),
-                        readTime: '3 min read',
-                        isPro: item.is_premium || false,
-                        tags: item.tags || [],
-                        image: item.image_url
-                    }));
-                    setInsights(formattedDetails as InsightItem[]);
+                    setInsights(data.map(mapRowToInsight));
                 }
             } catch (error) {
                 console.error('Failed to fetch research', error);
@@ -67,8 +53,46 @@ export default function ResearchPage() {
                 setLoading(false);
             }
         }
+
         fetchInsights();
+
+        // Real-time subscription
+        const channel = supabase
+            ? supabase.channel('public:research_page')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'research' }, (payload) => {
+                    const newRow = payload.new;
+                    setInsights(prev => [mapRowToInsight(newRow), ...prev]);
+                })
+                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'research' }, (payload) => {
+                    const deletedId = String(payload.old.id);
+                    setInsights(prev => prev.filter(item => item.id !== deletedId));
+                })
+                .subscribe()
+            : null;
+
+        return () => {
+            if (channel) supabase?.removeChannel(channel);
+        };
     }, []);
+
+    // Helper for mapping (Ensure consistency with Main Widget)
+    const mapRowToInsight = (item: any): InsightItem => ({
+        id: String(item.id),
+        type: item.category === 'KPI' ? 'KPI' :
+            item.category === 'BREAKING' ? 'NEWS' :
+                item.is_premium ? 'ANALYSIS' : 'REPORT',
+        title: item.title,
+        summary: item.summary || item.title,
+        author: item.author || 'TokenPost',
+        source: 'TokenPost',
+        date: new Date(item.created_at).toLocaleDateString(),
+        // Consolidate content fallback to match widget (Important for visibility)
+        content: item.content || item.summary || item.title || '내용이 없습니다.',
+        readTime: '3분',
+        isPro: item.is_premium || false,
+        tags: item.tags || [],
+        image: item.thumbnail_url || item.image_url
+    });
 
     const filteredInsights = insights.filter(item => {
         if (showProOnly && !item.isPro) return false;
@@ -150,26 +174,36 @@ export default function ResearchPage() {
                                 onClick={() => setSelectedItem(insight)}
                                 style={{ cursor: 'pointer' }}
                             >
-                                <div className={styles.cardHeader}>
-                                    <div className={styles.feedHeaderLeft}>
-                                        <span className={styles.typeBadge} style={{
-                                            color: insight.type === 'REPORT' ? '#3b82f6' : insight.type === 'ANALYSIS' ? '#8b5cf6' : '#10b981'
-                                        }}>
-                                            {getTypeLabel(insight.type)}
-                                        </span>
-                                        {insight.isPro && <span className={styles.proBadge}>PRO</span>}
-                                        <span className={styles.meta}>{insight.date}</span>
+                                <div className={styles.itemContentWrapper}>
+                                    {insight.image && (
+                                        <div className={styles.itemThumbnail}>
+                                            <img src={insight.image} alt="" />
+                                        </div>
+                                    )}
+
+                                    <div className={styles.itemMainContent}>
+                                        <div className={styles.cardHeader}>
+                                            <div className={styles.feedHeaderLeft}>
+                                                <span className={styles.typeBadge} style={{
+                                                    color: insight.type === 'REPORT' ? '#3b82f6' : insight.type === 'ANALYSIS' ? '#8b5cf6' : '#10b981'
+                                                }}>
+                                                    {getTypeLabel(insight.type)}
+                                                </span>
+                                                {insight.isPro && <span className={styles.proBadge}>PRO</span>}
+                                                <span className={styles.meta}>{insight.date}</span>
+                                            </div>
+                                        </div>
+
+                                        <h3 className={styles.cardTitle}>{insight.title}</h3>
+                                        <p className={styles.cardSummary}>{insight.summary}</p>
+
+                                        <div className={styles.cardFooter}>
+                                            <span className={styles.author}>{insight.author}</span>
+                                            {insight.tags && insight.tags.slice(0, 3).map(tag => (
+                                                <span key={tag} className={styles.meta} style={{ opacity: 0.7 }}>#{tag}</span>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-
-                                <h3 className={styles.cardTitle}>{insight.title}</h3>
-                                <p className={styles.cardSummary}>{insight.summary}</p>
-
-                                <div className={styles.cardFooter}>
-                                    <span className={styles.author}>{insight.author}</span>
-                                    {insight.tags && insight.tags.map(tag => (
-                                        <span key={tag} className={styles.meta} style={{ opacity: 0.7 }}>#{tag}</span>
-                                    ))}
                                 </div>
                             </div>
                         ))}
@@ -177,12 +211,13 @@ export default function ResearchPage() {
                 </main>
             </div>
 
-            {/* Modal */}
+            {/* Modal - Force re-mount with key to ensure content updates */}
             <ContentModal
+                key={selectedItem?.id}
                 contentData={selectedItem ? {
                     ...selectedItem,
-                    time: selectedItem.date, // Map date to time for modal
-                    thumbnail: selectedItem.image // Map image props
+                    time: selectedItem.date,
+                    thumbnail: selectedItem.image
                 } : null}
                 isOpen={!!selectedItem}
                 onClose={() => setSelectedItem(null)}

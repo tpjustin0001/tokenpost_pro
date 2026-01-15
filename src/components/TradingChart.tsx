@@ -128,7 +128,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                             color: isBullish ? '#00E396' : '#FF4560',
                             shape: isBullish ? 'arrowUp' : 'arrowDown',
                             id: item.id,
-                            size: 1,
+                            size: 2,  // 크게 표시
                         };
                     });
 
@@ -321,14 +321,35 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             // Reverse search to find the most "recent" or relevant one if multiple? 
             // Or just find ANY. Let's find the one closest to the center or just the first one.
             // Added 1 min buffer for safety
-            const marker = newsMarkers.find(m => {
-                const diff = (m.time as number) - clickTime;
-                return diff >= -60 && diff < (intervalSeconds + 60);
+            // 클릭 위치에서 가장 가까운 마커 찾기
+            let closestMarker = null;
+            let minDiff = Infinity;
+
+            for (const m of newsMarkers) {
+                const diff = Math.abs((m.time as number) - clickTime);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestMarker = m;
+                }
+            }
+
+            // 300초(5분) 이내의 마커만 클릭 인정
+            const marker = (minDiff < 300) ? closestMarker : null;
+
+            console.log('[NewsMarker] Click detected!', {
+                clickTime,
+                intervalSeconds,
+                markersCount: newsMarkers.length,
+                foundMarker: marker,
+                newsMapKeys: Object.keys(newsMapRef.current)
             });
 
             if (marker && marker.id && newsMapRef.current[marker.id]) {
                 const news = newsMapRef.current[marker.id];
+                console.log('[NewsMarker] Setting selectedNews:', news);
                 setSelectedNews(news);
+            } else {
+                console.log('[NewsMarker] No matching marker found');
             }
         };
     }, [newsMarkers, interval]);

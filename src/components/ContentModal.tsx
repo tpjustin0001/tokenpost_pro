@@ -50,7 +50,7 @@ export default function ContentModal({ contentData, isOpen, onClose }: ContentMo
                 </div>
 
                 <div className={styles.body}>
-                    {content.split('\n').map((line: string, i: number) => (
+                    {(content || '').split('\n').map((line: string, i: number) => (
                         line.trim() ? <p key={i} className={styles.paragraph}>{line}</p> : <br key={i} />
                     ))}
                 </div>

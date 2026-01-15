@@ -10,6 +10,12 @@ interface LoginGateProps {
 export default function LoginGate({ children }: LoginGateProps) {
     const { user, isLoggedIn, loading, login, logout } = useAuth();
 
+    // DEV: Skip login on localhost
+    const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    if (isLocalhost) {
+        return <>{children}</>;
+    }
+
     // 1. Show loading spinner while checking auth status
     if (loading) {
         return (

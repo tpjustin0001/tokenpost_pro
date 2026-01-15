@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Newspaper } from 'lucide-react';
 import { supabase, News } from '@/lib/supabase';
 import { NewsFeedSkeleton } from './LoadingSkeleton';
@@ -107,31 +108,33 @@ export default function NewsFeed() {
                     />
                 ) : (
                     newsItems.map((news) => (
-                        <article key={news.id} className={`${styles.item} ${styles[news.sentiment || 'neutral']}`}>
-                            <div className={styles.itemMeta}>
-                                <span className={styles.time}>{news.time}</span>
-                                <span className={styles.source}>{news.source}</span>
-                            </div>
+                        <Link key={news.id} href={`/content/${news.id}`} className={styles.itemLink}>
+                            <article className={`${styles.item} ${styles[news.sentiment || 'neutral']}`}>
+                                <div className={styles.itemMeta}>
+                                    <span className={styles.time}>{news.time}</span>
+                                    <span className={styles.source}>{news.source}</span>
+                                </div>
 
-                            <div className={styles.itemContent}>
-                                <div className={styles.titleRow}>
-                                    {news.tags && news.tags.includes('중요') && (
-                                        <span className={styles.importanceBadge}>⭐️ 중요</span>
-                                    )}
-                                    <h3
-                                        className={styles.title}
-                                        title={news.summary} // Native tooltip for quick summary
-                                    >
-                                        {news.title}
-                                    </h3>
+                                <div className={styles.itemContent}>
+                                    <div className={styles.titleRow}>
+                                        {news.tags && news.tags.includes('중요') && (
+                                            <span className={styles.importanceBadge}>⭐️ 중요</span>
+                                        )}
+                                        <h3
+                                            className={styles.title}
+                                            title={news.summary}
+                                        >
+                                            {news.title}
+                                        </h3>
+                                    </div>
+                                    <div className={styles.indicators}>
+                                        <span className={`${styles.sentimentPill} ${styles[news.sentiment || 'neutral']}`}>
+                                            {news.sentiment === 'positive' ? '▲ 호재' : news.sentiment === 'negative' ? '▼ 악재' : '- 중립'}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className={styles.indicators}>
-                                    <span className={`${styles.sentimentPill} ${styles[news.sentiment || 'neutral']}`}>
-                                        {news.sentiment === 'positive' ? '▲ 호재' : news.sentiment === 'negative' ? '▼ 악재' : '- 중립'}
-                                    </span>
-                                </div>
-                            </div>
-                        </article>
+                            </article>
+                        </Link>
                     ))
                 )}
             </div>

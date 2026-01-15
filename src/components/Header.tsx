@@ -10,9 +10,7 @@ export default function Header() {
     return (
         <header className={styles.header}>
             <div className={styles.headerContent}>
-                <Link href="/" className={styles.headerLogo}>
-                    TokenPost<span>PRO</span>
-                </Link>
+                {/* Logo removed - already in Sidebar */}
 
                 <div className={styles.headerActions}>
                     {loading ? (

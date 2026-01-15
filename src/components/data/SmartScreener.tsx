@@ -226,7 +226,7 @@ export default function SmartScreener() {
                                             {item.is_breakout && <span className={styles.badge} style={{ backgroundColor: '#f59e0b', color: '#fff' }}>🔥 돌파</span>}
                                         </div>
                                     </td>
-                                    <td>${item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                                    <td>₩{item.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                                     <td style={{ fontWeight: 600, color: item.ai_insight?.includes('Strong') ? '#10b981' : '#374151' }}>
                                         {item.ai_insight || '-'}
                                     </td>
@@ -273,7 +273,7 @@ export default function SmartScreener() {
                                             <span className={styles.symbol}>{item.symbol}</span>
                                         </div>
                                     </td>
-                                    <td>${item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                                    <td>₩{item.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                                     <td>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                             <div style={{ flex: 1, height: '6px', background: '#e5e7eb', borderRadius: '3px', maxWidth: '60px' }}>
@@ -329,7 +329,7 @@ export default function SmartScreener() {
                                             <span className={styles.symbol}>{item.symbol}</span>
                                         </div>
                                     </td>
-                                    <td>${item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                                    <td>₩{item.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                                     <td>{item.volatility?.toFixed(2) || '-'}%</td>
                                     <td>{item.risk_score?.toFixed(1) || '-'}</td>
                                     <td>

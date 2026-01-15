@@ -52,7 +52,17 @@ export default function LoginGate({ children }: LoginGateProps) {
     }
 
     // 3. Check PRO subscription
-    const hasPROAccess = user.subscription_plan || user.subscription_status === 'active';
+    // grade_name 있으면 PRO로 간주 (TokenPost에서 등급이 있으면 구독자)
+    const hasPROAccess = user.subscription_plan ||
+        user.subscription_status === 'active' ||
+        user.grade_name;  // 등급이 있으면 구독자로 간주
+
+    console.log('[LoginGate] PRO Check:', {
+        subscription_plan: user.subscription_plan,
+        subscription_status: user.subscription_status,
+        grade_name: user.grade_name,
+        hasPROAccess
+    });
 
     if (!hasPROAccess) {
         return (

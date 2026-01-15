@@ -86,22 +86,43 @@ export default function HomePage() {
 
     if (code && state && !isProcessingAuth) {
       setIsProcessingAuth(true);
-      console.log('[OAuth] Callback detected, processing...');
+      console.log('[OAuth] Callback detected, using server-side API...');
+
+      // Get code_verifier from localStorage for PKCE
+      const codeVerifier = localStorage.getItem('oauth_code_verifier');
 
       (async () => {
         try {
-          console.log('[OAuth] Step 1: Exchanging code for tokens...');
-          const tokens = await handleCallback(code, state);
-          console.log('[OAuth] Step 2: Tokens received');
-          saveTokens(tokens.access_token, tokens.refresh_token);
+          console.log('[OAuth] Calling /api/auth/oauth...');
 
-          console.log('[OAuth] Step 3: Fetching user profile...');
-          const profile = await fetchProfile(tokens.access_token);
-          console.log('[OAuth] Step 4: Profile received:', profile);
-          saveUserProfile(profile);
+          const response = await fetch('/api/auth/oauth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, code_verifier: codeVerifier })
+          });
+
+          const data = await response.json();
+          console.log('[OAuth] Server Response:', data);
+
+          if (data.error) {
+            throw new Error(data.error);
+          }
+
+          // Save tokens
+          if (data.tokens) {
+            saveTokens(data.tokens.access_token, data.tokens.refresh_token);
+          }
+
+          // Save user profile
+          if (data.user) {
+            saveUserProfile(data.user);
+          }
+
+          // Cleanup PKCE state
+          localStorage.removeItem('oauth_state');
+          localStorage.removeItem('oauth_code_verifier');
 
           console.log('[OAuth] ✅ Complete! Refreshing page...');
-          // Remove code/state from URL and reload
           window.location.href = '/';
         } catch (err) {
           console.error('[OAuth] ❌ Error:', err);

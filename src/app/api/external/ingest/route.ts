@@ -28,14 +28,44 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 2. Parse payload
-        const body = await request.json();
-        const contentType = body.type || 'news';
-        const payload = body.data;
+        // 2. Parse payload - support both JSON and multipart/form-data
+        const contentTypeHeader = request.headers.get('content-type') || '';
+        let contentType: string;
+        let payload: Record<string, any>;
 
-        if (!payload) {
+        if (contentTypeHeader.includes('multipart/form-data')) {
+            // Parse multipart/form-data
+            const formData = await request.formData();
+            contentType = formData.get('type')?.toString() || 'news';
+
+            // Build payload from form fields
+            payload = {};
+            formData.forEach((value, key) => {
+                if (key !== 'type') {
+                    // Handle arrays (e.g., tags[])
+                    if (key.endsWith('[]')) {
+                        const cleanKey = key.slice(0, -2);
+                        if (!payload[cleanKey]) payload[cleanKey] = [];
+                        payload[cleanKey].push(value.toString());
+                    } else if (key === 'show_on_chart' || key === 'is_premium') {
+                        payload[key] = value.toString() === 'true';
+                    } else if (key === 'sentiment_score') {
+                        payload[key] = parseFloat(value.toString());
+                    } else {
+                        payload[key] = value.toString();
+                    }
+                }
+            });
+        } else {
+            // Parse JSON
+            const body = await request.json();
+            contentType = body.type || 'news';
+            payload = body.data || body;
+        }
+
+        if (!payload || !payload.title) {
             return NextResponse.json(
-                { error: 'Missing data payload' },
+                { error: 'Missing required field: title' },
                 { status: 400 }
             );
         }

@@ -227,6 +227,10 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
             timeScale: {
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
                 timeVisible: true,
+                secondsVisible: false,
+            },
+            localization: {
+                locale: 'ko-KR',
             },
         });
 

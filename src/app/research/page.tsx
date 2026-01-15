@@ -175,12 +175,6 @@ export default function ResearchPage() {
                                 style={{ cursor: 'pointer' }}
                             >
                                 <div className={styles.itemContentWrapper}>
-                                    {insight.image && (
-                                        <div className={styles.itemThumbnail}>
-                                            <img src={insight.image} alt="" />
-                                        </div>
-                                    )}
-
                                     <div className={styles.itemMainContent}>
                                         <div className={styles.cardHeader}>
                                             <div className={styles.feedHeaderLeft}>
@@ -204,6 +198,12 @@ export default function ResearchPage() {
                                             ))}
                                         </div>
                                     </div>
+
+                                    {insight.image && (
+                                        <div className={styles.itemThumbnail}>
+                                            <img src={insight.image} alt="" />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}

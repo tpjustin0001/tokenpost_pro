@@ -50,11 +50,10 @@ export async function POST(request: NextRequest) {
         const accessToken = tokenData.access_token;
         const refreshToken = tokenData.refresh_token;
 
-        // Step 2: Fetch user profile
-        console.log('[OAuth API] Step 2: Fetching user profile...');
+        // Step 2: Fetch user profile (scope 없이 호출하면 전체 데이터 반환)
+        console.log('[OAuth API] Step 2: Fetching user profile (no scope = all data)...');
 
-        const userInfoUrl = `${USER_INFO_URL}?scope=${encodeURIComponent(USER_INFO_SCOPE)}`;
-        const userInfoResponse = await fetch(userInfoUrl, {
+        const userInfoResponse = await fetch(USER_INFO_URL, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'

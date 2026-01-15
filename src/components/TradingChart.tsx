@@ -30,7 +30,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
     // Use a ref for newsMap to access it inside the click handler closure without re-binding
     const newsMapRef = useRef<Record<string, any>>({});
-    const clickHandlerRef = useRef<(t: number) => void>(() => { });
+    const clickHandlerRef = useRef<(params: MouseEventParams) => void>(() => { });
 
     const [selectedNews, setSelectedNews] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);

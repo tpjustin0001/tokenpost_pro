@@ -2,16 +2,27 @@
 
 // TokenPost OAuth 2.0 Configuration (PRO)
 export const OAUTH_CONFIG = {
-    CLIENT_ID: 's5ViDSauo8wENm2AgqPK39J2oI13PbVn',
-    CLIENT_SECRET: 'xE4mNc8XQBHU3CNWrj3ci9HlFzbHXYdlot73EygyMEg54cKb9uK54X9DE130k08it2heu0B9703Ef701Y6ooOiSK67wrXn0yZ0DaEuG1N1iw3afJtN7QbnLdZm7FTfaa',
-    REDIRECT_URI: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '',
-    // Updated: Domain changed from accounts.tokenpost.kr to www.tokenpost.kr
+    // 클라이언트 키 (환경변수 우선)
+    CLIENT_ID: process.env.NEXT_PUBLIC_TP_CLIENT_ID || 's5ViDSauo8wENm2AgqPK39J2oI13PbVn',
+    CLIENT_SECRET: process.env.NEXT_PUBLIC_TP_CLIENT_SECRET || 'xE4mNc8XQBHU3CNWrj3ci9HlFzbHXYdlot73EygyMEg54cKb9uK54X9DE130k08it2heu0B9703Ef701Y6ooOiSK67wrXn0yZ0DaEuG1N1iw3afJtN7QbnLdZm7FTfaa',
+
+    // Callback URL (개발/배포 환경 분기)
+    REDIRECT_URI: typeof window !== 'undefined' && window.location.origin.includes('localhost')
+        ? 'http://localhost:3000/auth/callback'
+        : 'https://pro.tokenpost.kr/auth/callback',
+
+    // 인증 페이지 (www.tokenpost.kr)
     AUTH_URL: 'https://www.tokenpost.kr/oauth/login',
+
+    // API 엔드포인트
     TOKEN_URL: 'https://oapi.tokenpost.kr/oauth/v1/token',
     USER_INFO_URL: 'https://oapi.tokenpost.kr/oauth/v1/userInfo',
-    SCOPE: 'email,uid,grade,nickname',
-    // Scope for userInfo endpoint - required fields
-    USER_INFO_SCOPE: 'user.nickname,subscription,grade,point.tpc'
+
+    // [중요] 로그인 요청 Scope - 인증 페이지에 전달
+    SCOPE: 'user.email,user.nickname,user.profile_image,grade,subscription,point.tpc',
+
+    // UserInfo API Scope - 동일하게 사용
+    USER_INFO_SCOPE: 'user.email,user.nickname,user.profile_image,grade,subscription,point.tpc'
 };
 
 // CORS Proxy Helper

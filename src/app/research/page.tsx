@@ -38,7 +38,7 @@ export default function ResearchPage() {
             try {
                 const { data, error } = await supabase
                     .from('research')
-                    .select('id, title, summary, content, author, created_at, category, is_premium, tags, thumbnail_url, image_url')
+                    .select('id, title, summary, content, author, created_at, category, is_premium, tags, image_url')
                     .order('created_at', { ascending: false })
                     .limit(50);
 

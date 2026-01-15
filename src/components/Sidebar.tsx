@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 import { useXRay } from '@/context/XRayContext';
 import styles from './Sidebar.module.css';
 
@@ -24,6 +25,7 @@ export default function Sidebar() {
     const pathname = usePathname();
     const { theme, toggleTheme } = useTheme();
     const { isXRayActive, toggleXRay } = useXRay();
+    const { user } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Close mobile menu on route change
@@ -96,13 +98,21 @@ export default function Sidebar() {
 
                 {/* Footer / User Profile */}
                 <div className={styles.footer}>
-                    <div className={styles.userProfile}>
-                        <div className={styles.userAvatar}>QP</div>
-                        <div className={styles.userInfo}>
-                            <span className={styles.username}>관리자</span>
-                            <span className={styles.userRole}>PRO 멤버</span>
+                    {user && (
+                        <div className={styles.userProfile}>
+                            {user.profile_image ? (
+                                <img src={user.profile_image} alt="" className={styles.userAvatarImg} />
+                            ) : (
+                                <div className={styles.userAvatar}>
+                                    {(user.nickname || user.email || 'U').charAt(0).toUpperCase()}
+                                </div>
+                            )}
+                            <div className={styles.userInfo}>
+                                <span className={styles.username}>{user.nickname || user.email || '사용자'}</span>
+                                <span className={styles.userRole}>{user.grade_name || 'PRO'}</span>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <button
                         className={`${styles.themeBtn} ${isXRayActive ? styles.activeXRay : ''}`}

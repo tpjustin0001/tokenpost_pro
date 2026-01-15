@@ -1,17 +1,50 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import styles from './EventTicker.module.css';
 import Link from 'next/link';
 
-const EVENTS: { time: string; title: string; type: string; country: string; impact: string }[] = [
-    { time: '22:30', title: '미국 1월 CPI 소비자물가지수 발표', type: 'Economic', country: '🇺🇸', impact: 'High' },
-    { time: '23:00', title: '연준 파월 의장 연설', type: 'Speech', country: '🇺🇸', impact: 'High' },
-    { time: '03:00', title: 'FOMC 의사록 공개', type: 'Economic', country: '🇺🇸', impact: 'Medium' },
-    { time: '09:00', title: '한국 금통위 기준금리 결정', type: 'Economic', country: '🇰🇷', impact: 'High' },
-    { time: '18:00', title: '유로존 GDP 성장률 발표', type: 'Economic', country: '🇪🇺', impact: 'Medium' },
-];
+const EVENT_TYPE_MAP: Record<string, string> = {
+    'high': 'High',
+    'medium': 'Medium',
+    'low': 'Low'
+};
 
 export default function EventTicker() {
+    const [events, setEvents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchEvents() {
+            try {
+                if (!supabase) return;
+
+                // Fetch today's and coming events
+                const { data, error } = await supabase
+                    .from('calendar_events')
+                    .select('*')
+                    .gte('event_date', new Date().toISOString().split('T')[0]) // From today
+                    .order('event_date', { ascending: true })
+                    .order('time', { ascending: true })
+                    .limit(10);
+
+                if (error) throw error;
+                if (data) setEvents(data);
+            } catch (err) {
+                console.error('Failed to fetch calendar events:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchEvents();
+
+        // Refresh every 5 minutes
+        const interval = setInterval(fetchEvents, 5 * 60 * 1000);
+        return () => clearInterval(interval);
+    }, []);
+
     return (
         <div className={styles.tickerContainer}>
             <div className={styles.label}>
@@ -20,16 +53,22 @@ export default function EventTicker() {
 
             <div className={styles.tickerWrapper}>
                 <div className={styles.tickerContent}>
-                    {EVENTS.length === 0 ? (
+                    {loading ? (
+                        <div className={styles.tickerItem}>
+                            <span style={{ color: 'var(--text-muted)' }}>일정을 불러오는 중...</span>
+                        </div>
+                    ) : events.length === 0 ? (
                         <div className={styles.tickerItem}>
                             <span style={{ color: 'var(--text-muted)' }}>등록된 일정이 없습니다.</span>
                         </div>
                     ) : (
                         <>
-                            {EVENTS.map((event, idx) => (
-                                <div key={`e1-${idx}`} className={styles.tickerItem}>
-                                    <span className={styles.time}>{event.time}</span>
-                                    <span className={`${styles.badge} ${styles[event.type.toLowerCase()]}`}>{event.country} {event.type}</span>
+                            {events.map((event, idx) => (
+                                <div key={event.id || idx} className={styles.tickerItem}>
+                                    <span className={styles.time}>{event.time?.slice(0, 5)}</span>
+                                    <span className={`${styles.badge} ${styles[event.impact?.toLowerCase() || 'medium']}`}>
+                                        {event.country} {event.type}
+                                    </span>
                                     <span>{event.title}</span>
                                 </div>
                             ))}

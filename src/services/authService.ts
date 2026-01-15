@@ -41,17 +41,39 @@ const pkceChallengeFromVerifier = async (verifier: string): Promise<string> => {
     return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
 
-// User Interface
-export interface TokenPostUser {
-    uid?: string;
-    email?: string;
-    nickname?: string;
-    profile_image?: string;
-    grade?: string;
+// User Interface - Matches actual API response structure
+export interface TokenPostUserResponse {
+    user: {
+        uuid: string;
+        nickname?: string;
+        email?: string;
+        profile_image?: string;
+    };
+    grade?: {
+        name: string;
+        icon_url?: string;
+        exp?: number;
+    };
     subscription?: {
         plan?: string;
         status?: string;
     };
+    point?: {
+        tpc?: number;
+    };
+}
+
+// Flattened user interface for app consumption
+export interface TokenPostUser {
+    uuid: string;
+    nickname?: string;
+    email?: string;
+    profile_image?: string;
+    grade_name?: string;
+    grade_icon?: string;
+    grade_exp?: number;
+    subscription_plan?: string;
+    subscription_status?: string;
     point_tpc?: number;
 }
 
@@ -124,7 +146,24 @@ export const fetchProfile = async (token: string): Promise<TokenPostUser> => {
         throw new Error('Failed to fetch user profile');
     }
 
-    return await response.json();
+    // API returns nested structure, we flatten it for app use
+    const data: TokenPostUserResponse = await response.json();
+
+    // Transform to flat structure
+    const user: TokenPostUser = {
+        uuid: data.user.uuid,
+        nickname: data.user.nickname,
+        email: data.user.email,
+        profile_image: data.user.profile_image,
+        grade_name: data.grade?.name,
+        grade_icon: data.grade?.icon_url,
+        grade_exp: data.grade?.exp,
+        subscription_plan: data.subscription?.plan,
+        subscription_status: data.subscription?.status,
+        point_tpc: data.point?.tpc
+    };
+
+    return user;
 };
 
 export const logout = () => {

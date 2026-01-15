@@ -37,8 +37,8 @@ export default function Header() {
                             <span className={styles.userName}>
                                 {user.nickname || user.email || 'User'}
                             </span>
-                            {user.grade && (
-                                <span className={styles.userBadge}>{user.grade}</span>
+                            {user.grade_name && (
+                                <span className={styles.userBadge}>{user.grade_name}</span>
                             )}
                             <button
                                 className="btn btn-secondary"

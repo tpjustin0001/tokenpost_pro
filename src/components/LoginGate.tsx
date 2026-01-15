@@ -8,7 +8,7 @@ interface LoginGateProps {
 }
 
 export default function LoginGate({ children }: LoginGateProps) {
-    const { user, isLoggedIn, loading, login } = useAuth();
+    const { user, isLoggedIn, loading, login, logout } = useAuth();
 
     // Show loading spinner while checking auth status
     if (loading) {
@@ -50,6 +50,45 @@ export default function LoginGate({ children }: LoginGateProps) {
         );
     }
 
-    // User is logged in, render children
+    // Check PRO subscription (subscription_plan should not be empty)
+    const hasPROAccess = user.subscription_plan || user.subscription_status === 'active';
+
+    if (!hasPROAccess) {
+        return (
+            <div className={styles.gateContainer}>
+                <div className={styles.overlay}>
+                    <div className={styles.modal}>
+                        <div className={styles.logo}>
+                            TokenPost<span>PRO</span>
+                        </div>
+                        <div className={styles.modalIcon}>⭐</div>
+                        <h2 className={styles.modalTitle}>PRO 구독이 필요합니다</h2>
+                        <p className={styles.modalDescription}>
+                            안녕하세요, <strong>{user.nickname || user.email}</strong>님!<br />
+                            TokenPost PRO는 프리미엄 구독 회원 전용 서비스입니다.
+                        </p>
+                        <a
+                            href="https://www.tokenpost.kr/pro"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.loginButton}
+                            style={{ display: 'block', textDecoration: 'none', textAlign: 'center' }}
+                        >
+                            PRO 구독 알아보기
+                        </a>
+                        <button
+                            onClick={logout}
+                            className={styles.signupHint}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', marginTop: '16px' }}
+                        >
+                            다른 계정으로 로그인
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // User is logged in with PRO access, render children
     return <>{children}</>;
 }

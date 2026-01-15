@@ -8,32 +8,24 @@ export default function Header() {
     const { user, isLoggedIn, loading, login, logout } = useAuth();
 
     return (
-        <header className="header">
-            <div className="header-content container">
-                <Link href="/" className="header-logo">
+        <header className={styles.header}>
+            <div className={styles.headerContent}>
+                <Link href="/" className={styles.headerLogo}>
                     TokenPost<span>PRO</span>
                 </Link>
-
-                <nav className="header-nav">
-                    <Link href="/" className="nav-link active">
-                        Dashboard
-                    </Link>
-                    <Link href="/markets" className="nav-link">
-                        Markets
-                    </Link>
-                    <Link href="/insights" className="nav-link">
-                        Insights
-                    </Link>
-                    <Link href="/admin" className="nav-link">
-                        Admin
-                    </Link>
-                </nav>
 
                 <div className={styles.headerActions}>
                     {loading ? (
                         <div className={styles.loadingDot}>...</div>
                     ) : isLoggedIn && user ? (
                         <div className={styles.userMenu}>
+                            {user.profile_image && (
+                                <img
+                                    src={user.profile_image}
+                                    alt="Profile"
+                                    className={styles.userAvatar}
+                                />
+                            )}
                             <span className={styles.userName}>
                                 {user.nickname || user.email || 'User'}
                             </span>
@@ -41,7 +33,7 @@ export default function Header() {
                                 <span className={styles.userBadge}>{user.grade_name}</span>
                             )}
                             <button
-                                className="btn btn-secondary"
+                                className={styles.logoutBtn}
                                 onClick={logout}
                             >
                                 로그아웃
@@ -49,7 +41,7 @@ export default function Header() {
                         </div>
                     ) : (
                         <button
-                            className="btn btn-primary"
+                            className={styles.loginBtn}
                             onClick={login}
                         >
                             로그인

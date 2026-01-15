@@ -66,7 +66,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
 
                 if (isMounted && rawCandles) {
                     const formatted = rawCandles.map((c: any) => ({
-                        time: c[0] / 1000,
+                        time: (c[0] / 1000) + (9 * 60 * 60), // KST Offset
                         open: parseFloat(c[1]),
                         high: parseFloat(c[2]),
                         low: parseFloat(c[3]),
@@ -116,7 +116,8 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                         return true;
                     })
                     .map(item => {
-                        const time = new Date(item.published_at).getTime() / 1000;
+                        // KST Offset for markers
+                        const time = (new Date(item.published_at).getTime() / 1000) + (9 * 60 * 60);
                         const isBullish = (item.sentiment_score || 0) > 0;
 
                         // Store full item in map for click retrieval
@@ -178,7 +179,7 @@ export default function TradingChart({ symbol, interval = '15m' }: TradingChartP
                 if (msg.e === 'kline') {
                     const k = msg.k;
                     const c = {
-                        time: k.t / 1000,
+                        time: (k.t / 1000) + (9 * 60 * 60), // KST Offset
                         open: parseFloat(k.o),
                         high: parseFloat(k.h),
                         low: parseFloat(k.l),

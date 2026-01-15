@@ -10,7 +10,7 @@ interface LoginGateProps {
 export default function LoginGate({ children }: LoginGateProps) {
     const { user, isLoggedIn, loading, login, logout } = useAuth();
 
-    // Show loading spinner while checking auth status
+    // 1. Show loading spinner while checking auth status
     if (loading) {
         return (
             <div className={styles.loadingContainer}>
@@ -20,8 +20,10 @@ export default function LoginGate({ children }: LoginGateProps) {
         );
     }
 
-    // If not logged in, show login modal
-    if (!isLoggedIn || !user) {
+    // 2. Check if user is properly logged in (must have valid uuid)
+    const isValidLogin = isLoggedIn && user && user.uuid;
+
+    if (!isValidLogin) {
         return (
             <div className={styles.gateContainer}>
                 <div className={styles.overlay}>
@@ -29,7 +31,6 @@ export default function LoginGate({ children }: LoginGateProps) {
                         <div className={styles.logo}>
                             TokenPost<span>PRO</span>
                         </div>
-                        <div className={styles.modalIcon}>🔒</div>
                         <h2 className={styles.modalTitle}>로그인이 필요합니다</h2>
                         <p className={styles.modalDescription}>
                             TokenPost PRO는 프리미엄 암호화폐 분석 서비스입니다.<br />
@@ -50,7 +51,7 @@ export default function LoginGate({ children }: LoginGateProps) {
         );
     }
 
-    // Check PRO subscription (subscription_plan should not be empty)
+    // 3. Check PRO subscription
     const hasPROAccess = user.subscription_plan || user.subscription_status === 'active';
 
     if (!hasPROAccess) {
@@ -61,7 +62,6 @@ export default function LoginGate({ children }: LoginGateProps) {
                         <div className={styles.logo}>
                             TokenPost<span>PRO</span>
                         </div>
-                        <div className={styles.modalIcon}>⭐</div>
                         <h2 className={styles.modalTitle}>PRO 구독이 필요합니다</h2>
                         <p className={styles.modalDescription}>
                             안녕하세요, <strong>{user.nickname || user.email}</strong>님!<br />
@@ -78,8 +78,7 @@ export default function LoginGate({ children }: LoginGateProps) {
                         </a>
                         <button
                             onClick={logout}
-                            className={styles.signupHint}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', marginTop: '16px' }}
+                            className={styles.secondaryButton}
                         >
                             다른 계정으로 로그인
                         </button>
@@ -89,6 +88,6 @@ export default function LoginGate({ children }: LoginGateProps) {
         );
     }
 
-    // User is logged in with PRO access, render children
+    // 4. User has valid login + PRO access
     return <>{children}</>;
 }

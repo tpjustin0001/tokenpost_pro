@@ -100,7 +100,7 @@
 }
 
 .list {
-    max-height: 360px;
+    max-height: 520px;
     overflow-y: auto;
 }
 
@@ -216,15 +216,16 @@
 }
 
 .footer {
-    padding: var(--spacing-md);
+    padding: 8px 12px;
     border-top: 1px solid var(--border-color);
     text-align: center;
 }
 
 .viewAll {
-    font-size: var(--text-xs);
+    font-size: 11px;
     color: var(--accent-blue);
     text-decoration: none;
+    opacity: 0.8;
 }
 
 .viewAll:hover {

@@ -20,14 +20,17 @@ export default function EventTicker() {
             try {
                 if (!supabase) return;
 
-                // Fetch today's and coming events
+                // Fetch past week + upcoming events (show more context)
+                const pastDate = new Date();
+                pastDate.setDate(pastDate.getDate() - 7); // 7 days ago
+
                 const { data, error } = await supabase
                     .from('calendar_events')
                     .select('*')
-                    .gte('event_date', new Date().toISOString().split('T')[0]) // From today
+                    .gte('event_date', pastDate.toISOString().split('T')[0])
                     .order('event_date', { ascending: true })
                     .order('time', { ascending: true })
-                    .limit(10);
+                    .limit(20);
 
                 if (error) throw error;
                 if (data) setEvents(data);

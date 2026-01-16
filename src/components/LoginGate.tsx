@@ -69,8 +69,9 @@ export default function LoginGate({ children }: LoginGateProps) {
     // API returns status: "Y"/"N", Plan: "Plus"/"Free"
     const hasPROAccess = isWhitelisted ||  // 화이트리스트 계정
         user.subscription_status === 'Y' ||  // status가 'Y'면 구독자
-        (user.subscription_plan && user.subscription_plan !== 'Free') ||  // Plan이 Free가 아니면 구독자
-        user.grade_name;  // 등급이 있으면 구독자로 간주 (fallback)
+        (user.subscription_plan && user.subscription_plan !== 'Free');  // Plan이 Free가 아니면 구독자
+
+    // [Strict Mode] Removed 'user.grade_name' fallback to prevent non-subscribers from entering.
 
     console.log('[LoginGate] PRO Check:', {
         email: user.email,

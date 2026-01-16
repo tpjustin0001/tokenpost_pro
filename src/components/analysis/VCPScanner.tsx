@@ -17,53 +17,41 @@ interface VCPSignal {
     c3: number;
     atrPct: number;
     volRatio: number;
+    currency: string;
 }
 
-// Direct CoinGecko image URLs for major coins
+// Local coin icon paths (stored in public/icons/coins/)
 function getCoinIconUrl(symbol: string): string {
-    const urls: Record<string, string> = {
-        'BTC': 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
-        'ETH': 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
-        'SOL': 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
-        'BNB': 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
-        'XRP': 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
-        'ADA': 'https://assets.coingecko.com/coins/images/975/small/cardano.png',
-        'DOGE': 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png',
-        'AVAX': 'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png',
-        'SHIB': 'https://assets.coingecko.com/coins/images/11939/small/shiba.png',
-        'DOT': 'https://assets.coingecko.com/coins/images/12171/small/polkadot.png',
-        'LINK': 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
-        'MATIC': 'https://assets.coingecko.com/coins/images/4713/small/polygon.png',
-        'ATOM': 'https://assets.coingecko.com/coins/images/1481/small/cosmos_hub.png',
-        'LTC': 'https://assets.coingecko.com/coins/images/2/small/litecoin.png',
-        'UNI': 'https://assets.coingecko.com/coins/images/12504/small/uniswap.png',
-        'SUI': 'https://assets.coingecko.com/coins/images/28464/small/sui-ocean-square.png',
-        'NEAR': 'https://assets.coingecko.com/coins/images/10365/small/near_icon.png',
-        'APT': 'https://assets.coingecko.com/coins/images/26455/small/aptos_round.png',
-        'ARB': 'https://assets.coingecko.com/coins/images/16547/small/arbitrum.png',
-        'OP': 'https://assets.coingecko.com/coins/images/25244/small/Optimism.png',
-        'INJ': 'https://assets.coingecko.com/coins/images/12882/small/secondary-symbol.png',
-        'TIA': 'https://assets.coingecko.com/coins/images/31967/small/tia.png',
-        'SEI': 'https://assets.coingecko.com/coins/images/28205/small/Sei_Logo_Background_White.png',
-        'FET': 'https://assets.coingecko.com/coins/images/5624/small/fet.png',
-        'RNDR': 'https://assets.coingecko.com/coins/images/11636/small/rndr.png',
-        'IMX': 'https://assets.coingecko.com/coins/images/17233/small/imx.png',
-        'ONDO': 'https://assets.coingecko.com/coins/images/32532/small/ondo.png',
-        'AAVE': 'https://assets.coingecko.com/coins/images/12645/small/AAVE.png',
-    };
-    return urls[symbol.toUpperCase()] || `https://ui-avatars.com/api/?name=${symbol}&background=6366f1&color=fff&size=64&bold=true`;
+    const supported = [
+        // Top 10
+        'BTC', 'ETH', 'XRP', 'SOL', 'BNB', 'DOGE', 'ADA', 'TRX', 'AVAX', 'LINK',
+        // 11-20
+        'TON', 'SHIB', 'DOT', 'XLM', 'BCH', 'SUI', 'HBAR', 'LTC', 'PEPE', 'UNI',
+        // 21-30
+        'NEAR', 'APT', 'ICP', 'ETC', 'MATIC', 'TAO', 'AAVE', 'FIL', 'STX', 'VET',
+        // 31-40
+        'ATOM', 'INJ', 'RNDR', 'IMX', 'ARB', 'OP', 'MKR', 'GRT', 'THETA', 'FTM',
+        // 41-50
+        'ALGO', 'SEI', 'TIA', 'SAND', 'MANA', 'XTZ', 'AXS', 'LDO', 'WOO', 'ZEC',
+        // 51-60
+        'JUP', 'BONK', 'STRK', 'PYTH', 'BLUR', 'WEMIX', 'GALA', 'YFI', 'FRAX', 'ONT',
+        // 61-70
+        'ZRX', 'RAY', 'EOS', 'MASK', 'APE', 'CRO', 'CFX', 'FLOW', 'ONE', 'AR',
+        // 71-80
+        'LUNA', 'EGLD', 'ENS', 'DYDX', 'ICX', 'COMP', 'SUSHI', 'SNX', 'PENDLE', 'HT',
+        // 81-90
+        'AGIX', 'OCEAN', 'NEO', 'KAVA', 'ANKR', 'IOTA', 'CRV', 'IO', 'POL', 'WLFI',
+        // 91-100
+        'KCS', 'W', 'DAI', 'WBTC', 'STETH', 'USDT', 'USDC', 'BUSD', '1INCH', 'CC'
+    ];
+    const sym = symbol.toUpperCase();
+    if (supported.includes(sym)) {
+        return `/icons/coins/${sym.toLowerCase()}.png`;
+    }
+    return `https://ui-avatars.com/api/?name=${symbol}&background=6366f1&color=fff&size=64&bold=true`;
 }
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
-
-// Fallback data when API is unavailable
-const FALLBACK_SIGNALS = [
-    { symbol: 'SOL', grade: 'A', score: 85, signal_type: 'BREAKOUT', pivot_high: 195, current_price: 198.5, breakout_pct: 1.8, c1: 28, c2: 18, c3: 12, atr_pct: 3.2, vol_ratio: 2.1 },
-    { symbol: 'AVAX', grade: 'A', score: 78, signal_type: 'APPROACHING', pivot_high: 42, current_price: 41.2, breakout_pct: -1.9, c1: 32, c2: 22, c3: 15, atr_pct: 4.1, vol_ratio: 1.5 },
-    { symbol: 'LINK', grade: 'B', score: 72, signal_type: 'RETEST_OK', pivot_high: 28, current_price: 28.8, breakout_pct: 2.9, c1: 25, c2: 20, c3: 16, atr_pct: 3.8, vol_ratio: 1.8 },
-    { symbol: 'SUI', grade: 'B', score: 68, signal_type: 'BREAKOUT', pivot_high: 4.2, current_price: 4.35, breakout_pct: 3.6, c1: 30, c2: 24, c3: 18, atr_pct: 5.2, vol_ratio: 2.4 },
-    { symbol: 'XRP', grade: 'C', score: 55, signal_type: 'APPROACHING', pivot_high: 2.5, current_price: 2.48, breakout_pct: -0.8, c1: 22, c2: 20, c3: 18, atr_pct: 3.5, vol_ratio: 1.2 },
-];
 
 export default function VCPScanner() {
     const { data, isLoading } = useSWR(
@@ -92,11 +80,19 @@ export default function VCPScanner() {
         c3: s.c3 || 15,
         atrPct: s.atr_pct || 3.5,
         volRatio: s.vol_ratio || 1.5,
+        currency: s.currency || 'USD',
     }));
 
-    const filteredSignals = filter === 'ALL'
-        ? signals
-        : signals.filter(s => s.grade === filter);
+    const filteredSignals = (filter === 'ALL' ? signals : signals.filter(s => s.grade === filter))
+        .filter(s => s.currentPrice > 0 && s.currency === 'KRW') // Upbit Only (KRW)
+        .sort((a, b) => {
+            // 1. Score Descending
+            if (b.score !== a.score) return b.score - a.score;
+            // 2. Grade Ascending (A < B < C)
+            if (a.grade !== b.grade) return a.grade.localeCompare(b.grade);
+            // 3. Vol Ratio Descending
+            return (b.volRatio || 0) - (a.volRatio || 0);
+        });
 
     const gradeColors: Record<string, string> = {
         A: '#10b981',
@@ -119,16 +115,16 @@ export default function VCPScanner() {
 
     return (
         <div className="card">
-            <div className="card-header">
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className="card-title">VCP 스캐너</span>
-                        <span style={{
-                            fontSize: '9px', padding: '2px 6px', background: 'rgba(16, 185, 129, 0.15)',
-                            color: '#10b981', borderRadius: '4px', fontWeight: 600
-                        }}>TOP 30 대상</span>
+            {/* Enhanced Header */}
+            <div className={styles.header}>
+                <div className={styles.headerMain}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '20px' }}>📊</span>
+                        <h2 className={styles.title}>
+                            <span style={{ color: '#093687', fontWeight: 900 }}>AI</span> 차트 패턴 분석
+                        </h2>
                     </div>
-                    <p className={styles.subtitle}>VCP 패턴 탐지 (A/B/C/D 등급)</p>
+                    <span className="badge badge-live">실시간</span>
                 </div>
                 <div className={styles.tabs}>
                     {['ALL', 'A', 'B', 'C'].map((tab) => (
@@ -137,57 +133,57 @@ export default function VCPScanner() {
                             className={`${styles.tab} ${filter === tab ? styles.active : ''}`}
                             onClick={() => setFilter(tab as typeof filter)}
                         >
-                            {tab}
+                            {tab === 'ALL' ? '전체' : `${tab}등급`}
                         </button>
                     ))}
                 </div>
             </div>
 
             {/* Scanner HUD */}
-            <div style={{
-                display: 'flex', gap: '12px', padding: '12px 16px', background: 'var(--bg-secondary)',
-                borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>스캔 결과:</span>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{totalSignals}개</span>
+            <div className={styles.hud}>
+                <div className={styles.hudItem}>
+                    <span className={styles.hudLabel}>스캔 결과</span>
+                    <span className={styles.hudValue}>{totalSignals}개</span>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                    <span style={{ fontSize: '11px', padding: '2px 8px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', borderRadius: '4px', fontWeight: 600 }}>
+                <div className={styles.hudBadges}>
+                    <span className={styles.hudBadge} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
                         A등급: {countA}
                     </span>
-                    <span style={{ fontSize: '11px', padding: '2px 8px', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', borderRadius: '4px', fontWeight: 600 }}>
+                    <span className={styles.hudBadge} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6' }}>
                         B등급: {countB}
                     </span>
-                    <span style={{ fontSize: '11px', padding: '2px 8px', background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', borderRadius: '4px', fontWeight: 600 }}>
+                    <span className={styles.hudBadge} style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
                         C등급: {countC}
                     </span>
                 </div>
             </div>
+
             {/* VCP Logic Guide */}
-            <div style={{
-                background: 'rgba(16, 185, 129, 0.08)',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                fontSize: '13px',
-                color: 'var(--text-secondary)',
-                border: '1px solid rgba(16, 185, 129, 0.2)'
-            }}>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '16px' }}>📉</span>
-                    <div>
-                        <strong>VCP (Volatility Contraction Pattern)란?</strong><br />
-                        가격 파동이 점차 줄어들며(C1→C2→C3) 힘을 응축하다가, 저항선을 뚫고 폭발적으로 상승하기 직전의 차트 패턴입니다. (마크 미너비니 전략)
-                    </div>
+            <div className={styles.guide}>
+                <div className={styles.guideIcon}>📉</div>
+                <div className={styles.guideText}>
+                    <strong>VCP (Volatility Contraction Pattern)</strong>
+                    <span>가격 파동이 점차 줄어들며(C1→C2→C3) 힘을 응축하다가, 저항선을 뚫고 폭발적으로 상승하기 직전의 차트 패턴입니다. (마크 미너비니 전략)</span>
                 </div>
-                <div style={{ marginTop: '8px', paddingLeft: '24px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span>• <strong>등급(Grade):</strong> 패턴의 완성도입니다. A등급일수록 변동성 축소가 뚜렷하고 이평선 정배열 상태가 좋습니다.</span>
-                    <span>• <strong>돌파(Breakout):</strong> 52주 신고가 근처에서 저항선을 뚫어낸 상태입니다. 거래량이 동반되면 강력한 매수 신호입니다.</span>
-                    <span>• <strong>축소(Contraction):</strong> 30일/20일/10일 간의 가격 진폭이 줄어드는 것을 의미합니다. (예: 28% → 18% → 12%)</span>
-                    <span style={{ marginTop: '4px', color: '#10b981', fontWeight: 500 }}>
-                        ※ 시가총액 상위 30개 자산 대상 · 5분 주기 업데이트
-                    </span>
+            </div>
+
+            {/* Column Legend */}
+            <div className={styles.legend}>
+                <div className={styles.legendItem}>
+                    <strong>시그널</strong>
+                    <span>돌파=신고가 돌파, 접근중=돌파 임박, 리테스트=재확인</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <strong>점수</strong>
+                    <span>0~100점. 이평선 정배열, 거래량, 패턴 완성도 반영</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <strong>돌파율</strong>
+                    <span>52주 고점 대비 현재가 (+ = 돌파, - = 미달)</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <strong>축소율</strong>
+                    <span>30일→20일→10일 변동폭. 숫자가 줄어들면 VCP 성립</span>
                 </div>
             </div>
 
@@ -200,12 +196,12 @@ export default function VCPScanner() {
                     <div className={styles.table}>
                         <div className={styles.tableHeader}>
                             <span>심볼</span>
+                            <span>현재가</span>
                             <span>등급</span>
                             <span>시그널</span>
                             <span>점수</span>
                             <span>돌파율</span>
-                            <span>축소율 (C1→C3)</span>
-                            <span>거래강도</span>
+                            <span>축소율</span>
                         </div>
                         {filteredSignals.map((signal) => (
                             <div key={signal.symbol} className={styles.tableRow}>
@@ -221,6 +217,9 @@ export default function VCPScanner() {
                                     />
                                     <span className={styles.symbolText}>{signal.symbol}</span>
                                 </div>
+                                <span className={styles.priceCell}>
+                                    {signal.currency === 'KRW' ? '₩' : '$'}{signal.currentPrice.toLocaleString()}
+                                </span>
                                 <span
                                     className={styles.grade}
                                     style={{
@@ -232,6 +231,9 @@ export default function VCPScanner() {
                                 </span>
                                 <span className={`${styles.signalType} ${styles[signal.signalType.toLowerCase()]}`}>
                                     {signalLabels[signal.signalType]}
+                                    <span style={{ display: 'block', fontSize: '10px', marginTop: '2px', fontWeight: 500, color: 'rgba(0,0,0,0.5)' }}>
+                                        Vol {signal.volRatio?.toFixed(1)}x
+                                    </span>
                                 </span>
                                 <span className={styles.score}>
                                     <div className={styles.scoreBar}>
@@ -251,14 +253,12 @@ export default function VCPScanner() {
                                 <span className={styles.contraction}>
                                     {signal.c1.toFixed(0)}→{signal.c2.toFixed(0)}→{signal.c3.toFixed(0)}
                                 </span>
-                                <span className={signal.volRatio >= 1.5 ? styles.positive : styles.neutral}>
-                                    {signal.volRatio.toFixed(1)}x
-                                </span>
                             </div>
                         ))}
                     </div>
-                )}
-            </div>
+                )
+                }
+            </div >
         </div >
     );
 }

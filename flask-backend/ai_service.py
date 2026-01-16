@@ -106,27 +106,49 @@ class AIService:
         
         JSON Structure:
         {{
+            "overallScore": int(0-100), // Integrated Market Score
+            "marketPhase": "Accumulation | Markup | Distribution | Markdown",
+            "summary": "Comprehensive Macro Summary (Korean). Analyze Fed data, unexpected events, and global liquidity.",
             "grok_saying": "A witty, edgy, and insightful one-liner about the market vibe. Be cynical but accurate. IN KOREAN.",
-            "atmosphere_score": int(0-100), // 0=Extreme Fear, 100=Extreme Greed
+            "atmosphere_score": int(0-100),
             "atmosphere_label": "공포 (Fear) | 중립 (Neutral) | 탐욕 (Greed)",
             "market_keywords": ["#Keyword1", "#Keyword2", "#Keyword3"],
             "top_tweets": [
-                {{ "author": "User Name", "handle": "@handle", "content": "Tweet text...", "time": "2m ago" }},
-                {{ "author": "Analyst", "handle": "@analyst", "content": "Analysis...", "time": "15m ago" }},
-                {{ "author": "News", "handle": "@news", "content": "Breaking...", "time": "1h ago" }}
+                {{ "author": "CryptoGuru", "handle": "@cryptoguru", "content": "Bitcoin breaking resistance...", "time": "2m ago" }},
+                {{ "author": "MarketAnalyst", "handle": "@marketanalyst", "content": "Ethereum ETF flows looking strong...", "time": "15m ago" }},
+                {{ "author": "MacroWatch", "handle": "@macrowatch", "content": "Fed meeting minutes released...", "time": "23m ago" }},
+                {{ "author": "DefiLlama", "handle": "@defillama", "content": "TVL reaching new highs...", "time": "45m ago" }},
+                {{ "author": "WhaleAlert", "handle": "@whale_alert", "content": "1000 BTC moved to Coinbase...", "time": "1h ago" }}
             ],
             "whale_alerts": [
-                {{ "symbol": "BTC", "type": "매수", "amount": "$120M", "time": "5분 전", "note": "바이낸스 입금" }},
-                {{ "symbol": "ETH", "type": "매도", "amount": "$80M", "time": "12분 전", "note": "거래소 출금" }}
+                {{ "symbol": "BTC", "type": "매수", "amount": "$120M", "time": "5분 전", "note": "바이낸스 입금" }}
             ],
-            "sectorAnalysis": [ {{ "name": "...", "signal": "...", "score": int, "insight": "..." }} ],
+            "macro_factors": [
+                {{ "name": "Interest Rates", "impact": "Positive/Neutral/Negative", "detail": "Analyze impact of Fed rates..." }},
+                {{ "name": "Global Liquidity", "impact": "Positive/Neutral/Negative", "detail": "M2 supply trends..." }},
+                {{ "name": "Geopolitical", "impact": "Positive/Neutral/Negative", "detail": "Wars or regulations..." }}
+            ],
+            "sectorAnalysis": [ 
+                {{ "name": "Layer 1", "signal": "bullish/bearish/neutral", "score": int, "insight": "..." }},
+                {{ "name": "DeFi", "signal": "...", "score": int, "insight": "..." }},
+                {{ "name": "AI", "signal": "...", "score": int, "insight": "..." }},
+                {{ "name": "RWA", "signal": "...", "score": int, "insight": "..." }}
+            ],
+            "onchain_signals": [
+                {{ "metric": "Exchange Netflow", "signal": "bullish/bearish/neutral", "value": "Inflow/Outflow High/Low", "comment": "..." }},
+                {{ "metric": "Miner Position", "signal": "...", "value": "...", "comment": "..." }}
+            ],
             "radar_data": [
                  {{ "label": "Macro", "value": int }},
                  {{ "label": "Technical", "value": int }},
                  {{ "label": "On-Chain", "value": int }},
                  {{ "label": "Sentiment", "value": int }},
                  {{ "label": "Innovation", "value": int }}
-            ]
+            ],
+            "risks": ["Risk 1", "Risk 2", "Risk 3"],
+            "opportunities": ["Opp 1", "Opp 2", "Opp 3"],
+            "recommendation": "Main Strategy (e.g. DCA, Hold, Take Profit)",
+            "actionable_insight_summary": "One sentence actionable advice for the user."
         }}
         """
 

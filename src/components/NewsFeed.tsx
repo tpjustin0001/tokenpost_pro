@@ -11,19 +11,42 @@ interface NewsItem {
     time: string;
     source: string;
     title: string;
-    sentiment?: 'positive' | 'negative' | 'neutral';
     summary?: string;
     content?: string;
-    tags?: string[];
+    tickers: string[];
 }
+
+// Top crypto tickers for filtering
+const CRYPTO_TICKERS = [
+    'BTC', 'ETH', 'XRP', 'SOL', 'BNB', 'DOGE', 'ADA', 'TRX', 'AVAX', 'LINK',
+    'TON', 'SHIB', 'DOT', 'XLM', 'BCH', 'SUI', 'HBAR', 'LTC', 'PEPE', 'UNI',
+    'NEAR', 'APT', 'ICP', 'ETC', 'MATIC', 'TAO', 'AAVE', 'FIL', 'STX', 'VET',
+    'ATOM', 'INJ', 'RNDR', 'IMX', 'ARB', 'OP', 'MKR', 'GRT', 'THETA', 'FTM'
+];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RawNewsData = News & Record<string, any>;
+
+// Extract tickers from content
+function extractTickers(content: string): string[] {
+    const found: string[] = [];
+    const upperContent = content.toUpperCase();
+
+    for (const ticker of CRYPTO_TICKERS) {
+        // Check for ticker as standalone word (with word boundaries)
+        const regex = new RegExp(`\\b${ticker}\\b`, 'i');
+        if (regex.test(upperContent)) {
+            found.push(ticker);
+        }
+    }
+    return found.slice(0, 3); // Max 3 tickers
+}
 
 export default function NewsFeed() {
     const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+    const [filter, setFilter] = useState<string>('ALL');
 
     useEffect(() => {
         fetchNews();
@@ -33,7 +56,7 @@ export default function NewsFeed() {
             ? supabase.channel('public:news')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news' }, (payload) => {
                     const newRow = payload.new as RawNewsData;
-                    setNewsItems(prev => [mapNewsToItem(newRow), ...prev].slice(0, 20));
+                    setNewsItems(prev => [mapNewsToItem(newRow), ...prev].slice(0, 30));
                 })
                 .subscribe()
             : null;
@@ -50,7 +73,7 @@ export default function NewsFeed() {
             .from('news')
             .select('*')
             .order('published_at', { ascending: false })
-            .limit(20);
+            .limit(30);
 
         if (error) {
             console.error('Error fetching news:', error);
@@ -67,29 +90,26 @@ export default function NewsFeed() {
         const date = new Date(row.published_at || new Date().toISOString());
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        let sentiment: 'positive' | 'negative' | 'neutral' = 'neutral';
-        let importance: 'high' | 'normal' = 'normal';
-
-        if (row.sentiment_score !== null) {
-            if (row.sentiment_score > 0.3) sentiment = 'positive';
-            else if (row.sentiment_score < -0.3) sentiment = 'negative';
-
-            if (Math.abs(row.sentiment_score) > 0.6) {
-                importance = 'high';
-            }
-        }
+        // Extract tickers from title and content
+        const searchText = `${row.title || ''} ${row.content || ''} ${row.summary || ''}`;
+        const tickers = extractTickers(searchText);
 
         return {
             id: row.id.toString(),
             time: timeStr,
             source: row.source || 'TokenPost',
             title: row.title,
-            sentiment: sentiment,
             summary: row.summary || undefined,
             content: row.content || undefined,
-            tags: importance === 'high' ? ['중요'] : [],
+            tickers,
         };
     }
+
+    const filteredNews = filter === 'ALL'
+        ? newsItems
+        : newsItems.filter(news => news.tickers.includes(filter));
+
+    const tickerFilters = ['ALL', 'BTC', 'ETH', 'XRP', 'SOL', 'BNB'];
 
     return (
         <div className={styles.feedContainer}>
@@ -100,22 +120,34 @@ export default function NewsFeed() {
                 </div>
             </div>
 
+            {/* Ticker Filters */}
+            <div className={styles.filters}>
+                {tickerFilters.map(ticker => (
+                    <button
+                        key={ticker}
+                        className={`${styles.filterBtn} ${filter === ticker ? styles.active : ''}`}
+                        onClick={() => setFilter(ticker)}
+                    >
+                        {ticker === 'ALL' ? '전체' : ticker}
+                    </button>
+                ))}
+            </div>
+
             <div className={styles.list}>
                 {loading ? (
                     <NewsFeedSkeleton />
-                ) : newsItems.length === 0 ? (
+                ) : filteredNews.length === 0 ? (
                     <EmptyState
                         icon={<Newspaper size={48} />}
-                        title="뉴스를 불러오는 중입니다"
-                        description="최신 암호화폐 뉴스가 곧 표시됩니다."
+                        title="해당 뉴스가 없습니다"
+                        description="다른 필터를 선택해보세요."
                     />
                 ) : (
-                    newsItems.map((news) => (
+                    filteredNews.map((news) => (
                         <article
                             key={news.id}
-                            className={`${styles.item} ${styles[news.sentiment || 'neutral']}`}
+                            className={styles.item}
                             onClick={() => setSelectedNews(news)}
-                            style={{ cursor: 'pointer' }}
                         >
                             <div className={styles.itemMeta}>
                                 <span className={styles.time}>{news.time}</span>
@@ -123,22 +155,14 @@ export default function NewsFeed() {
                             </div>
 
                             <div className={styles.itemContent}>
-                                <div className={styles.titleRow}>
-                                    {news.tags && news.tags.includes('중요') && (
-                                        <span className={styles.importanceBadge}>⭐️ 중요</span>
-                                    )}
-                                    <h3
-                                        className={styles.title}
-                                        title={news.summary}
-                                    >
-                                        {news.title}
-                                    </h3>
-                                </div>
-                                <div className={styles.indicators}>
-                                    <span className={`${styles.sentimentPill} ${styles[news.sentiment || 'neutral']}`}>
-                                        {news.sentiment === 'positive' ? '▲ 호재' : news.sentiment === 'negative' ? '▼ 악재' : '- 중립'}
-                                    </span>
-                                </div>
+                                <h3 className={styles.title}>{news.title}</h3>
+                                {news.tickers.length > 0 && (
+                                    <div className={styles.tickerTags}>
+                                        {news.tickers.map(ticker => (
+                                            <span key={ticker} className={styles.tickerTag}>{ticker}</span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </article>
                     ))
@@ -153,7 +177,7 @@ export default function NewsFeed() {
                     readTime: '2분',
                     summary: selectedNews.summary || '',
                     content: selectedNews.content || selectedNews.summary || '',
-                    tags: selectedNews.tags || []
+                    tags: selectedNews.tickers || []
                 } : null}
                 isOpen={!!selectedNews}
                 onClose={() => setSelectedNews(null)}

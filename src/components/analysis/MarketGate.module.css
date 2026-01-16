@@ -1,147 +1,177 @@
-.loading {
-    padding: var(--spacing-xl);
-    text-align: center;
-    color: var(--text-muted);
+/* Market Gate - Coin Cards Layout */
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
-.liveBadge {
-    padding: 2px 6px;
-    background: var(--accent-green-dim);
-    color: var(--accent-green);
-    font-size: 9px;
+.headerMain {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.headerIcon {
+    font-size: 22px;
+}
+
+.title {
+    font-size: 17px;
     font-weight: 700;
-    border-radius: 2px;
-}
-
-.content {
-    padding: var(--spacing-lg);
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-lg);
-}
-
-.gaugeSection {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-md);
-}
-
-.gauge {
-    position: relative;
-    width: 140px;
-    height: 140px;
-}
-
-.gaugeSvg {
-    width: 100%;
-    height: 100%;
-}
-
-.gaugeCenter {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-xs);
-}
-
-.score {
-    font-size: var(--text-3xl);
-    font-weight: 800;
     color: var(--text-primary);
+    margin: 0;
 }
 
-.gateLabel {
-    padding: 2px 8px;
-    border-radius: var(--radius-sm);
-    font-size: 10px;
-    font-weight: 700;
-}
-
-.summary {
-    font-size: var(--text-sm);
+.subtitle {
+    font-size: 12px;
     color: var(--text-muted);
-    text-align: center;
 }
 
-.components {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-}
-
-.component {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.componentHeader {
-    display: flex;
-    justify-content: space-between;
-    font-size: var(--text-xs);
-}
-
-.componentName {
-    color: var(--text-secondary);
-}
-
-.componentScore {
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-}
-
-.bar {
-    height: 6px;
-    background: var(--bg-tertiary);
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-.barFill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.5s ease;
-}
-
-.indicators {
+/* Card Grid */
+.cardGrid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-sm);
-    padding-top: var(--spacing-md);
-    border-top: 1px solid var(--border-color);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 16px;
 }
 
-.indicator {
-    display: flex;
-    justify-content: space-between;
-    font-size: var(--text-xs);
-    padding: var(--spacing-xs);
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-sm);
+@media (max-width: 900px) {
+    .cardGrid {
+        grid-template-columns: 1fr;
+    }
 }
 
-.indName {
+.loading {
+    grid-column: 1 / -1;
+    padding: 40px;
+    text-align: center;
     color: var(--text-muted);
 }
 
-.indValue {
+/* Coin Card */
+.coinCard {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s;
+}
+
+.coinCard:hover {
+    border-color: var(--border-color-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.coinHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.coinInfo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.coinIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.coinSymbol {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: block;
+}
+
+.coinName {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+}
+
+.priceSection {
+    text-align: right;
+}
+
+.price {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
     font-family: var(--font-mono);
-    font-weight: 500;
+    display: block;
 }
 
-.bullish {
+.positive {
     color: var(--accent-green);
+    font-size: 12px;
+    font-weight: 600;
 }
 
-.bearish {
+.negative {
     color: var(--accent-red);
+    font-size: 12px;
+    font-weight: 600;
 }
 
-.neutral {
+/* Signals */
+.signals {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.signal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.signalLabel {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.signalValue {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.signalTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reason {
+    font-size: 11px;
     color: var(--text-secondary);
+    margin-top: 4px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+/* MA Info */
+.maInfo {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
 }

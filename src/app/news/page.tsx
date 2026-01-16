@@ -4,25 +4,29 @@ import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import ContentModal from '@/components/ContentModal';
 import { supabase, News } from '@/lib/supabase';
-import { flaskApi } from '@/services/flaskApi';
 import styles from './page.module.css';
 
-// Fallback mock data (Supabase 연결 전)
-const CATEGORY_MAP: Record<string, string> = {
-    ALL: '전체',
-    REGULATION: '규제',
-    MARKET: '시장',
-    DEFI: 'DeFi',
-    POLICY: '정책',
-    LAYER2: 'Layer2',
-    NFT: 'NFT',
-    GENERAL: '일반',
-    MACRO: '거시경제',
-    EXCHANGE: '거래소',
-    AI: 'AI'
-};
+// Top crypto tickers for filtering
+const CRYPTO_TICKERS = [
+    'BTC', 'ETH', 'XRP', 'SOL', 'BNB', 'DOGE', 'ADA', 'TRX', 'AVAX', 'LINK',
+    'TON', 'SHIB', 'DOT', 'PEPE', 'UNI', 'NEAR', 'APT', 'ARB', 'OP', 'SUI'
+];
 
-const CATEGORY_KEYS = Object.keys(CATEGORY_MAP);
+const TICKER_FILTERS = ['ALL', 'BTC', 'ETH', 'XRP', 'SOL', 'BNB', 'ADA', 'DOGE'];
+
+// Extract tickers from content
+function extractTickers(content: string): string[] {
+    const found: string[] = [];
+    const upperContent = content.toUpperCase();
+
+    for (const ticker of CRYPTO_TICKERS) {
+        const regex = new RegExp(`\\b${ticker}\\b`, 'i');
+        if (regex.test(upperContent)) {
+            found.push(ticker);
+        }
+    }
+    return found.slice(0, 4);
+}
 
 function getTimeAgo(dateString: string): string {
     const diff = Date.now() - new Date(dateString).getTime();
@@ -36,8 +40,8 @@ function getTimeAgo(dateString: string): string {
 export default function NewsPage() {
     const [news, setNews] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeCategory, setActiveCategory] = useState('ALL');
-    const [selectedItem, setSelectedItem] = useState<any>(null); // Store full object
+    const [activeFilter, setActiveFilter] = useState('ALL');
+    const [selectedItem, setSelectedItem] = useState<any>(null);
 
     useEffect(() => {
         async function fetchNews() {
@@ -60,12 +64,13 @@ export default function NewsPage() {
         fetchNews();
     }, []);
 
-    const filteredNews = activeCategory === 'ALL'
+    // Filter news by ticker
+    const filteredNews = activeFilter === 'ALL'
         ? news
         : news.filter(item => {
-            // Case-insensitive match for category keys
-            const itemCat = item.category?.toUpperCase();
-            return itemCat === activeCategory;
+            const searchText = `${item.title || ''} ${item.content || ''} ${item.summary || ''}`;
+            const tickers = extractTickers(searchText);
+            return tickers.includes(activeFilter);
         });
 
     return (
@@ -79,14 +84,15 @@ export default function NewsPage() {
                         <p className={styles.subtitle}>크립토 시장의 최신 소식을 빠르게 전달합니다</p>
                     </div>
 
-                    <div className={styles.categories}>
-                        {CATEGORY_KEYS.map(key => (
+                    {/* Ticker Filters */}
+                    <div className={styles.filters}>
+                        {TICKER_FILTERS.map(ticker => (
                             <button
-                                key={key}
-                                className={`${styles.categoryBtn} ${activeCategory === key ? styles.active : ''}`}
-                                onClick={() => setActiveCategory(key)}
+                                key={ticker}
+                                className={`${styles.filterBtn} ${activeFilter === ticker ? styles.active : ''}`}
+                                onClick={() => setActiveFilter(ticker)}
                             >
-                                {CATEGORY_MAP[key]}
+                                {ticker === 'ALL' ? '전체' : ticker}
                             </button>
                         ))}
                     </div>
@@ -94,35 +100,42 @@ export default function NewsPage() {
                     {loading ? (
                         <div className={styles.loading}>뉴스 로딩 중...</div>
                     ) : (
-                        <>
-                            {/* Timeline Feed */}
-                            <h2 className={styles.sectionHeading}>실시간 타임라인 (Timeline)</h2>
-                            <div className={styles.timelineFeed}>
-                                {filteredNews.map((item) => {
-                                    return (
-                                        <article
-                                            key={item.id}
-                                            className={styles.newsItem}
-                                            onClick={() => setSelectedItem(item)}
-                                        >
-                                            <div className={styles.itemHeader}>
-                                                <span className={styles.time}>{item.published_at ? new Date(item.published_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : getTimeAgo(item.created_at || new Date().toISOString())}</span>
-                                                <span className={styles.sourceBadge}>{item.source || 'TokenPost'}</span>
-                                            </div>
+                        <div className={styles.timelineFeed}>
+                            {filteredNews.map((item) => {
+                                const searchText = `${item.title || ''} ${item.content || ''} ${item.summary || ''}`;
+                                const tickers = extractTickers(searchText);
+                                const isImportant = item.is_important === true;
 
-                                            <h3 className={styles.title}>{item.title}</h3>
-                                            <p className={styles.summary}>{item.summary || item.content?.substring(0, 100) + '...'}</p>
+                                return (
+                                    <article
+                                        key={item.id}
+                                        className={`${styles.newsItem} ${isImportant ? styles.important : ''}`}
+                                        onClick={() => setSelectedItem(item)}
+                                    >
+                                        <div className={styles.itemHeader}>
+                                            <span className={styles.time}>
+                                                {item.published_at
+                                                    ? new Date(item.published_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                                    : getTimeAgo(item.created_at || new Date().toISOString())}
+                                            </span>
+                                            <span className={styles.sourceBadge}>{item.source || 'TokenPost'}</span>
+                                            {isImportant && <span className={styles.importantBadge}>⭐ 중요</span>}
+                                        </div>
 
-                                            <div className={styles.tags}>
-                                                {item.category && <span className={styles.tag}>{CATEGORY_MAP[item.category?.toUpperCase()] || item.category}</span>}
-                                                {item.sentiment_score > 0 && <span className={styles.tag} style={{ color: 'var(--accent-green)' }}>Positive</span>}
-                                                {item.sentiment_score < 0 && <span className={styles.tag} style={{ color: 'var(--accent-red)' }}>Negative</span>}
+                                        <h3 className={styles.title}>{item.title}</h3>
+                                        <p className={styles.summary}>{item.summary || item.content?.substring(0, 120) + '...'}</p>
+
+                                        {tickers.length > 0 && (
+                                            <div className={styles.tickerTags}>
+                                                {tickers.map(ticker => (
+                                                    <span key={ticker} className={styles.tickerTag}>{ticker}</span>
+                                                ))}
                                             </div>
-                                        </article>
-                                    );
-                                })}
-                            </div>
-                        </>
+                                        )}
+                                    </article>
+                                );
+                            })}
+                        </div>
                     )}
                 </main>
             </div>
@@ -130,8 +143,8 @@ export default function NewsPage() {
             <ContentModal
                 contentData={selectedItem ? {
                     ...selectedItem,
-                    time: selectedItem.published_at || selectedItem.created_at, // Map for Modal
-                    thumbnail: selectedItem.image_url // Map for Modal
+                    time: selectedItem.published_at || selectedItem.created_at,
+                    thumbnail: selectedItem.image_url
                 } : null}
                 isOpen={!!selectedItem}
                 onClose={() => setSelectedItem(null)}

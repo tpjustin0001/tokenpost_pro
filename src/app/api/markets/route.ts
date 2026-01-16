@@ -30,13 +30,15 @@ export async function GET() {
         const rawData = await res.json();
 
         // Normalize data for usePricePerformance hook
-        const normalizedData = rawData.map((coin: any) => ({
-            symbol: coin.symbol?.toUpperCase() || 'UNKNOWN',
-            price: coin.current_price || 0,
-            change: coin.price_change_percentage_1h_in_currency || coin.price_change_percentage_24h || 0,
-            volume: coin.total_volume || 0,
-            market_cap: coin.market_cap || 0,
-        }));
+        const normalizedData = rawData
+            .filter((coin: any) => (coin.total_volume || 0) >= 10_000_000) // Min $10M volume
+            .map((coin: any) => ({
+                symbol: coin.symbol?.toUpperCase() || 'UNKNOWN',
+                price: coin.current_price || 0,
+                change: coin.price_change_percentage_1h_in_currency || coin.price_change_percentage_24h || 0,
+                volume: coin.total_volume || 0,
+                market_cap: coin.market_cap || 0,
+            }));
 
         cache = { data: normalizedData, timestamp: now };
         return NextResponse.json(normalizedData);

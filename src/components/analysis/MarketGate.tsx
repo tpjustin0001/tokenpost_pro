@@ -1,168 +1,214 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import styles from './MarketGate.module.css';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
-interface GateData {
-    score: number;
-    gate_color: 'GREEN' | 'YELLOW' | 'RED';
-    summary: string;
-    components: {
-        trend: number;
-        volatility: number;
-        participation: number;
-        breadth: number;
-        leverage: number;
+interface CoinData {
+    symbol: string;
+    name: string;
+    price: number;
+    change24h: number;
+    trend: 'Bullish' | 'Neutral' | 'Bearish';
+    volatility: 'Low' | 'Normal' | 'High';
+    volume: 'High' | 'Normal' | 'Low';
+    ma20: number;
+    ma50: number;
+    currency: string;
+}
+
+// Signal colors
+const signalColors = {
+    Bullish: '#10b981',
+    Neutral: '#f59e0b',
+    Bearish: '#ef4444',
+    Low: '#10b981',
+    Normal: '#f59e0b',
+    High: '#ef4444',
+};
+
+const signalEmojis = {
+    Bullish: '🟢',
+    Neutral: '🟡',
+    Bearish: '🔴',
+    Low: '🟢',
+    Normal: '🟡',
+    High: '🔴',
+};
+
+// Volume signal is reversed (High is good)
+const volumeSignalColors = {
+    High: '#10b981',
+    Normal: '#f59e0b',
+    Low: '#ef4444',
+};
+
+const volumeSignalEmojis = {
+    High: '🟢',
+    Normal: '🟡',
+    Low: '🔴',
+};
+
+function getCoinIcon(symbol: string): string {
+    const icons: Record<string, string> = {
+        BTC: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
+        ETH: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+        XRP: 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
     };
-    indicators: Array<{
-        name: string;
-        value: number | string;
-        signal: 'Bullish' | 'Bearish' | 'Neutral';
-    }>;
-    error?: string;
+    return icons[symbol] || '';
 }
 
 export default function MarketGate() {
-    const { data, error, isLoading } = useSWR<GateData>(
-        '/api/python/crypto/market-gate',
-        fetcher,
-        {
-            refreshInterval: 300000, // 5분
-            revalidateOnFocus: false,
-        }
-    );
+    const { data: btcData } = useSWR('/api/python/crypto/asset/BTC', fetcher, { refreshInterval: 10000 });
+    const { data: ethData } = useSWR('/api/python/crypto/asset/ETH', fetcher, { refreshInterval: 10000 });
+    const { data: xrpData } = useSWR('/api/python/crypto/asset/XRP', fetcher, { refreshInterval: 10000 });
 
-    if (isLoading) {
-        return (
-            <div className="card">
-                <div className="card-header">
-                    <span className="card-title">Market Gate</span>
-                </div>
-                <div className={styles.loading}>시장 분석 중...</div>
-            </div>
-        );
-    }
+    const coins: CoinData[] = [
+        btcData && {
+            symbol: 'BTC',
+            name: '비트코인',
+            price: btcData.current_price || 0,
+            change24h: btcData.price_change_24h || 0,
+            trend: btcData.trend || 'Neutral',
+            volatility: btcData.volatility || 'Normal',
+            volume: btcData.volume_signal || 'Normal',
+            ma20: btcData.ma_20 || 0,
+            ma50: btcData.ma_50 || 0,
+            currency: btcData.source?.includes('KRW') ? 'KRW' : 'USD',
+        },
+        ethData && {
+            symbol: 'ETH',
+            name: '이더리움',
+            price: ethData.current_price || 0,
+            change24h: ethData.price_change_24h || 0,
+            trend: ethData.trend || 'Neutral',
+            volatility: ethData.volatility || 'Normal',
+            volume: ethData.volume_signal || 'Normal',
+            ma20: ethData.ma_20 || 0,
+            ma50: ethData.ma_50 || 0,
+            currency: ethData.source?.includes('KRW') ? 'KRW' : 'USD',
+        },
+        xrpData && {
+            symbol: 'XRP',
+            name: '리플',
+            price: xrpData.current_price || 0,
+            change24h: xrpData.price_change_24h || 0,
+            trend: xrpData.trend || 'Neutral',
+            volatility: xrpData.volatility || 'Normal',
+            volume: xrpData.volume_signal || 'Normal',
+            ma20: xrpData.ma_20 || 0,
+            ma50: xrpData.ma_50 || 0,
+            currency: xrpData.source?.includes('KRW') ? 'KRW' : 'USD',
+        },
+    ].filter(Boolean) as CoinData[];
 
-    if (error || !data || data.error) {
-        return (
-            <div className="card">
-                <div className="card-header">
-                    <span className="card-title">Market Gate</span>
-                </div>
-                <div className={styles.loading}>데이터 로딩 실패</div>
-            </div>
-        );
-    }
-
-    const gateColors = {
-        GREEN: '#10b981',
-        YELLOW: '#f59e0b',
-        RED: '#ef4444',
-    };
-
-    const gateColor = gateColors[data.gate_color];
-    const circumference = 2 * Math.PI * 45;
-    const progress = (data.score / 100) * circumference;
+    const isLoading = !btcData && !ethData && !xrpData;
 
     return (
         <div className="card">
-            <div className="card-header">
-                <span className="card-title">Market Gate</span>
-                <span className={styles.liveBadge}>LIVE</span>
+            <div className={styles.header}>
+                <div className={styles.headerMain}>
+                    <span className={styles.headerIcon}>🚦</span>
+                    <h2 className={styles.title}>시장 신호등</h2>
+                    <span className="badge badge-live">실시간</span>
+                </div>
+                <span className={styles.subtitle}>BTC · ETH · XRP 시장 상태</span>
             </div>
 
-            <div className={styles.content}>
-                {/* Gauge */}
-                <div className={styles.gaugeSection}>
-                    <div className={styles.gauge}>
-                        <svg viewBox="0 0 100 100" className={styles.gaugeSvg}>
-                            <circle
-                                cx="50" cy="50" r="45"
-                                fill="none"
-                                stroke="var(--border-color)"
-                                strokeWidth="8"
-                            />
-                            <circle
-                                cx="50" cy="50" r="45"
-                                fill="none"
-                                stroke={gateColor}
-                                strokeWidth="8"
-                                strokeLinecap="round"
-                                strokeDasharray={circumference}
-                                strokeDashoffset={circumference - progress}
-                                style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                            />
-                        </svg>
-                        <div className={styles.gaugeCenter}>
-                            <span className={styles.score}>{data.score}</span>
-                            <span
-                                className={styles.gateLabel}
-                                style={{ background: `${gateColor}20`, color: gateColor }}
-                            >
-                                {data.gate_color}
-                            </span>
-                        </div>
-                    </div>
-                    <p className={styles.summary}>{data.summary}</p>
-                </div>
-
-                {/* Components */}
-                <div className={styles.components}>
-                    {Object.entries(data.components).map(([key, value]) => {
-                        const maxPoints: Record<string, number> = {
-                            trend: 35,
-                            volatility: 18,
-                            participation: 18,
-                            breadth: 18,
-                            leverage: 11,
-                        };
-                        const labels: Record<string, string> = {
-                            trend: '트렌드',
-                            volatility: '변동성',
-                            participation: '참여도',
-                            breadth: 'Breadth',
-                            leverage: '레버리지',
-                        };
-                        const pct = (value / maxPoints[key]) * 100;
-
-                        return (
-                            <div key={key} className={styles.component}>
-                                <div className={styles.componentHeader}>
-                                    <span className={styles.componentName}>{labels[key]}</span>
-                                    <span className={styles.componentScore}>{value}/{maxPoints[key]}</span>
+            <div className={styles.cardGrid}>
+                {isLoading ? (
+                    <div className={styles.loading}>시장 분석 중...</div>
+                ) : coins.length === 0 ? (
+                    <div className={styles.loading}>데이터 로딩 실패</div>
+                ) : (
+                    coins.map((coin) => (
+                        <div key={coin.symbol} className={styles.coinCard}>
+                            {/* Card Header */}
+                            <div className={styles.coinHeader}>
+                                <div className={styles.coinInfo}>
+                                    <img src={getCoinIcon(coin.symbol)} alt={coin.symbol} className={styles.coinIcon} />
+                                    <div>
+                                        <span className={styles.coinSymbol}>{coin.symbol}</span>
+                                        <span className={styles.coinName}>{coin.name}</span>
+                                    </div>
                                 </div>
-                                <div className={styles.bar}>
-                                    <div
-                                        className={styles.barFill}
-                                        style={{
-                                            width: `${pct}%`,
-                                            background: pct >= 70 ? '#10b981' : pct >= 40 ? '#f59e0b' : '#ef4444'
-                                        }}
-                                    />
+                                <div className={styles.priceSection}>
+                                    <span className={styles.price}>
+                                        ₩{coin.price.toLocaleString()}
+                                    </span>
+                                    <span className={coin.change24h >= 0 ? styles.positive : styles.negative}>
+                                        {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%
+                                    </span>
                                 </div>
                             </div>
-                        );
-                    })}
-                </div>
 
-                {/* Indicators */}
-                <div className={styles.indicators}>
-                    {data.indicators.map((ind, i) => (
-                        <div key={i} className={styles.indicator}>
-                            <span className={styles.indName}>{ind.name}</span>
-                            <span className={`${styles.indValue} ${styles[ind.signal.toLowerCase()]}`}>
-                                {ind.value !== undefined && ind.value !== null
-                                    ? (typeof ind.value === 'number'
-                                        ? ind.value.toLocaleString(undefined, { maximumFractionDigits: 2 })
-                                        : ind.value)
-                                    : '-'}
-                            </span>
+                            {/* Signal Indicators with Reasoning */}
+                            <div className={styles.signals}>
+                                <div className={styles.signal}>
+                                    <div className={styles.signalTop}>
+                                        <span className={styles.signalLabel}>트렌드</span>
+                                        <span
+                                            className={styles.signalValue}
+                                            style={{ color: signalColors[coin.trend] }}
+                                        >
+                                            {signalEmojis[coin.trend]} {coin.trend === 'Bullish' ? '상승' : coin.trend === 'Bearish' ? '하락' : '횡보'}
+                                        </span>
+                                    </div>
+                                    <span className={styles.reason}>
+                                        {coin.trend === 'Bullish'
+                                            ? `현재가 > MA20 (₩${coin.ma20.toLocaleString()})`
+                                            : coin.trend === 'Bearish'
+                                                ? `현재가 < MA20 (₩${coin.ma20.toLocaleString()})`
+                                                : 'MA20 근처에서 횡보 중'}
+                                    </span>
+                                </div>
+                                <div className={styles.signal}>
+                                    <div className={styles.signalTop}>
+                                        <span className={styles.signalLabel}>변동성</span>
+                                        <span
+                                            className={styles.signalValue}
+                                            style={{ color: signalColors[coin.volatility] }}
+                                        >
+                                            {signalEmojis[coin.volatility]} {coin.volatility === 'Low' ? '낮음' : coin.volatility === 'High' ? '높음' : '보통'}
+                                        </span>
+                                    </div>
+                                    <span className={styles.reason}>
+                                        {coin.volatility === 'Low'
+                                            ? 'ATR 14일 < 2.5% (안정)'
+                                            : coin.volatility === 'High'
+                                                ? 'ATR 14일 > 5% (주의)'
+                                                : 'ATR 14일 2.5~5% (적정)'}
+                                    </span>
+                                </div>
+                                <div className={styles.signal}>
+                                    <div className={styles.signalTop}>
+                                        <span className={styles.signalLabel}>거래량</span>
+                                        <span
+                                            className={styles.signalValue}
+                                            style={{ color: volumeSignalColors[coin.volume] }}
+                                        >
+                                            {volumeSignalEmojis[coin.volume]} {coin.volume === 'High' ? '활발' : coin.volume === 'Low' ? '부족' : '보통'}
+                                        </span>
+                                    </div>
+                                    <span className={styles.reason}>
+                                        {coin.volume === 'High'
+                                            ? '20일 평균 대비 130%↑'
+                                            : coin.volume === 'Low'
+                                                ? '20일 평균 대비 70%↓'
+                                                : '20일 평균 수준'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* MA Info */}
+                            <div className={styles.maInfo}>
+                                <span>MA20: ₩{coin.ma20.toLocaleString()}</span>
+                                <span>MA50: ₩{coin.ma50?.toLocaleString() || '-'}</span>
+                            </div>
                         </div>
-                    ))}
-                </div>
+                    ))
+                )}
             </div>
         </div>
     );

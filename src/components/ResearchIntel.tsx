@@ -22,6 +22,7 @@ interface IntelItem {
     tags?: string[];
     readTime?: string;
     date?: string;
+    link?: string; // External link for RSS items
 }
 
 type TabType = 'ALL' | 'PRO' | 'NEWS';
@@ -37,11 +38,13 @@ function getTimeAgo(dateString: string): string {
 
 export default function ResearchIntel() {
     const [data, setData] = useState<IntelItem[]>([]);
+    const [rssNews, setRssNews] = useState<IntelItem[]>([]);
     const [activeTab, setActiveTab] = useState<TabType>('ALL');
     const [selectedId, setSelectedId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchResearch();
+        fetchRssNews();
 
         // Real-time subscription
         const channel = supabase
@@ -57,6 +60,18 @@ export default function ResearchIntel() {
             if (channel) supabase?.removeChannel(channel);
         }
     }, []);
+
+    async function fetchRssNews() {
+        try {
+            const res = await fetch('/api/rss/tokenpost');
+            if (res.ok) {
+                const items = await res.json();
+                setRssNews(items);
+            }
+        } catch (err) {
+            console.error('RSS fetch error:', err);
+        }
+    }
 
     async function fetchResearch() {
         if (!supabase) return;
@@ -118,13 +133,13 @@ export default function ResearchIntel() {
     }
 
     const filteredData = activeTab === 'ALL'
-        ? data
+        ? [...data, ...rssNews.slice(0, 5)]
         : activeTab === 'PRO'
             ? data.filter(item => item.isPro)
-            : data.filter(item => item.type === 'NEWS' || item.type === 'BREAKING');
+            : rssNews; // NEWS tab uses RSS feed
 
     const breakingCount = data.filter(item => item.isBreaking).length;
-    const selectedItem = data.find(item => item.id === selectedId);
+    const selectedItem = data.find(item => item.id === selectedId) || rssNews.find(item => item.id === selectedId);
 
     const getTypeColor = (type: string) => {
         switch (type) {
@@ -183,7 +198,13 @@ export default function ResearchIntel() {
                         <div
                             key={item.id}
                             className={`${styles.intelItem} ${item.isBreaking ? styles.breaking : ''}`}
-                            onClick={() => setSelectedId(item.id)}
+                            onClick={() => {
+                                if (item.link) {
+                                    window.open(item.link, '_blank');
+                                } else {
+                                    setSelectedId(item.id);
+                                }
+                            }}
                         >
                             {item.thumbnail && (
                                 <div className={styles.thumbnail}>
@@ -194,25 +215,32 @@ export default function ResearchIntel() {
                                 <div style={{ display: 'flex', gap: '6px', marginBottom: '4px' }}>
                                     <span
                                         className={styles.typeBadge}
-                                        style={{ color: getTypeColor(item.type), borderLeft: `2px solid ${getTypeColor(item.type)}` }}
+                                        style={{
+                                            color: getTypeColor(item.type),
+                                            background: `${getTypeColor(item.type)}20`,
+                                            padding: '2px 6px',
+                                            borderRadius: '4px',
+                                            fontWeight: 600,
+                                        }}
                                     >
                                         {item.typeKo}
                                     </span>
-                                    {/* Show tags in list as requested by user */}
-                                    {item.tags && item.tags.length > 0 && (
-                                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '2px 4px', borderRadius: '4px' }}>
-                                            #{item.tags[0]}
-                                        </span>
-                                    )}
                                 </div>
 
                                 <div className={styles.content}>
                                     <div className={styles.titleRow}>
                                         <span className={styles.title}>{item.title}</span>
-                                        {item.isPro && <span className={styles.proTag}>PRO</span>}
+
                                         {item.isBreaking && <span className={styles.liveTag}>LIVE</span>}
                                     </div>
-                                    <div className={styles.meta}>{item.source} · {item.time}</div>
+                                    <div className={styles.meta}>
+                                        {item.source} · {item.time}
+                                        {item.tags && item.tags.length > 0 && (
+                                            <span style={{ marginLeft: '6px', fontSize: '10px', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.12)', padding: '2px 6px', borderRadius: '4px', fontWeight: 500 }}>
+                                                #{item.tags[0]}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

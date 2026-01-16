@@ -83,8 +83,8 @@ export default function Mindshare() {
         <div className={styles.widget}>
             <div className={styles.header}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <h3 className={styles.title}>🤖 Grok Market Pulse</h3>
-                    <span className="badge badge-live">실시간</span>
+                    <h3 className={styles.title}>AI 마켓 & 속보</h3>
+                    <span className="liveBadge">LIVE</span>
                 </div>
             </div>
 
@@ -94,7 +94,7 @@ export default function Mindshare() {
                 <div className={styles.insightCard}>
                     <div className={styles.insightHeader}>
                         <span style={{ fontSize: '18px' }}>🧠</span>
-                        <span style={{ fontWeight: 600, color: '#e5e7eb' }}>Grok's Insight</span>
+                        <span style={{ fontWeight: 600, color: '#e5e7eb' }}>AI 인사이트</span>
                     </div>
                     <p className={styles.insightText}>
                         "{grokSaying}"
@@ -154,23 +154,7 @@ export default function Mindshare() {
                     </div>
                 )}
 
-                {/* 5. Whale Alerts */}
-                {whales.length > 0 && (
-                    <div className={styles.section} style={{ marginTop: '16px' }}>
-                        <h4 className={styles.sectionTitle}>🐳 고래 추적 (Whale Alert)</h4>
-                        <div className={styles.feedList}>
-                            {whales.map((w: any, i: number) => (
-                                <div key={i} className={styles.whaleItem}>
-                                    <span className={styles.whaleSymbol}>{w.symbol}</span>
-                                    <span className={w.type === '매수' ? styles.whaleBuy : styles.whaleSell}>{w.type}</span>
-                                    <span className={styles.whaleAmount}>{w.amount}</span>
-                                    <span className={styles.whaleNote}>{w.note}</span>
-                                    <span className={styles.tweetTime}>{w.time}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+
 
                 <div style={{ padding: '12px 0 0', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '6px', opacity: 0.6 }}>
                     <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Powered by</span>

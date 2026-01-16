@@ -34,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning={true}>
         <a href="#main-content" className="skip-to-content">
           메인 콘텐츠로 건너뛰기
         </a>

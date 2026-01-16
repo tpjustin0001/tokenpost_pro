@@ -173,6 +173,72 @@ def api_test_hello():
     """Dependency-free test route"""
     return jsonify({'message': 'Hello from Vercel!', 'status': 'ok'})
 
+# ============================================================
+# SIMPLE ASSET DATA API (for Market Gate cards)
+# ============================================================
+@app.route('/api/crypto/asset/<symbol>')
+@cache.cached(timeout=10)  # Cache for 10 seconds for real-time
+def api_crypto_asset(symbol):
+    """Simple asset data for individual coin cards"""
+    from market_provider import market_data_service
+    
+    symbol = symbol.upper()
+    
+    try:
+        data = market_data_service.get_asset_data(symbol)
+        
+        # Calculate volatility based on ATR or price range
+        df = data.get('raw_df')
+        volatility = 'Normal'
+        volume_signal = 'Normal'
+        
+        if df is not None and len(df) > 14:
+            # ATR-based volatility
+            high_low = df['High'] - df['Low']
+            atr = high_low.tail(14).mean()
+            atr_pct = (atr / data['current_price']) * 100 if data['current_price'] > 0 else 0
+            
+            if atr_pct <= 2.5:
+                volatility = 'Low'
+            elif atr_pct <= 5.0:
+                volatility = 'Normal'
+            else:
+                volatility = 'High'
+            
+            # Volume signal
+            vol_avg = df['Volume'].tail(20).mean()
+            vol_current = df['Volume'].iloc[-1]
+            
+            if vol_current > vol_avg * 1.3:
+                volume_signal = 'High'
+            elif vol_current < vol_avg * 0.7:
+                volume_signal = 'Low'
+            else:
+                volume_signal = 'Normal'
+        
+        return jsonify({
+            'symbol': symbol,
+            'name': data.get('name', symbol),
+            'current_price': data['current_price'],
+            'price_change_24h': data.get('change_24h', 0),
+            'trend': data.get('trend', 'Neutral'),
+            'volatility': volatility,
+            'volume_signal': volume_signal,
+            'ma_20': data.get('ma_20', 0),
+            'ma_50': data.get('ma_50', data.get('ma_20', 0)),
+            'source': data.get('source', 'Unknown')
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'symbol': symbol,
+            'current_price': 0,
+            'trend': 'Neutral',
+            'volatility': 'Normal',
+            'volume_signal': 'Normal'
+        }), 500
+
 
 # ============================================================
 # MARKET GATE API

@@ -1,5 +1,6 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './ContentModal.module.css';
 
 interface ContentModalProps {
@@ -210,6 +211,8 @@ function parseMarkdown(text: string): React.ReactNode[] {
 }
 
 export default function ContentModal({ contentData, isOpen, onClose }: ContentModalProps) {
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+
     // Lock body scroll when modal is open
     useEffect(() => {
         if (isOpen) {
@@ -245,9 +248,88 @@ export default function ContentModal({ contentData, isOpen, onClose }: ContentMo
                 <button className={styles.closeBtn} onClick={onClose}>×</button>
 
                 {thumbnail && (
-                    <div className={styles.thumbnailWrapper}>
+                    <div className={styles.thumbnailWrapper} style={{ position: 'relative' }}>
                         <img src={thumbnail} alt="" className={styles.thumbnail} />
+                        <button
+                            onClick={() => setLightboxOpen(true)}
+                            style={{
+                                position: 'absolute',
+                                bottom: '12px',
+                                right: '12px',
+                                width: '36px',
+                                height: '36px',
+                                background: 'rgba(0,0,0,0.6)',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(59,130,246,0.8)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(0,0,0,0.6)';
+                            }}
+                            title="이미지 확대 보기"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                <line x1="11" y1="8" x2="11" y2="14" />
+                                <line x1="8" y1="11" x2="14" y2="11" />
+                            </svg>
+                        </button>
                     </div>
+                )}
+
+                {/* Image Lightbox Popup */}
+                {lightboxOpen && thumbnail && typeof document !== 'undefined' && createPortal(
+                    <div
+                        onClick={() => setLightboxOpen(false)}
+                        style={{
+                            position: 'fixed',
+                            inset: 0,
+                            background: 'rgba(0,0,0,0.9)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 10000,
+                            cursor: 'zoom-out',
+                        }}
+                    >
+                        <button
+                            onClick={() => setLightboxOpen(false)}
+                            style={{
+                                position: 'absolute',
+                                top: '20px',
+                                right: '20px',
+                                width: '48px',
+                                height: '48px',
+                                background: 'rgba(255,255,255,0.1)',
+                                border: 'none',
+                                borderRadius: '50%',
+                                color: 'white',
+                                fontSize: '28px',
+                                cursor: 'pointer',
+                            }}
+                        >×</button>
+                        <img
+                            src={thumbnail}
+                            alt=""
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                                maxWidth: '90vw',
+                                maxHeight: '90vh',
+                                objectFit: 'contain',
+                                borderRadius: '8px',
+                                cursor: 'default',
+                            }}
+                        />
+                    </div>,
+                    document.body
                 )}
 
                 <div className={styles.header}>
@@ -266,21 +348,7 @@ export default function ContentModal({ contentData, isOpen, onClose }: ContentMo
                 <div className={styles.body}>
                     {parseMarkdown(content || '')}
 
-                    {/* Debug / Fallback View */}
-                    <div style={{ marginTop: '40px', padding: '20px', borderTop: '1px dashed #333', opacity: 0.7 }}>
-                        <details>
-                            <summary style={{ cursor: 'pointer', fontSize: '12px', color: '#666' }}>
-                                🛠 개발자 도구 (Raw Data View) - 본문이 안 보일 때 확인용
-                            </summary>
-                            <div style={{ marginTop: '10px', fontSize: '12px', whiteSpace: 'pre-wrap', fontFamily: 'monospace', color: '#aaa' }}>
-                                <p><strong>Length:</strong> {content?.length || 0}</p>
-                                <p><strong>Content Preview:</strong></p>
-                                <div style={{ background: '#111', padding: '10px', borderRadius: '4px' }}>
-                                    {content || '데이터 없음 (Empty)'}
-                                </div>
-                            </div>
-                        </details>
-                    </div>
+
                 </div>
 
                 {tags.length > 0 && (

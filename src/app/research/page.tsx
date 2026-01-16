@@ -76,23 +76,29 @@ export default function ResearchPage() {
     }, []);
 
     // Helper for mapping (Ensure consistency with Main Widget)
-    const mapRowToInsight = (item: any): InsightItem => ({
-        id: String(item.id),
-        type: item.category === 'KPI' ? 'KPI' :
-            item.category === 'BREAKING' ? 'NEWS' :
-                item.is_premium ? 'ANALYSIS' : 'REPORT',
-        title: item.title,
-        summary: item.summary || item.title,
-        author: item.author || 'TokenPost',
-        source: 'TokenPost',
-        date: new Date(item.created_at).toLocaleDateString(),
-        // Consolidate content fallback to match widget (Important for visibility)
-        content: item.content || item.summary || item.title || '내용이 없습니다.',
-        readTime: '3분',
-        isPro: item.is_premium || false,
-        tags: item.tags || [],
-        image: item.thumbnail_url || item.image_url
-    });
+    const mapRowToInsight = (item: any): InsightItem => {
+        // Map category to simplified types (Removed ANALYSIS/AI as per request)
+        let type: 'KPI' | 'NEWS' | 'REPORT' = 'REPORT';
+
+        if (item.category === 'KPI') type = 'KPI';
+        else if (item.category === 'BREAKING') type = 'NEWS';
+        else type = 'REPORT'; // Default everything else to REPORT including old ANALYSIS
+
+        return {
+            id: String(item.id),
+            type: type,
+            title: item.title,
+            summary: item.summary || item.title,
+            author: item.author || 'TokenPost',
+            source: 'TokenPost',
+            date: new Date(item.created_at).toLocaleDateString(),
+            content: item.content || item.summary || item.title || '내용이 없습니다.',
+            readTime: '3분',
+            isPro: item.is_premium || false,
+            tags: item.tags || [],
+            image: item.thumbnail_url || item.image_url
+        };
+    };
 
     const filteredInsights = insights.filter(item => {
         if (showProOnly && !item.isPro) return false;
@@ -103,7 +109,6 @@ export default function ResearchPage() {
     const getTypeColor = (type: string) => {
         switch (type) {
             case 'REPORT': return 'var(--accent-purple)';
-            case 'ANALYSIS': return 'var(--accent-blue)';
             case 'KPI': return 'var(--accent-green)';
             case 'NEWS': return 'var(--accent-yellow)';
             default: return 'var(--text-muted)';
@@ -113,7 +118,6 @@ export default function ResearchPage() {
     const getTypeLabel = (type: string) => {
         switch (type) {
             case 'REPORT': return '리포트';
-            case 'ANALYSIS': return 'AI 분석';
             case 'KPI': return 'KPI';
             case 'NEWS': return '뉴스';
             default: return type;
@@ -132,7 +136,7 @@ export default function ResearchPage() {
                     <div className={styles.pageHeader}>
                         <div className={styles.headerLeft}>
                             <h1 className={styles.pageTitle}>리서치 & 인사이트</h1>
-                            <p className={styles.pageDesc}>TokenPost PRO의 독점 리서치, AI 분석, 시장 인사이트</p>
+                            <p className={styles.pageDesc}>TokenPost PRO의 독점 리서치 및 심층 리포트</p>
                         </div>
                         <div className={styles.headerActions}>
                             <label className={styles.proToggle}>
@@ -148,7 +152,7 @@ export default function ResearchPage() {
 
                     {/* Filter Tabs */}
                     <div className={styles.filterBar}>
-                        {(['ALL', 'REPORT', 'ANALYSIS', 'KPI', 'NEWS'] as FilterType[]).map((filter) => (
+                        {(['ALL', 'REPORT', 'KPI', 'NEWS'] as FilterType[]).map((filter) => (
                             <button
                                 key={filter}
                                 className={`${styles.filterBtn} ${activeFilter === filter ? styles.active : ''}`}

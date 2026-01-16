@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
+import { TrendingUp, AlertTriangle, ArrowDown, ArrowUp, Activity, Info, BarChart2, Shield } from 'lucide-react';
 import styles from './SmartScreener.module.css';
 
-// --- Simplified Interfaces matching Real API (api/index.py) ---
 interface TickerData {
     symbol: string;
     price: number;
@@ -24,15 +24,11 @@ interface TickerData {
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 // Helper for icons
-// Helper for icons
 function getCoinIconUrl(symbol: string): string {
-    // Normalize symbol: remove -USDT, -KRW, etc.
     let clean = symbol.toUpperCase();
     clean = clean.replace('KRW-', '').replace('-KRW', '');
     clean = clean.replace('USDT-', '').replace('-USDT', '');
     clean = clean.replace('BTC-', '').replace('-BTC', '');
-
-    // Use CoinCap assets (High coverage)
     return `https://assets.coincap.io/assets/icons/${clean.toLowerCase()}@2x.png`;
 }
 
@@ -50,12 +46,73 @@ export default function SmartScreener() {
         loadingTimeout: 10000
     });
 
+    // Price formatting helper - Enhanced for precision
+    const formatPrice = (price: number) => {
+        if (!price) return '0';
+        if (price < 1) return price.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 6 });
+        if (price < 100) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return price.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    };
+
+    // Sorting & Filtering State
+    const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'change_1h', direction: 'desc' });
+    const [showGainersOnly, setShowGainersOnly] = useState(false);
+
+    const handleSort = (key: string) => {
+        setSortConfig(current => ({
+            key,
+            direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc'
+        }));
+    };
+
+    // Trend Badge Helper
+    const renderTrendBadge = (item: any) => {
+        const text = item.ai_insight || '-';
+        const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '');
+
+        let badgeStyle = { bg: '#f3f4f6', color: '#4b5563', icon: null as any };
+        let reason = '';
+
+        if (cleanText.includes('상승') || cleanText.includes('Strong') || cleanText.includes('Bull')) {
+            badgeStyle = { bg: 'rgba(16, 185, 129, 0.15)', color: '#059669', icon: TrendingUp };
+            if (item.rsi) reason += `RSI ${item.rsi}`;
+            if (item.rvol) reason += `${reason ? ' · ' : ''}Vol ${item.rvol.toFixed(1)}x`;
+        } else if (cleanText.includes('조정') || cleanText.includes('Correction') || cleanText.includes('Down')) {
+            badgeStyle = { bg: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', icon: ArrowDown };
+            if (item.drawdown) reason += `MDD ${item.drawdown.toFixed(1)}%`;
+        } else if (cleanText.includes('돌파') || cleanText.includes('Breakout')) {
+            badgeStyle = { bg: 'rgba(245, 158, 11, 0.15)', color: '#d97706', icon: Activity };
+            if (item.price) reason += `₩${formatPrice(item.price)}`;
+        } else if (cleanText.includes('과매도') || cleanText.includes('Value') || cleanText.includes('저평가')) {
+            badgeStyle = { bg: 'rgba(59, 130, 246, 0.15)', color: '#2563eb', icon: Shield };
+            if (item.rsi) reason += `RSI ${item.rsi}`;
+        }
+
+        const Icon = badgeStyle.icon;
+
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '4px',
+                    padding: '3px 8px', borderRadius: '12px',
+                    fontSize: '11px', fontWeight: 600,
+                    backgroundColor: badgeStyle.bg, color: badgeStyle.color,
+                    whiteSpace: 'nowrap'
+                }}>
+                    {Icon && <Icon size={10} />}
+                    {cleanText}
+                </span>
+                {reason && <span style={{ fontSize: '10px', color: '#9ca3af', fontWeight: 500, whiteSpace: 'nowrap' }}>{reason}</span>}
+            </div>
+        );
+    };
+
     const renderSkeleton = () => (
         <div className={styles.skeletonContainer}>
-            {[1, 2, 3].map(i => (
+            {[1, 2, 3, 4, 5].map(i => (
                 <div key={i} className={styles.skeletonRow} />
             ))}
-            <div className={styles.skeletonText}>AI가 데이터를 분석 중입니다... (약 5초 소요)</div>
+            <div className={styles.skeletonText}>데이터 분석 중...</div>
         </div>
     );
 
@@ -70,17 +127,26 @@ export default function SmartScreener() {
             return (
                 <>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>🚀 상승 추세</span>
+                        <div className={styles.cardHeader}>
+                            <TrendingUp size={14} className={styles.cardIcon} color="#10b981" />
+                            <span className={styles.cardTitle}>상승 추세</span>
+                        </div>
                         <span className={styles.cardValue}>{list.filter(i => (i.change_24h || 0) > 0).length}</span>
                         <span className={styles.cardDesc}>24시간 가격 상승</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>🔥 돌파 신호</span>
+                        <div className={styles.cardHeader}>
+                            <Activity size={14} className={styles.cardIcon} color="#f59e0b" />
+                            <span className={styles.cardTitle}>돌파 신호</span>
+                        </div>
                         <span className={styles.cardValue}>{breakouts}</span>
                         <span className={styles.cardDesc}>고점 근접 (상위 2%)</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>🏆 최고 상승</span>
+                        <div className={styles.cardHeader}>
+                            <BarChart2 size={14} className={styles.cardIcon} color="#3b82f6" />
+                            <span className={styles.cardTitle}>최고 상승</span>
+                        </div>
                         <span className={styles.cardValue}>{topGainer?.symbol || '-'}</span>
                         <span className={styles.cardDesc}>+{topGainer?.change_24h?.toFixed(1) || '0.0'}% (24시간)</span>
                     </div>
@@ -96,17 +162,26 @@ export default function SmartScreener() {
             return (
                 <>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>💪 강세 코인 (+5%↑)</span>
+                        <div className={styles.cardHeader}>
+                            <ArrowUp size={14} className={styles.cardIcon} color="#10b981" />
+                            <span className={styles.cardTitle}>강세 코인 (+5%↑)</span>
+                        </div>
                         <span className={styles.cardValue}>{upCount}</span>
                         <span className={styles.cardDesc}>모멘텀 강세</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>📉 약세 코인 (-5%↓)</span>
+                        <div className={styles.cardHeader}>
+                            <ArrowDown size={14} className={styles.cardIcon} color="#ef4444" />
+                            <span className={styles.cardTitle}>약세 코인 (-5%↓)</span>
+                        </div>
                         <span className={styles.cardValue}>{downCount}</span>
                         <span className={styles.cardDesc}>단기 조정 중</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>💰 거래 대장</span>
+                        <div className={styles.cardHeader}>
+                            <Activity size={14} className={styles.cardIcon} color="#3b82f6" />
+                            <span className={styles.cardTitle}>거래 대장</span>
+                        </div>
                         <span className={styles.cardValue}>{topVol?.symbol || '-'}</span>
                         <span className={styles.cardDesc}>최고 거래량 (USDT)</span>
                     </div>
@@ -122,34 +197,32 @@ export default function SmartScreener() {
             return (
                 <>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>🛡 안정형 자산</span>
+                        <div className={styles.cardHeader}>
+                            <Shield size={14} className={styles.cardIcon} color="#10b981" />
+                            <span className={styles.cardTitle}>안정형 자산</span>
+                        </div>
                         <span className={styles.cardValue}>{lowRisk}</span>
                         <span className={styles.cardDesc}>변동성 3% 미만</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>☢️ 고위험 주의</span>
+                        <div className={styles.cardHeader}>
+                            <AlertTriangle size={14} className={styles.cardIcon} color="#ef4444" />
+                            <span className={styles.cardTitle}>고위험 주의</span>
+                        </div>
                         <span className={styles.cardValue}>{extremeRisk}</span>
                         <span className={styles.cardDesc}>변동성 7% 초과</span>
                     </div>
                     <div className={styles.card}>
-                        <span className={styles.cardTitle}>🌪 최고 변동성</span>
+                        <div className={styles.cardHeader}>
+                            <Activity size={14} className={styles.cardIcon} color="#f59e0b" />
+                            <span className={styles.cardTitle}>최고 변동성</span>
+                        </div>
                         <span className={styles.cardValue}>{mostVolatile?.symbol || '-'}</span>
                         <span className={styles.cardDesc}>변동폭 {mostVolatile?.volatility?.toFixed(1) || '0.0'}%</span>
                     </div>
                 </>
             );
         }
-    };
-
-    // Sorting & Filtering State
-    const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'change_1h', direction: 'desc' });
-    const [showGainersOnly, setShowGainersOnly] = useState(false);
-
-    const handleSort = (key: string) => {
-        setSortConfig(current => ({
-            key,
-            direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc'
-        }));
     };
 
     const renderTable = () => {
@@ -168,7 +241,9 @@ export default function SmartScreener() {
 
         let list = [...(data.data as TickerData[])];
 
-        // Filter
+        // Filter: Price > 0
+        list = list.filter(item => item.price > 0);
+
         if (showGainersOnly) {
             list = list.filter(item => (item.change_1h || 0) > 0);
         }
@@ -182,10 +257,11 @@ export default function SmartScreener() {
             return 0;
         });
 
-        // Helper to render sort arrow
         const SortIcon = ({ column }: { column: string }) => {
             if (sortConfig.key !== column) return <span style={{ opacity: 0.3, marginLeft: '4px' }}>⇅</span>;
-            return <span style={{ marginLeft: '4px', color: '#3b82f6' }}>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
+            return sortConfig.direction === 'asc'
+                ? <ArrowUp size={12} style={{ marginLeft: '4px', color: '#3b82f6', display: 'inline' }} />
+                : <ArrowDown size={12} style={{ marginLeft: '4px', color: '#3b82f6', display: 'inline' }} />;
         };
 
         const FilterControls = () => (
@@ -223,12 +299,16 @@ export default function SmartScreener() {
                                         <div className={styles.assetCell}>
                                             <img src={getCoinIconUrl(item.symbol)} alt="" className={styles.coinIcon} />
                                             <span className={styles.symbol}>{item.symbol}</span>
-                                            {item.is_breakout && <span className={styles.badge} style={{ backgroundColor: '#f59e0b', color: '#fff' }}>🔥 돌파</span>}
+                                            {item.is_breakout && (
+                                                <span className={styles.badge} style={{ backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                                    <TrendingUp size={10} /> 돌파
+                                                </span>
+                                            )}
                                         </div>
                                     </td>
-                                    <td>₩{item.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                                    <td style={{ fontWeight: 600, color: item.ai_insight?.includes('Strong') ? '#10b981' : '#374151' }}>
-                                        {item.ai_insight || '-'}
+                                    <td>₩{formatPrice(item.price)}</td>
+                                    <td style={{ fontWeight: 600 }}>
+                                        {renderTrendBadge(item)}
                                     </td>
                                     <td>
                                         <span style={{
@@ -273,7 +353,7 @@ export default function SmartScreener() {
                                             <span className={styles.symbol}>{item.symbol}</span>
                                         </div>
                                     </td>
-                                    <td>₩{item.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                                    <td>₩{formatPrice(item.price)}</td>
                                     <td>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                             <div style={{ flex: 1, height: '6px', background: '#e5e7eb', borderRadius: '3px', maxWidth: '60px' }}>
@@ -296,8 +376,8 @@ export default function SmartScreener() {
                                             {item.rsi || '-'}
                                         </span>
                                     </td>
-                                    <td style={{ fontWeight: 600, color: item.ai_insight?.includes('Deep') || item.ai_insight?.includes('Value') ? '#10b981' : '#374151' }}>
-                                        {item.ai_insight || '-'}
+                                    <td style={{ fontWeight: 600 }}>
+                                        {renderTrendBadge(item)}
                                     </td>
                                 </tr>
                             ))}
@@ -315,6 +395,7 @@ export default function SmartScreener() {
                         <thead>
                             <tr>
                                 <th>자산</th>
+                                <th onClick={() => handleSort('price')} style={{ cursor: 'pointer' }}>현재가 <SortIcon column="price" /></th>
                                 <th onClick={() => handleSort('volatility')} style={{ cursor: 'pointer' }}>변동성 (연율, %) <SortIcon column="volatility" /></th>
                                 <th onClick={() => handleSort('rating')} style={{ cursor: 'pointer' }}>위험 등급 <SortIcon column="rating" /></th>
                                 <th>상태</th>
@@ -329,15 +410,15 @@ export default function SmartScreener() {
                                             <span className={styles.symbol}>{item.symbol}</span>
                                         </div>
                                     </td>
-                                    <td>₩{item.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                                    <td>₩{formatPrice(item.price)}</td>
                                     <td>{item.volatility?.toFixed(2) || '-'}%</td>
                                     <td>{item.risk_score?.toFixed(1) || '-'}</td>
                                     <td>
-                                        <span className={styles[`risk${item.rating}`]}>
-                                            {item.rating === 'Low' && '🛡 안정'}
-                                            {item.rating === 'Medium' && '⚠️ 보통'}
-                                            {item.rating === 'Extreme' && '☢️ 위험'}
-                                        </span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }} className={styles[`risk${item.rating}`]}>
+                                            {item.rating === 'Low' && <><Shield size={12} /> 안정</>}
+                                            {item.rating === 'Medium' && <><AlertTriangle size={12} /> 보통</>}
+                                            {item.rating === 'Extreme' && <><Activity size={12} /> 위험</>}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -353,53 +434,73 @@ export default function SmartScreener() {
             <div className={styles.header}>
                 <div className={styles.titleGroup}>
                     <h2 className={styles.title}>
-                        스마트 가상자산 스크리너
+                        <TrendingUp size={20} style={{ color: '#3b82f6' }} />
+                        가상자산 실전 전략 분석
                     </h2>
-                    <p className={styles.subtitle}>실시간 분석 · 1분 갱신</p>
+                    <p className={styles.subtitle}>Top 30 코인 돌파·저점·리스크 진단</p>
                 </div>
 
                 <div className={styles.tabs}>
                     <button
                         className={`${styles.tab} ${tab === 'breakout' ? styles.active : ''}`}
                         onClick={() => setTab('breakout')}
-                        title="주요 이동평균선(20/50/200일)을 상향 돌파하는 자산 포착"
                     >
-                        🚀 돌파 (Breakout)
+                        돌파 (Breakout)
                     </button>
                     <button
                         className={`${styles.tab} ${tab === 'performance' ? styles.active : ''}`}
                         onClick={() => setTab('performance')}
-                        title="고점 대비 하락폭이 큰 자산을 찾아 저점 매수 기회 탐색"
                     >
-                        💎 저점 (Bottom)
+                        저점 (Bottom)
                     </button>
                     <button
                         className={`${styles.tab} ${tab === 'risk' ? styles.active : ''}`}
                         onClick={() => setTab('risk')}
-                        title="연환산 변동성을 기준으로 리스크 분석 (High Volatility = High Risk)"
                     >
-                        ⚠️ 리스크 (Risk)
+                        리스크 (Risk)
                     </button>
                 </div>
             </div>
 
-            {/* Guide Section */}
-            <div style={{
-                background: 'rgba(59, 130, 246, 0.08)',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                fontSize: '13px',
-                color: 'var(--text-secondary)',
-                border: '1px solid rgba(59, 130, 246, 0.2)'
-            }}>
-                <span style={{ marginRight: '8px', fontSize: '16px' }}>💡</span>
-                {tab === 'breakout' && <span><strong>돌파 전략:</strong> 현재 가격이 20일/50일/200일 이동평균선을 강하게 뚫고 올라가는 '골든 크로스' 직전 혹은 직후의 자산을 찾습니다.</span>}
-                {tab === 'performance' && <span><strong>저점 공략:</strong> 역사적 고점(ATH) 대비 하락폭(Drawdown)이 큰 자산을 필터링하여, 펀더멘탈 대비 과매도된 저평가 구간을 탐색합니다.</span>}
-                {tab === 'risk' && <span><strong>리스크 분석:</strong> 자산의 가격 변동폭(Standard Deviation)을 연율화하여 계산합니다. 'Extreme' 등급은 하루에도 10% 이상 급등락할 수 있는 고위험 자산입니다.</span>}
-                <span style={{ marginTop: '8px', display: 'block', fontSize: '12px', color: '#3b82f6', fontWeight: 500 }}>
-                    ※ 분석 대상: 시가총액 상위 30개 주요 암호화폐 (실시간)
-                </span>
+            {/* Compact Legend Bar */}
+            <div className={styles.legendBar}>
+                <Info size={14} style={{ color: '#6b7280' }} />
+                {tab === 'breakout' && (
+                    <>
+                        <div className={styles.legendItem}>
+                            <strong>RSI:</strong> 50~70 (상승여력)
+                        </div>
+                        <div className={styles.legendItem}>
+                            <strong>RVol:</strong> 1.5x↑ (거래급증)
+                        </div>
+                        <div className={styles.legendItem}>
+                            <strong>Breakout:</strong> 주요 저항 돌파
+                        </div>
+                    </>
+                )}
+                {tab === 'performance' && (
+                    <>
+                        <div className={styles.legendItem}>
+                            <strong>MDD:</strong> 고점대비낙폭
+                        </div>
+                        <div className={styles.legendItem}>
+                            <strong>RSI:</strong> 30↓ (과매도)
+                        </div>
+                        <div className={styles.legendItem}>
+                            <strong>Insight:</strong> 저평가 분석
+                        </div>
+                    </>
+                )}
+                {tab === 'risk' && (
+                    <>
+                        <div className={styles.legendItem}>
+                            <strong>Volatility:</strong> 연환산 변동성
+                        </div>
+                        <div className={styles.legendItem}>
+                            <strong>Risk Sco:</strong> 0-10 (10=위험)
+                        </div>
+                    </>
+                )}
             </div>
 
 

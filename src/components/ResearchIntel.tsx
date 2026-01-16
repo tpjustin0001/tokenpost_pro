@@ -144,6 +144,10 @@ export default function ResearchIntel() {
                             인사이트
                         </XRayTooltip>
                     </span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 6px', background: 'rgba(34, 197, 94, 0.15)', borderRadius: '4px', fontSize: '10px', color: '#22c55e', fontWeight: 600 }}>
+                        <span style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%' }} />
+                        실시간
+                    </span>
                     <span className={styles.badge}>핵심 강점</span>
                     {breakingCount > 0 && (
                         <span className={styles.breakingBadge}>

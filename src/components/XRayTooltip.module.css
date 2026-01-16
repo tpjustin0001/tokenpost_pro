@@ -65,8 +65,8 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     width: 100%;
-    max-width: 500px;
-    max-height: 80vh;
+    max-width: 580px;
+    max-height: 85vh;
     overflow-y: auto;
 }
 
@@ -108,22 +108,25 @@
 }
 
 .closeBtn {
-    width: 28px;
-    height: 28px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
-    color: var(--text-muted);
-    font-size: var(--text-lg);
+    color: var(--text-primary);
+    font-size: 20px;
+    font-weight: bold;
     cursor: pointer;
+    transition: all 0.2s;
 }
 
 .closeBtn:hover {
-    background: var(--bg-card-hover);
-    color: var(--text-primary);
+    background: var(--accent-red);
+    border-color: var(--accent-red);
+    color: white;
 }
 
 .content {

@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import styles from './ContentModal.module.css';
 
 interface ContentModalProps {
@@ -210,6 +210,16 @@ function parseMarkdown(text: string): React.ReactNode[] {
 }
 
 export default function ContentModal({ contentData, isOpen, onClose }: ContentModalProps) {
+    // Lock body scroll when modal is open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
+
     if (!isOpen || !contentData) return null;
 
     const {

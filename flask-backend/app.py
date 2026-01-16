@@ -178,8 +178,9 @@ def api_test_hello():
 # MARKET GATE API
 # ============================================================
 @app.route('/api/crypto/market-gate')
+@cache.cached(timeout=300)  # Cache for 5 minutes
 def api_market_gate():
-    """Market Gate 분석 API (100점 스코어링)"""
+    """Market Gate 분석 API (100점 스코어링) - Cached 5min"""
     try:
         try:
             # Ensure module is available
@@ -814,13 +815,15 @@ def api_xray_global():
 
 
 @app.route('/api/crypto/listings')
+@cache.cached(timeout=300)  # Cache for 5 minutes
 def api_crypto_listings():
-    """Fetch Top Crypto Listings (CMC or Binance Fallback)"""
+    """Fetch Top Crypto Listings (CMC or Binance Fallback) - Cached 5min"""
     from market_provider import market_data_service
     
     try:
         limit = request.args.get('limit', default=30, type=int)
         data = market_data_service.get_crypto_listings(limit=limit)
+        print(f"📦 [Cache MISS] Fetched {len(data.get('data', []))} listings from API")
         return jsonify(data)
     except Exception as e:
         print(f"Listings API Error: {e}")

@@ -53,6 +53,7 @@ export default function TokenUnlocks() {
                         토큰 언락 일정
                     </XRayTooltip>
                 </span>
+                <span style={{ padding: '2px 6px', background: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24', borderRadius: '4px', fontSize: '10px', fontWeight: 600 }}>준비중</span>
                 <span className={styles.subtitle}>30일 이내</span>
             </div>
             <div className={styles.list}>

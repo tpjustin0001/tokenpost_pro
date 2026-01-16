@@ -75,6 +75,7 @@ export default function Sidebar() {
                     <span style={{ fontSize: '18px', fontWeight: 'bold', background: 'linear-gradient(90deg, #fff, #aaa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                         TOKENPOST PRO
                     </span>
+                    <span className={styles.betaBadge}>BETA</span>
                 </Link>
 
                 {/* Navigation */}

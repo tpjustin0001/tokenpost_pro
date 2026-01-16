@@ -10,13 +10,16 @@ interface LoginGateProps {
 export default function LoginGate({ children }: LoginGateProps) {
     const { user, isLoggedIn, loading, login, logout } = useAuth();
 
-    // DEV: Skip login on localhost
+    // DEV: Skip login on localhost ONLY in development mode
+    const isDev = process.env.NODE_ENV === 'development';
     const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-    if (isLocalhost) {
+
+    // Allow bypass only if explicitly in DEV mode and on localhost
+    if (isDev && isLocalhost) {
         return <>{children}</>;
     }
 
-    // 1. Show loading spinner while checking auth status
+    // 1. Show loading spinner
     if (loading) {
         return (
             <div className={styles.loadingContainer}>
@@ -26,7 +29,7 @@ export default function LoginGate({ children }: LoginGateProps) {
         );
     }
 
-    // 2. Check if user is properly logged in (must have valid uuid)
+    // 2. Check login
     const isValidLogin = isLoggedIn && user && user.uuid;
 
     if (!isValidLogin) {
@@ -36,6 +39,7 @@ export default function LoginGate({ children }: LoginGateProps) {
                     <div className={styles.modal}>
                         <div className={styles.logo}>
                             TokenPost<span>PRO</span>
+                            <span className={styles.betaBadge}>BETA</span>
                         </div>
                         <h2 className={styles.modalTitle}>로그인이 필요합니다</h2>
                         <p className={styles.modalDescription}>
@@ -51,9 +55,9 @@ export default function LoginGate({ children }: LoginGateProps) {
                                 회원가입
                             </a>
                         </p>
-                    </div>
-                </div>
-            </div>
+                    </div >
+                </div >
+            </div >
         );
     }
 

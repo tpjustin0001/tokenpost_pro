@@ -30,12 +30,15 @@ export default function CalendarPage() {
             try {
                 if (!supabase) return;
 
-                // Fetch events from today onwards
+                // Fetch events from past 7 days onwards
+                const pastDate = new Date();
+                pastDate.setDate(pastDate.getDate() - 7);
                 const today = new Date().toISOString().split('T')[0];
+
                 const { data, error } = await supabase
                     .from('calendar_events')
                     .select('*')
-                    .gte('event_date', today)
+                    .gte('event_date', pastDate.toISOString().split('T')[0])
                     .order('event_date', { ascending: true })
                     .order('time', { ascending: true });
 

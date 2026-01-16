@@ -88,91 +88,94 @@ export default function Mindshare() {
                 </div>
             </div>
 
-            {/* 1. Grok Insight Card */}
-            <div className={styles.insightCard}>
-                <div className={styles.insightHeader}>
-                    <span style={{ fontSize: '18px' }}>🧠</span>
-                    <span style={{ fontWeight: 600, color: '#e5e7eb' }}>Grok's Insight</span>
+            {/* Scrollable content area */}
+            <div className={styles.scrollContent}>
+                {/* 1. Grok Insight Card */}
+                <div className={styles.insightCard}>
+                    <div className={styles.insightHeader}>
+                        <span style={{ fontSize: '18px' }}>🧠</span>
+                        <span style={{ fontWeight: 600, color: '#e5e7eb' }}>Grok's Insight</span>
+                    </div>
+                    <p className={styles.insightText}>
+                        "{grokSaying}"
+                    </p>
                 </div>
-                <p className={styles.insightText}>
-                    "{grokSaying}"
-                </p>
-            </div>
 
-            {/* 2. Atmosphere Gauge */}
-            <div className={styles.section} style={{ marginTop: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '12px' }}>
-                    <span style={{ color: '#ef4444' }}>😨 공포 (Fear)</span>
-                    <span style={{ color: getScoreColor(sentimentScore), fontWeight: 'bold' }}>{sentimentLabel} ({sentimentScore})</span>
-                    <span style={{ color: '#10b981' }}>🤑 탐욕 (Greed)</span>
-                </div>
-                <div className={styles.phBarBg}>
-                    <div
-                        className={styles.phBarFill}
-                        style={{
-                            width: `${sentimentScore}%`,
-                            background: `linear-gradient(90deg, #ef4444 0%, #fbbf24 50%, #10b981 100%)`
-                        }}
-                    />
-                    <div
-                        className={styles.phIndicator}
-                        style={{ left: `${sentimentScore}%` }}
-                    />
-                </div>
-            </div>
-
-            {/* 3. Trending Keywords */}
-            {keywords.length > 0 && (
+                {/* 2. Atmosphere Gauge */}
                 <div className={styles.section} style={{ marginTop: '16px' }}>
-                    <h4 className={styles.sectionTitle}>🔥 Trending Keywords</h4>
-                    <div className={styles.keywordGrid}>
-                        {keywords.map((k: string, i: number) => (
-                            <span key={i} className={styles.keywordTag}>{k}</span>
-                        ))}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '12px' }}>
+                        <span style={{ color: '#ef4444' }}>😨 공포 (Fear)</span>
+                        <span style={{ color: getScoreColor(sentimentScore), fontWeight: 'bold' }}>{sentimentLabel} ({sentimentScore})</span>
+                        <span style={{ color: '#10b981' }}>🤑 탐욕 (Greed)</span>
+                    </div>
+                    <div className={styles.phBarBg}>
+                        <div
+                            className={styles.phBarFill}
+                            style={{
+                                width: `${sentimentScore}%`,
+                                background: `linear-gradient(90deg, #ef4444 0%, #fbbf24 50%, #10b981 100%)`
+                            }}
+                        />
+                        <div
+                            className={styles.phIndicator}
+                            style={{ left: `${sentimentScore}%` }}
+                        />
                     </div>
                 </div>
-            )}
 
-            {/* 4. Live X Feed */}
-            {tweets.length > 0 && (
-                <div className={styles.section} style={{ marginTop: '16px' }}>
-                    <h4 className={styles.sectionTitle}>🐦 Real-time X Feed (Top 5)</h4>
-                    <div className={styles.feedList}>
-                        {tweets.map((t: any, i: number) => (
-                            <div key={i} className={styles.tweetItem}>
-                                <div className={styles.tweetHeader}>
-                                    <span className={styles.tweetAuthor}>{t.author}</span>
-                                    <span className={styles.tweetHandle}>{t.handle}</span>
-                                    <span className={styles.tweetTime}>· {t.time}</span>
+                {/* 3. Trending Keywords */}
+                {keywords.length > 0 && (
+                    <div className={styles.section} style={{ marginTop: '16px' }}>
+                        <h4 className={styles.sectionTitle}>🔥 Trending Keywords</h4>
+                        <div className={styles.keywordGrid}>
+                            {keywords.map((k: string, i: number) => (
+                                <span key={i} className={styles.keywordTag}>{k}</span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* 4. Live X Feed */}
+                {tweets.length > 0 && (
+                    <div className={styles.section} style={{ marginTop: '16px' }}>
+                        <h4 className={styles.sectionTitle}>🐦 Real-time X Feed (Top 5)</h4>
+                        <div className={styles.feedList}>
+                            {tweets.map((t: any, i: number) => (
+                                <div key={i} className={styles.tweetItem}>
+                                    <div className={styles.tweetHeader}>
+                                        <span className={styles.tweetAuthor}>{t.author}</span>
+                                        <span className={styles.tweetHandle}>{t.handle}</span>
+                                        <span className={styles.tweetTime}>· {t.time}</span>
+                                    </div>
+                                    <p className={styles.tweetContent}>{t.content}</p>
                                 </div>
-                                <p className={styles.tweetContent}>{t.content}</p>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* 5. Whale Alerts */}
-            {whales.length > 0 && (
-                <div className={styles.section} style={{ marginTop: '16px' }}>
-                    <h4 className={styles.sectionTitle}>🐳 고래 추적 (Whale Alert)</h4>
-                    <div className={styles.feedList}>
-                        {whales.map((w: any, i: number) => (
-                            <div key={i} className={styles.whaleItem}>
-                                <span className={styles.whaleSymbol}>{w.symbol}</span>
-                                <span className={w.type === '매수' ? styles.whaleBuy : styles.whaleSell}>{w.type}</span>
-                                <span className={styles.whaleAmount}>{w.amount}</span>
-                                <span className={styles.whaleNote}>{w.note}</span>
-                                <span className={styles.tweetTime}>{w.time}</span>
-                            </div>
-                        ))}
+                {/* 5. Whale Alerts */}
+                {whales.length > 0 && (
+                    <div className={styles.section} style={{ marginTop: '16px' }}>
+                        <h4 className={styles.sectionTitle}>🐳 고래 추적 (Whale Alert)</h4>
+                        <div className={styles.feedList}>
+                            {whales.map((w: any, i: number) => (
+                                <div key={i} className={styles.whaleItem}>
+                                    <span className={styles.whaleSymbol}>{w.symbol}</span>
+                                    <span className={w.type === '매수' ? styles.whaleBuy : styles.whaleSell}>{w.type}</span>
+                                    <span className={styles.whaleAmount}>{w.amount}</span>
+                                    <span className={styles.whaleNote}>{w.note}</span>
+                                    <span className={styles.tweetTime}>{w.time}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            <div style={{ padding: '12px 0 0', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '6px', opacity: 0.6 }}>
-                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Powered by</span>
-                <span style={{ fontSize: '10px', fontWeight: 'bold' }}>xAI Grok 4.1</span>
+                <div style={{ padding: '12px 0 0', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '6px', opacity: 0.6 }}>
+                    <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Powered by</span>
+                    <span style={{ fontSize: '10px', fontWeight: 'bold' }}>xAI Grok 4.1</span>
+                </div>
             </div>
         </div>
     );

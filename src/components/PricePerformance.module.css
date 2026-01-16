@@ -2,7 +2,7 @@
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    overflow: hidden;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     height: 100%;

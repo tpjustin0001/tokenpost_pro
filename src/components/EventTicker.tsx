@@ -18,11 +18,15 @@ export default function EventTicker() {
     useEffect(() => {
         async function fetchEvents() {
             try {
-                if (!supabase) return;
+                if (!supabase) {
+                    console.log('[EventTicker] Supabase not initialized');
+                    return;
+                }
 
                 // Fetch past week + upcoming events (show more context)
                 const pastDate = new Date();
                 pastDate.setDate(pastDate.getDate() - 7); // 7 days ago
+                console.log('[EventTicker] Fetching events from:', pastDate.toISOString().split('T')[0]);
 
                 const { data, error } = await supabase
                     .from('calendar_events')
@@ -32,7 +36,11 @@ export default function EventTicker() {
                     .order('time', { ascending: true })
                     .limit(20);
 
-                if (error) throw error;
+                if (error) {
+                    console.error('[EventTicker] Fetch error:', error);
+                    throw error;
+                }
+                console.log('[EventTicker] Fetched events:', data?.length || 0);
                 if (data) setEvents(data);
             } catch (err) {
                 console.error('Failed to fetch calendar events:', err);

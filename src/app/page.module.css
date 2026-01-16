@@ -159,7 +159,7 @@
 .twoColumnGrid>* {
   min-height: 280px;
   max-height: 420px;
-  /* Show 4 items without cutoff */
+  /* Increased for Market Pulse widget */
 }
 
 .threeColumnGrid {
@@ -193,6 +193,7 @@
 /* Grid item styling */
 .twoColumnGrid>*,
 .threeColumnGrid>* {
+  height: 100%;
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--bg-card);

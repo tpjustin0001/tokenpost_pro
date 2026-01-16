@@ -48,7 +48,7 @@ export default function WhaleTracker() {
         <div className="card">
             <div className="card-header">
                 <span className="card-title">고래 추적</span>
-                <span className={styles.live}>LIVE</span>
+                <span className="badge badge-live">실시간</span>
             </div>
             <div className={styles.list}>
                 {WHALE_ACTIVITIES.length === 0 ? (

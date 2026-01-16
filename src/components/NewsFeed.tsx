@@ -96,8 +96,7 @@ export default function NewsFeed() {
             <div className={styles.header}>
                 <h3 className={styles.headerTitle}>실시간 뉴스</h3>
                 <div className={styles.headerControls}>
-                    <span className={styles.liveBadge} />
-                    <span className={styles.liveText}>실시간</span>
+                    <span className="badge badge-live">실시간</span>
                 </div>
             </div>
 

@@ -66,7 +66,7 @@ export default function InstitutionalMetrics({ symbol = 'BTC' }: InstitutionalMe
             <div className="card">
                 <div className="card-header">
                     <span className="card-title">기관급 밸류에이션</span>
-                    <span style={{ padding: '2px 6px', background: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24', borderRadius: '4px', fontSize: '10px', fontWeight: 600, marginLeft: '8px' }}>데모 데이터</span>
+                    <span className="badge badge-demo">데모 데이터</span>
                     <div className={styles.headerActions}>
                         <button
                             className={styles.aiButton}

@@ -84,7 +84,7 @@ export default function Mindshare() {
             <div className={styles.header}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <h3 className={styles.title}>🤖 Grok Market Pulse</h3>
-                    <span className={styles.liveBadge}>LIVE</span>
+                    <span className="badge badge-live">실시간</span>
                 </div>
             </div>
 

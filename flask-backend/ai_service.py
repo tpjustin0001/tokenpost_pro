@@ -1,6 +1,7 @@
 
 import os
 import json
+import requests
 from datetime import datetime
 from openai import OpenAI
 
@@ -28,6 +29,23 @@ class AIService:
         self._cache = {}
         self.CACHE_TTL_GLOBAL = 300 # Reduced to 5 mins for "live" feel
         self.CACHE_TTL_ASSET = 300
+
+    def _fetch_real_fear_greed(self):
+        """Fetch real Fear & Greed Index from Alternative.me API"""
+        try:
+            response = requests.get("https://api.alternative.me/fng/?limit=1", timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                if data and 'data' in data and len(data['data']) > 0:
+                    fng = data['data'][0]
+                    return {
+                        'score': int(fng['value']),
+                        'label': fng['value_classification'],  # e.g., "Greed", "Extreme Fear"
+                        'timestamp': fng['timestamp']
+                    }
+        except Exception as e:
+            print(f"⚠️ Fear & Greed API Error: {e}")
+        return None
 
     @property
     def model(self):
@@ -113,16 +131,8 @@ class AIService:
             "atmosphere_score": int(0-100),
             "atmosphere_label": "공포 (Fear) | 중립 (Neutral) | 탐욕 (Greed)",
             "market_keywords": ["#Keyword1", "#Keyword2", "#Keyword3"],
-            "top_tweets": [
-                {{ "author": "CryptoGuru", "handle": "@cryptoguru", "content": "Bitcoin breaking resistance...", "time": "2m ago" }},
-                {{ "author": "MarketAnalyst", "handle": "@marketanalyst", "content": "Ethereum ETF flows looking strong...", "time": "15m ago" }},
-                {{ "author": "MacroWatch", "handle": "@macrowatch", "content": "Fed meeting minutes released...", "time": "23m ago" }},
-                {{ "author": "DefiLlama", "handle": "@defillama", "content": "TVL reaching new highs...", "time": "45m ago" }},
-                {{ "author": "WhaleAlert", "handle": "@whale_alert", "content": "1000 BTC moved to Coinbase...", "time": "1h ago" }}
-            ],
-            "whale_alerts": [
-                {{ "symbol": "BTC", "type": "매수", "amount": "$120M", "time": "5분 전", "note": "바이낸스 입금" }}
-            ],
+            "top_tweets": [],
+            "whale_alerts": [],
             "macro_factors": [
                 {{ "name": "Interest Rates", "impact": "Positive/Neutral/Negative", "detail": "Analyze impact of Fed rates..." }},
                 {{ "name": "Global Liquidity", "impact": "Positive/Neutral/Negative", "detail": "M2 supply trends..." }},
@@ -167,6 +177,21 @@ class AIService:
             parsed_result['timestamp'] = datetime.now().isoformat()
             parsed_result['recent_news'] = news_list
             parsed_result['grok_sentiment_raw'] = grok_sentiment # Store raw Grok output if needed
+            
+            # OVERRIDE with Real Fear & Greed Index from Alternative.me
+            real_fng = self._fetch_real_fear_greed()
+            if real_fng:
+                print(f"✅ Real F&G: {real_fng['score']} ({real_fng['label']})")
+                parsed_result['atmosphere_score'] = real_fng['score']
+                # Translate label to Korean
+                label_map = {
+                    'Extreme Fear': '극단적 공포',
+                    'Fear': '공포',
+                    'Neutral': '중립',
+                    'Greed': '탐욕',
+                    'Extreme Greed': '극단적 탐욕'
+                }
+                parsed_result['atmosphere_label'] = label_map.get(real_fng['label'], real_fng['label'])
             
             self._set_cache_data(cache_key, parsed_result)
             return parsed_result

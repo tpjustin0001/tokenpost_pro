@@ -95,7 +95,7 @@ class AIService:
         except Exception as e:
             return "Data analysis failed."
 
-    def analyze_global_market(self, market_data, news_list=[]):
+    def analyze_global_market(self, market_data, news_list=[], whale_news_list=[]):
         cache_key = 'GLOBAL_MARKET_V3'
         cached = self._get_cached_data(cache_key, self.CACHE_TTL_GLOBAL)
         if cached: return cached
@@ -106,35 +106,32 @@ class AIService:
         # Step 1: Get Grok Sentiment
         grok_sentiment = self._get_grok_sentiment(news_list)
 
-        # Step 2: GPT Main Analysis (acting as parsing layer or using Grok directly if possible)
-        # Note: We are using GPT-4o to structure the data, but we inject Grok's sentiment.
-        # Ideally, we would use Grok for the whole thing if it supported JSON mode reliably.
-        
+        # Prepare Whale News Text
+        whale_news_text = "No specific whale news."
+        if whale_news_list:
+            whale_news_text = "\n".join([f"- {item['title']} ({item['source']})" for item in whale_news_list])
+
+        # Step 2: GPT Main Analysis
         system_prompt = f"""
         You are a 'Crypto Social Pulse' Analyzer.
         
         INPUT CONTEXT:
         1. Market Data (Technical/Macro)
         2. Social Sentiment (AI Analysis): "{grok_sentiment}"
+        3. Whale Tracking News:
+        "{whale_news_text}"
         
         TASK:
         Generate a "Social Pulse" report in STRICT JSON format.
-        The content must be in KOREAN (except for usernames/handles and numbers).
-        ALL PRICES MUST BE IN USD (convert if necessary or strictly assume USD for global data).
-        
-        JSON Structure:
-        {{
-            "overallScore": int(0-100), // Integrated Market Score
-            "marketPhase": "Accumulation | Markup | Distribution | Markdown",
-            "summary": "Comprehensive Macro Summary (Korean). Analyze Fed data, unexpected events, and global liquidity.",
-            "grok_saying": "A witty, edgy, and insightful one-liner about the market vibe. Be cynical but accurate. IN KOREAN.",
-            "atmosphere_score": int(0-100),
-            "atmosphere_label": "공포 (Fear) | 중립 (Neutral) | 탐욕 (Greed)",
+        ...
             "market_keywords": ["#Keyword1", "#Keyword2", "#Keyword3"],
             "top_tweets": [
-                { "author": "Influencer Name", "handle": "@handle", "content": "Summary of their key insight or opinion (Korean)", "time": "2h relative time" }
+                {{ "author": "Influencer Name", "handle": "@handle", "content": "Summary of key insight (Korean)", "time": "2h relative time" }}
             ],
-            "whale_alerts": [],
+            "whale_alerts": [
+                "Summarize key whale movement 1 from Whale News (Korean)",
+                "Summarize key whale movement 2 from Whale News (Korean)"
+            ],
             "macro_factors": [
                 {{ "name": "Interest Rates", "impact": "Positive/Neutral/Negative", "detail": "Analyze impact of Fed rates..." }},
                 {{ "name": "Global Liquidity", "impact": "Positive/Neutral/Negative", "detail": "M2 supply trends..." }},

@@ -37,12 +37,12 @@ class SchedulerService:
             # 1. Fetch Data
             market_data = market_data_service.get_global_metrics()
             
-            # 2. Fetch News (Bitcoin + Crypto General)
+            # 2. Fetch News (General + Whale)
             news_btc = news_service.get_crypto_news("BTC", name="Bitcoin")
-            # Enhance: specific macro query could be added to news_service, but this is okay for now
+            news_whale = news_service.get_whale_news(limit=5)
             
             # 3. AI Analysis
-            result = ai_service.analyze_global_market(market_data, news_list=news_btc)
+            result = ai_service.analyze_global_market(market_data, news_list=news_btc, whale_news_list=news_whale)
             
             # 4. Save to DB
             if self.supabase:
@@ -99,13 +99,13 @@ class SchedulerService:
         # Run immediately on startup to populate data
         from datetime import timedelta
         # Run every 4 hours (240 mins) to optimize cost for Grok 4.1
-        # Delay initial run by 2 mins to allow server to boot safely
+        # Delay initial run by 10s to allow server to boot safely (Previously 2 mins)
         self.scheduler.add_job(
             self.update_market_analysis, 
             'interval', 
             minutes=240, 
             id='global_analysis_job',
-            next_run_time=datetime.now() + timedelta(minutes=2)
+            next_run_time=datetime.now() + timedelta(seconds=10)
         )
         
         # ETH Staking Data Collection (10분 간격)

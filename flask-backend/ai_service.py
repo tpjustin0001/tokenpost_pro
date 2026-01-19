@@ -103,7 +103,7 @@ class AIService:
         if not self.client_gpt:
             return self._get_mock_global_analysis()
 
-        # Step 1: Get Grok Sentiment
+        # Step 1: Grok Sentiment
         grok_sentiment = self._get_grok_sentiment(news_list)
 
         # Prepare Whale News Text
@@ -123,10 +123,22 @@ class AIService:
         
         TASK:
         Generate a "Social Pulse" report in STRICT JSON format.
-        ...
+        USE YOUR LIVE SEARCH TOOL TO FIND REAL TWEETS. DO NOT HALLUCINATE.
+        FIND VIRAL TWEETS WITH >1000 LIKES FROM THE LAST 24 HOURS.
+        The content must be in KOREAN (except for usernames/handles and numbers).
+        ALL PRICES MUST BE IN USD (convert if necessary or strictly assume USD for global data).
+        
+        JSON Structure:
+        {{
+            "overallScore": int(0-100), // Integrated Market Score
+            "marketPhase": "Accumulation | Markup | Distribution | Markdown",
+            "summary": "Comprehensive Macro Summary (Korean). Analyze Fed data, unexpected events, and global liquidity.",
+            "grok_saying": "A witty, edgy, and insightful one-liner about the market vibe. Be cynical but accurate. IN KOREAN.",
+            "atmosphere_score": int(0-100),
+            "atmosphere_label": "공포 (Fear) | 중립 (Neutral) | 탐욕 (Greed)",
             "market_keywords": ["#Keyword1", "#Keyword2", "#Keyword3"],
             "top_tweets": [
-                {{ "author": "Influencer Name", "handle": "@handle", "content": "Summary of key insight (Korean)", "time": "2h relative time" }}
+                {{ "author": "Real Author", "handle": "@RealHandle", "content": "Summary of ACTUAL viral tweet found via search (Korean)", "time": "2h relative time" }}
             ],
             "whale_alerts": [
                 "Summarize key whale movement 1 from Whale News (Korean)",

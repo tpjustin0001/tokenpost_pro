@@ -150,6 +150,8 @@ export const fetchProfile = async (token: string): Promise<TokenPostUser> => {
 
     // Call Flask proxy directly (no CORS wrapper needed)
     const response = await fetch(url, {
+        method: 'GET',
+        cache: 'no-store', // Disable browser caching
         headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

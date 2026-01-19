@@ -51,32 +51,47 @@ class AIService:
     def model(self):
         return "gpt-4o + grok-4.1-fast"
 
-    def _get_grok_sentiment(self, news_list):
+    def _get_grok_social_pulse(self, news_list):
         """
-        Use Grok (xAI) to extract deep social sentiment from news.
+        Use Grok (xAI) as a DATA AGENT to fetch real-time X activity.
         """
-        if not self.client_grok or not news_list:
-            if not self.client_grok:
-                print("⚠️ xAI Client not initialized (Missing XAI_API_KEY)")
-            return "Grok AI: No sentiment data available."
+        if not self.client_grok:
+            print("⚠️ xAI Client not initialized (Missing XAI_API_KEY)")
+            return "Grok AI: No data available."
 
+        # Provide recent news context to help Grok's search
         news_text = "\n".join([f"- {item['title']} ({item['source']})" for item in news_list])
         
         try:
-            # Using 'grok-4.1-fast' as requested by user
+            # Using 'grok-4.1-fast' for Live Search
             response = self.client_grok.chat.completions.create(
                 model="grok-4.1-fast", 
                 messages=[
-                    {"role": "system", "content": "You are Grok, a real-time Social Sentiment Engine. Analyze the crypto news headlines. Output a brief, witty, uncensored, and slightly edgy paragraph about the current market 'vibe' and crowd psychology. Be bold. Output in KOREAN."},
-                    {"role": "user", "content": f"Headlines:\n{news_text}"}
+                    {"role": "system", "content": """
+                    You are a Real-Time Crypto Data Agent.
+                    Your job is to SEARCH X (Twitter) and extract ACTUAL viral content.
+                    
+                    TASK:
+                    1. Search for 'Top 5 Viral Crypto Tweets' from the last 6 HOURS with >1000 likes.
+                       - MUST be real tweets. Include Handle, Author, and Summary.
+                    2. Identify 'Top 3 Trending Keywords' from the last 6 HOURS.
+                    3. Generate a 'Market Vibe' summary (1 witty, edgy Korean sentence).
+                    
+                    OUTPUT FORMAT (Plain Text):
+                    VIBE: [Korean Sentence]
+                    KEYWORDS: #Key1, #Key2, #Key3
+                    TWEETS:
+                    1. @Handle | Author | Summary (Korean)
+                    2. ...
+                    """},
+                    {"role": "user", "content": f"Context News:\n{news_text}\n\nGO! Find real data now."}
                 ],
-                temperature=0.9
+                temperature=0.3 # Lower temp for more factual search results
             )
             return response.choices[0].message.content
         except Exception as e:
-            print(f"❌ Grok Sentiment Failed: {e}")
-            # Fallback to OpenAI if Grok fails key/quota
-            return self._get_openai_sentiment_fallback(news_list)
+            print(f"❌ Grok Pulse Failed: {e}")
+            return f"Error: {e}"
 
     def _get_openai_sentiment_fallback(self, news_list):
         """Fallback to OpenAI if Grok fails"""
@@ -103,25 +118,40 @@ class AIService:
         if not self.client_gpt:
             return self._get_mock_global_analysis()
 
-        # Step 1: Grok Sentiment
-        grok_sentiment = self._get_grok_sentiment(news_list)
-
+        # Step 1: Grok Social Pulse (The "Researcher")
+        grok_pulse_text = self._get_grok_social_pulse(news_list)
+        
         # Prepare Whale News Text
         whale_news_text = "No specific whale news."
         if whale_news_list:
             whale_news_text = "\n".join([f"- {item['title']} ({item['source']})" for item in whale_news_list])
 
-        # Step 2: GPT Main Analysis
+        # Step 2: GPT Main Analysis (The "Formatter")
         system_prompt = f"""
-        You are a 'Crypto Social Pulse' Analyzer.
+        You are a 'Social Pulse' JSON Formatter.
         
         INPUT CONTEXT:
         1. Market Data (Technical/Macro)
-        2. Social Sentiment (AI Analysis): "{grok_sentiment}"
+        2. Grok Social Pulse (GROUND TRUTH):
+        "
+        {grok_pulse_text}
+        "
         3. Whale Tracking News:
         "{whale_news_text}"
         
         TASK:
+        Convert the provided 'Grok Social Pulse' text into STRICT JSON.
+        DO NOT HALLUCINATE OR CREATE NEW INFLUENCERS. ONLY USE THE TEXT PROVIDED.
+        
+        JSON Structure:
+        ...
+        "grok_saying": "Extract 'VIBE' from Grok Pulse",
+        "market_keywords": ["Extract 'KEYWORDS' from Grok Pulse"],
+        "top_tweets": [
+            {{ "author": "Extract from Grok Pulse", "handle": "Extract from Grok Pulse", "content": "Summary (Korean)", "time": "6h" }}
+        ],
+        ...
+        
         Generate a "Social Pulse" report in STRICT JSON format.
         USE YOUR LIVE SEARCH TOOL TO FIND REAL TWEETS. DO NOT HALLUCINATE.
         FIND VIRAL TWEETS WITH >1000 LIKES FROM THE LAST 24 HOURS.

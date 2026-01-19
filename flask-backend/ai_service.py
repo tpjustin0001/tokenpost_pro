@@ -131,7 +131,9 @@ class AIService:
             "atmosphere_score": int(0-100),
             "atmosphere_label": "공포 (Fear) | 중립 (Neutral) | 탐욕 (Greed)",
             "market_keywords": ["#Keyword1", "#Keyword2", "#Keyword3"],
-            "top_tweets": [],
+            "top_tweets": [
+                { "author": "Influencer Name", "handle": "@handle", "content": "Summary of their key insight or opinion (Korean)", "time": "2h relative time" }
+            ],
             "whale_alerts": [],
             "macro_factors": [
                 {{ "name": "Interest Rates", "impact": "Positive/Neutral/Negative", "detail": "Analyze impact of Fed rates..." }},

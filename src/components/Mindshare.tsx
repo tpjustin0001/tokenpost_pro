@@ -138,7 +138,7 @@ export default function Mindshare() {
                 {/* 4. Live X Feed */}
                 {tweets.length > 0 && (
                     <div className={styles.section} style={{ marginTop: '16px' }}>
-                        <h4 className={styles.sectionTitle}>🐦 Real-time X Feed (Top 5)</h4>
+                        <h4 className={styles.sectionTitle}>🗣️ Top 5 Major Influencers (xAI Analysis)</h4>
                         <div className={styles.feedList}>
                             {tweets.map((t: any, i: number) => (
                                 <div key={i} className={styles.tweetItem}>

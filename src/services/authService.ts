@@ -14,9 +14,9 @@ export const OAUTH_CONFIG = {
     // 인증 페이지 (www.tokenpost.kr)
     AUTH_URL: 'https://www.tokenpost.kr/oauth/login',
 
-    // API 엔드포인트
-    TOKEN_URL: 'https://oapi.tokenpost.kr/oauth/v1/token',
-    USER_INFO_URL: 'https://oapi.tokenpost.kr/oauth/v1/userInfo',
+    // API 엔드포인트 (Now using Flask backend proxy to bypass CORS)
+    TOKEN_URL: '/api/python/oauth/token',       // Flask proxy endpoint
+    USER_INFO_URL: '/api/python/oauth/userinfo', // Flask proxy endpoint
 
     // [수정됨] 로그인 요청 Scope - TokenPost 설정과 일치
     SCOPE: 'email nickname grade uid point.tpc subscription',
@@ -25,8 +25,8 @@ export const OAUTH_CONFIG = {
     USER_INFO_SCOPE: 'user.email,user.nickname,subscription,grade,point.tpc'
 };
 
-// CORS Proxy Helper
-const withProxy = (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`;
+// No longer using CORS proxy - Flask backend handles it
+// const withProxy = (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`;
 
 // PKCE Utilities
 const generateRandomString = (length: number): string => {
@@ -119,19 +119,18 @@ export const handleCallback = async (code: string, state: string): Promise<{ acc
         throw new Error('CSRF Warning: State mismatch');
     }
 
-    const body = new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        client_id: OAUTH_CONFIG.CLIENT_ID,
-        client_secret: OAUTH_CONFIG.CLIENT_SECRET,
-        redirect_uri: OAUTH_CONFIG.REDIRECT_URI,
-        code_verifier: verifier || ''
-    });
-
-    const response = await fetch(withProxy(OAUTH_CONFIG.TOKEN_URL), {
+    // Send as JSON to Flask proxy (which will convert to form data for TokenPost API)
+    const response = await fetch(OAUTH_CONFIG.TOKEN_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            grant_type: 'authorization_code',
+            code,
+            client_id: OAUTH_CONFIG.CLIENT_ID,
+            client_secret: OAUTH_CONFIG.CLIENT_SECRET,
+            redirect_uri: OAUTH_CONFIG.REDIRECT_URI,
+            code_verifier: verifier || ''
+        })
     });
 
     if (!response.ok) {
@@ -149,7 +148,8 @@ export const handleCallback = async (code: string, state: string): Promise<{ acc
 export const fetchProfile = async (token: string): Promise<TokenPostUser> => {
     const url = `${OAUTH_CONFIG.USER_INFO_URL}?scope=${encodeURIComponent(OAUTH_CONFIG.USER_INFO_SCOPE)}`;
 
-    const response = await fetch(withProxy(url), {
+    // Call Flask proxy directly (no CORS wrapper needed)
+    const response = await fetch(url, {
         headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

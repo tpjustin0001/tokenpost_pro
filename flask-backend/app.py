@@ -140,6 +140,61 @@ def index():
 def health():
     return jsonify({'status': 'ok'})
 
+# ============================================================
+# OAUTH PROXY ENDPOINTS (Bypass CORS for TokenPost OAuth API)
+# ============================================================
+import requests
+
+@app.route('/api/oauth/token', methods=['POST'], strict_slashes=False)
+def oauth_token_proxy():
+    """Proxy for TokenPost OAuth token exchange - bypasses CORS"""
+    try:
+        data = request.get_json() or {}
+        
+        # Forward request to TokenPost OAuth API
+        response = requests.post(
+            'https://oapi.tokenpost.kr/oauth/v1/token',
+            data={
+                'grant_type': data.get('grant_type', 'authorization_code'),
+                'code': data.get('code'),
+                'client_id': data.get('client_id'),
+                'client_secret': data.get('client_secret'),
+                'redirect_uri': data.get('redirect_uri'),
+                'code_verifier': data.get('code_verifier', '')
+            },
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+            timeout=30
+        )
+        
+        return jsonify(response.json()), response.status_code
+        
+    except Exception as e:
+        print(f"❌ OAuth Token Proxy Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/oauth/userinfo', methods=['GET'], strict_slashes=False)
+def oauth_userinfo_proxy():
+    """Proxy for TokenPost OAuth UserInfo API - bypasses CORS"""
+    try:
+        # Get bearer token from Authorization header
+        auth_header = request.headers.get('Authorization', '')
+        scope = request.args.get('scope', 'user.email,user.nickname,subscription,grade,point.tpc')
+        
+        response = requests.get(
+            f'https://oapi.tokenpost.kr/oauth/v1/userInfo?scope={scope}',
+            headers={
+                'Authorization': auth_header,
+                'Content-Type': 'application/json'
+            },
+            timeout=30
+        )
+        
+        return jsonify(response.json()), response.status_code
+        
+    except Exception as e:
+        print(f"❌ OAuth UserInfo Proxy Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/admin/trigger-analysis', methods=['POST'], strict_slashes=False)
 def trigger_analysis():
     """Manual trigger for analysis job"""

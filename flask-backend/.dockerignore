@@ -1,0 +1,19 @@
+
+# Exclude local environment files/secrets
+.env
+.env.local
+.env.*
+*.env
+
+# Exclude Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+build/
+dist/
+.git/
+.gitignore
+README.md

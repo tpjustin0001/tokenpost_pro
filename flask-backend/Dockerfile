@@ -15,11 +15,10 @@ RUN pip install gunicorn
 COPY . .
 
 # Make port 10000 available to the world outside this container
-EXPOSE 10000
+# Expose port (Documentation only, Railway ignores this but good practice)
+EXPOSE $PORT
 
-# Define environment variable
-ENV PORT=10000
-ENV FLASK_APP=app.py
+# Run app.py using gunicorn with dynamic port
+# URL-encoded shell form to allow $PORT expansion
+CMD gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1 --threads 4
 
-# Run app.py when the container launches
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:10000", "--timeout", "120"]

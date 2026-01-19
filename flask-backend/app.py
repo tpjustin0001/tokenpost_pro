@@ -21,10 +21,34 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 app = Flask(__name__)
 # Load Env
 load_dotenv()
+
+# Support for local development with .env.local in root
+if not os.environ.get('RAILWAY_ENVIRONMENT'):
+    env_local_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env.local')
+    if os.path.exists(env_local_path):
+        print(f"📂 Loading .env.local from: {env_local_path}")
+        load_dotenv(env_local_path)
+
 print("----------------------------------------------------------------")
 print(f"🚀 [DEBUG] APP STARTING...")
 print(f"🚀 [DEBUG] ENV PORT: {os.environ.get('PORT')}")
 print(f"🚀 [DEBUG] CWD: {os.getcwd()}")
+
+def debug_env_var(name):
+    val = os.environ.get(name)
+    if not val:
+        print(f"❌ {name}: NOT SET")
+    else:
+        # Mask: first 4 ... last 4
+        masked = val[:4] + "*" * 6 + val[-4:] if len(val) > 8 else "********"
+        print(f"✅ {name}: {masked}")
+
+print("--- ENV VAR CHECK ---")
+debug_env_var("COINMARKETCAP_API_KEY")
+debug_env_var("EXTERNAL_API_KEY")
+debug_env_var("OPENAI_API_KEY")
+debug_env_var("XAI_API_KEY")
+debug_env_var("SUPABASE_URL")
 print("----------------------------------------------------------------")
 CORS(app)
 

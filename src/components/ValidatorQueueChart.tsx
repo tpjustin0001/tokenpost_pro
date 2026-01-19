@@ -11,6 +11,7 @@ import {
     Tooltip,
     Legend,
     Filler,
+    ChartOptions
 } from 'chart.js';
 import { useMemo } from 'react';
 
@@ -99,7 +100,7 @@ export default function ValidatorQueueChart({ data, period }: ValidatorQueueChar
         };
     }, [data, period]);
 
-    const options = useMemo(() => ({
+    const options: ChartOptions<'line'> = useMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
         interaction: {
@@ -154,9 +155,12 @@ export default function ValidatorQueueChart({ data, period }: ValidatorQueueChar
                 ticks: {
                     font: { size: 9 },
                     color: '#6495ED', // Match Entry color
-                    callback: (value: number) => {
-                        if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-                        if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+                    callback: function (value: string | number) {
+                        if (typeof value === 'number') {
+                            if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                            if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+                            return value;
+                        }
                         return value;
                     }
                 }
@@ -171,9 +175,12 @@ export default function ValidatorQueueChart({ data, period }: ValidatorQueueChar
                 ticks: {
                     font: { size: 9 },
                     color: '#FF6384', // Match Exit color
-                    callback: (value: number) => {
-                        if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-                        if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+                    callback: function (value: string | number) {
+                        if (typeof value === 'number') {
+                            if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                            if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+                            return value;
+                        }
                         return value;
                     }
                 }

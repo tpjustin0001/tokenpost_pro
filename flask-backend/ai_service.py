@@ -49,7 +49,7 @@ class AIService:
 
     @property
     def model(self):
-        return "gpt-4o-mini + grok-2-latest"
+        return "gpt-4o + grok-beta"
 
     def _get_grok_sentiment(self, news_list):
         """
@@ -63,9 +63,9 @@ class AIService:
         news_text = "\n".join([f"- {item['title']} ({item['source']})" for item in news_list])
         
         try:
-            # Using 'grok-2-latest' as beta might be deprecated
+            # Using 'grok-beta' as it is the stable endpoint for now
             response = self.client_grok.chat.completions.create(
-                model="grok-2-latest", 
+                model="grok-beta", 
                 messages=[
                     {"role": "system", "content": "You are Grok, a real-time Social Sentiment Engine. Analyze the crypto news headlines. Output a brief, witty, uncensored, and slightly edgy paragraph about the current market 'vibe' and crowd psychology. Be bold. Output in KOREAN."},
                     {"role": "user", "content": f"Headlines:\n{news_text}"}
@@ -81,10 +81,10 @@ class AIService:
     def _get_openai_sentiment_fallback(self, news_list):
         """Fallback to OpenAI if Grok fails"""
         try:
-            print("🔄 Falling back to OpenAI for sentiment...")
+            print("🔄 Falling back to OpenAI (GPT-4o) for sentiment...")
             news_text = "\n".join([f"- {item['title']} ({item['source']})" for item in news_list])
             response = self.client_gpt.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-4o",
                 messages=[
                     {"role": "system", "content": "You are a crypto sentiment analyzer. Output a witty, edgy paragraph about market vibe in Korean."},
                     {"role": "user", "content": f"Headlines:\n{news_text}"}
@@ -107,7 +107,7 @@ class AIService:
         grok_sentiment = self._get_grok_sentiment(news_list)
 
         # Step 2: GPT Main Analysis (acting as parsing layer or using Grok directly if possible)
-        # Note: We are using GPT-4o-mini to structure the data, but we inject Grok's sentiment.
+        # Note: We are using GPT-4o to structure the data, but we inject Grok's sentiment.
         # Ideally, we would use Grok for the whole thing if it supported JSON mode reliably.
         
         system_prompt = f"""
@@ -164,7 +164,7 @@ class AIService:
 
         try:
             response = self.client_gpt.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-4o",
                 response_format={"type": "json_object"},
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -234,7 +234,7 @@ class AIService:
 
         try:
             response = self.client_gpt.chat.completions.create(
-                model="gpt-4o-mini", # Use GPT for structure
+                model="gpt-4o", # Use GPT for structure
                 response_format={"type": "json_object"},
                 messages=[
                     {"role": "system", "content": system_prompt},

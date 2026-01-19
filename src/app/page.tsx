@@ -223,12 +223,12 @@ export default function HomePage() {
             </MotionDiv>
 
             {/* Section: ETH Staking Intelligence */}
-            {/* <MotionSection className={styles.dashboardSection} variants={itemVariants}>
+            <MotionSection className={styles.dashboardSection} variants={itemVariants}>
               <h2 className={styles.sectionHeading}>ETH 스테이킹 인텔리전스</h2>
               <div className={styles.singleColumnGrid}>
                 <ETHSupplyRadar />
               </div>
-            </MotionSection> */}
+            </MotionSection>
 
             {/* Section: Market Pulse (Sentiment & Volatility) */}
             <MotionSection className={styles.dashboardSection} variants={itemVariants}>

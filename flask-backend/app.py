@@ -276,11 +276,13 @@ def api_test_hello():
 @cache.cached(timeout=10)  # Cache for 10 seconds for real-time
 def api_crypto_asset(symbol):
     """Simple asset data for individual coin cards"""
-    from market_provider import market_data_service
-    
     symbol = symbol.upper()
     
     try:
+        print(f"🔍 [DEBUG] Importing market_provider for {symbol}...")
+        from market_provider import market_data_service
+        print(f"✅ [DEBUG] market_provider imported. Fetching data...")
+        
         data = market_data_service.get_asset_data(symbol)
         
         # Calculate volatility based on ATR or price range

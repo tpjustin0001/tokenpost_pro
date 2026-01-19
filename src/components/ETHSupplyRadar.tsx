@@ -73,7 +73,7 @@ export default function ETHSupplyRadar() {
         const fetchData = async () => {
             try {
                 // Fetch current data
-                const response = await fetch(`${API_BASE_URL}/api/eth/staking`);
+                const response = await fetch('/api/eth/staking');
                 if (!response.ok) throw new Error('API Error');
                 const result = await response.json();
                 setData(result);
@@ -81,7 +81,7 @@ export default function ETHSupplyRadar() {
 
                 // Fetch history data for chart
                 try {
-                    const historyRes = await fetch(`${API_BASE_URL}/api/eth/staking/history`);
+                    const historyRes = await fetch('/api/eth/staking/history');
                     if (historyRes.ok) {
                         const historyData = await historyRes.json();
                         if (historyData.data && historyData.data.length > 0) {

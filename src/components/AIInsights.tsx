@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import styles from './AIInsights.module.css';
 
 interface AIInsight {
@@ -11,11 +12,11 @@ interface AIInsight {
     time: string;
 }
 
-const AI_INSIGHTS: AIInsight[] = [
-    // AI 분석 데이터 초기화 (실제 모델 연동 대기)
-];
-
 export default function AIInsights() {
+    const [insights, setInsights] = useState<AIInsight[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
     const getTypeColor = (type: string) => {
         switch (type) {
             case 'bullish': return 'var(--accent-green)';
@@ -34,6 +35,52 @@ export default function AIInsights() {
         }
     };
 
+    useEffect(() => {
+        const fetchInsights = async () => {
+            try {
+                // Fetch from Next.js API (which calls Supabase)
+                // Assuming we will create or use an existing endpoint.
+                // For now, let's use the same pattern as other components: custom endpoint or direct Supabase.
+                // Given the privacy, better to use an API route that reads from global_market_snapshots.
+                const response = await fetch('/api/analysis/market/latest');
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch insights');
+                }
+
+                const data = await response.json();
+
+                if (data && data.data) {
+                    // Transform backend data to frontend model
+                    // Backend saves: { overview: "...", sentiment: "bullish", ... }
+                    // We need to map it.
+                    // For now, let's map the 'overview' as one main insight.
+                    const mappedInsights: AIInsight[] = [{
+                        id: `market-${new Date(data.created_at).getTime()}`,
+                        type: data.data.sentiment || 'neutral',
+                        title: '글로벌 시장 브리핑',
+                        content: data.data.overview || '시장 데이터 분석 중입니다.',
+                        confidence: data.data.confidence || 85,
+                        time: new Date(data.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                    }];
+                    setInsights(mappedInsights);
+                } else {
+                    // If no data, keep empty to show loading/empty state
+                }
+            } catch (err) {
+                console.error('AI Insight fetch error:', err);
+                // Fallback to error or empty
+                setError('AI 연결이 지연되고 있습니다. 잠시 후 다시 확인해주세요.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchInsights();
+        const interval = setInterval(fetchInsights, 60000); // 1 minute refresh
+        return () => clearInterval(interval);
+    }, []);
+
     return (
         <div className="card">
             <div className="card-header">
@@ -44,12 +91,20 @@ export default function AIInsights() {
                 <span className={styles.live}>LIVE</span>
             </div>
             <div className={styles.insightsList}>
-                {AI_INSIGHTS.length === 0 ? (
+                {loading ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        데이터 분석 중...
+                    </div>
+                ) : error ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--accent-red)', fontSize: '0.9rem' }}>
+                        {error}
+                    </div>
+                ) : insights.length === 0 ? (
                     <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                         현재 분석 리포트를 생성 중입니다...
                     </div>
                 ) : (
-                    AI_INSIGHTS.map((insight) => (
+                    insights.map((insight) => (
                         <div key={insight.id} className={styles.insightItem}>
                             <div className={styles.insightHeader}>
                                 <span

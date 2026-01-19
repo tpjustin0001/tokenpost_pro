@@ -166,6 +166,9 @@ def oauth_token_proxy():
             timeout=30
         )
         
+        if response.status_code != 200:
+            print(f"❌ TokenPost Token Error ({response.status_code}): {response.text}")
+
         return jsonify(response.json()), response.status_code
         
     except Exception as e:
@@ -189,6 +192,9 @@ def oauth_userinfo_proxy():
             timeout=30
         )
         
+        if response.status_code != 200:
+            print(f"❌ TokenPost UserInfo Error ({response.status_code}): {response.text}")
+            
         return jsonify(response.json()), response.status_code
         
     except Exception as e:

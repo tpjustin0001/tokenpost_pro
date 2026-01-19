@@ -17,4 +17,6 @@ def version():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
+    print(f"🚀 Starting WSGI Test Server on port {port}...")
+    print(f"Current Environment Keys: {list(os.environ.keys())}")
     app.run(host='0.0.0.0', port=port)

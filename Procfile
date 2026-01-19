@@ -1,1 +1,1 @@
-web: cd flask-backend && gunicorn app:app --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:8080 --log-file -
+web: cd flask-backend && gunicorn app:app --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT --log-file -

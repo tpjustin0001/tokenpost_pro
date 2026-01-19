@@ -11,12 +11,14 @@ class MarketDataService:
         # 1. Binance (CCXT) - Public/Free/Fast
         self.binance = ccxt.binance({
             'enableRateLimit': True,
-            'options': {'defaultType': 'spot'}
+            'options': {'defaultType': 'spot'},
+            'timeout': 3000  # 3s timeout
         })
         
         # 2. Upbit (CCXT) - For KRW Pairs (Critical for Korean Context)
         self.upbit = ccxt.upbit({
-            'enableRateLimit': True
+            'enableRateLimit': True,
+            'timeout': 3000  # 3s timeout
         })
         
         # 3. CoinMarketCap (Requires Key)
@@ -36,14 +38,15 @@ class MarketDataService:
         # 1. Try Upbit (KRW) FIRST for Korean Context
         try:
             return self._fetch_upbit(base_symbol)
-        except Exception:
+        except Exception as e:
+            print(f"⚠️ [Market] Upbit failed for {symbol}: {e}")
             pass # Fallback to Binance
             
         # 2. Try Binance (USDT)
         try:
             return self._fetch_binance(base_symbol)
         except Exception as e:
-            # print(f"Binance fetch failed for {symbol}: {e}")
+            print(f"⚠️ [Market] Binance failed for {symbol}: {e}")
             pass # Fall through to CMC
 
         # 3. Try CoinMarketCap

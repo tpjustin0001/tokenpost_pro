@@ -168,6 +168,17 @@
   gap: 16px;
 }
 
+.singleColumnGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.singleColumnGrid>* {
+  min-height: 150px;
+  max-height: 500px;
+}
+
 @media (max-width: 1600px) {
   .widgetGrid {
     grid-template-columns: repeat(2, 1fr);

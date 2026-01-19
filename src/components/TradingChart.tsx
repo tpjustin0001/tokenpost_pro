@@ -12,7 +12,7 @@ interface TradingChartProps {
     interval?: string;
 }
 
-export default function TradingChart({ symbol, interval = '15m' }: TradingChartProps) {
+export default function TradingChart({ symbol, interval = '5m' }: TradingChartProps) {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartWrapperRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);

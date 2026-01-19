@@ -7,6 +7,7 @@ from supabase import create_client, Client
 from market_provider import market_data_service
 from news_service import news_service
 from ai_service import ai_service
+from eth_staking_service import eth_staking_service
 
 # Configure Logging
 logging.basicConfig(level=logging.INFO)
@@ -65,6 +66,28 @@ class SchedulerService:
             logger.error(f"❌ Scheduler Job Failed: {e}")
             raise e
 
+    def update_eth_staking_metrics(self):
+        """
+        Job: Fetch ETH Staking Data from Beaconcha.in -> Save to Supabase
+        Runs every 10 minutes
+        """
+        logger.info(f"🔄 Starting Scheduled Job: ETH Staking Metrics ({datetime.now()})")
+        
+        try:
+            # 1. Fetch all staking metrics
+            metrics = eth_staking_service.get_staking_metrics()
+            
+            # 2. Save to DB
+            if self.supabase:
+                eth_staking_service.save_to_db(metrics, self.supabase)
+            
+            logger.info(f"✅ ETH Staking Job Complete: {metrics['signal_text']}")
+            return metrics
+            
+        except Exception as e:
+            logger.error(f"❌ ETH Staking Job Failed: {e}")
+            return None
+
     def start(self):
         """Start the scheduler"""
         # Run immediately on startup (in a separate thread usually, or just once)
@@ -84,8 +107,20 @@ class SchedulerService:
             id='global_analysis_job',
             next_run_time=datetime.now() + timedelta(minutes=2)
         )
+        
+        # ETH Staking Data Collection (10분 간격)
+        # Delay initial run by 30 seconds to allow server to boot
+        self.scheduler.add_job(
+            self.update_eth_staking_metrics, 
+            'interval', 
+            minutes=10, 
+            id='eth_staking_job',
+            next_run_time=datetime.now() + timedelta(seconds=30)
+        )
+        
         self.scheduler.start()
-        logger.info("⏰ Scheduler Started (Interval: 4h / 240m)")
+        logger.info("⏰ Scheduler Started (Market: 4h, ETH Staking: 10m)")
 
 # Singleton
 scheduler_service = SchedulerService()
+

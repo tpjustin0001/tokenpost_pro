@@ -10,6 +10,7 @@ import EventTicker from '@/components/EventTicker';
 import Mindshare from '@/components/Mindshare';
 import KimchiPremium from '@/components/KimchiPremium';
 import PricePerformance from '@/components/PricePerformance';
+import ETHSupplyRadar from '@/components/ETHSupplyRadar';
 import LoginGate from '@/components/LoginGate';
 import { handleCallback, saveTokens, fetchProfile, saveUserProfile } from '@/services/authService';
 
@@ -76,7 +77,7 @@ export default function HomePage() {
   const router = useRouter();
   const [globalXRayOpen, setGlobalXRayOpen] = useState(false);
   const [activeSymbol, setActiveSymbol] = useState('BTC');
-  const [activeInterval, setActiveInterval] = useState('15m');
+  const [activeInterval, setActiveInterval] = useState('5m');
   const [isProcessingAuth, setIsProcessingAuth] = useState(false);
 
   // OAuth Callback Handler - 루트 URL로 콜백받을 때 처리
@@ -220,6 +221,14 @@ export default function HomePage() {
               </div>
               <TradingChart symbol={activeSymbol} interval={activeInterval} />
             </MotionDiv>
+
+            {/* Section: ETH Staking Intelligence */}
+            <MotionSection className={styles.dashboardSection} variants={itemVariants}>
+              <h2 className={styles.sectionHeading}>ETH 스테이킹 인텔리전스</h2>
+              <div className={styles.singleColumnGrid}>
+                <ETHSupplyRadar />
+              </div>
+            </MotionSection>
 
             {/* Section: Market Pulse (Sentiment & Volatility) */}
             <MotionSection className={styles.dashboardSection} variants={itemVariants}>

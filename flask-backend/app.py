@@ -446,12 +446,114 @@ def api_vcp_signals():
 
 
 # ============================================================
-# SMART CRYPTO SCREENER API
+# ETH STAKING INTELLIGENCE API
 # ============================================================
+@app.route('/api/eth/staking')
+@cache.cached(timeout=60)  # 1분 캐시 (10분 수집 주기보다 짧게)
+def api_eth_staking():
+    """
+    ETH Staking Intelligence API
+    Returns: validator queue, wait times, signal status, AI report
+    """
+    try:
+        from eth_staking_service import eth_staking_service
+        
+        # Get real-time metrics
+        metrics = eth_staking_service.get_staking_metrics()
+        
+        return jsonify({
+            'success': True,
+            'entry_queue': metrics['entry_queue'],
+            'exit_queue': metrics['exit_queue'],
+            'entry_queue_eth': metrics['entry_queue_eth'],
+            'exit_queue_eth': metrics['exit_queue_eth'],
+            'entry_wait_days': metrics['entry_wait_days'],
+            'entry_wait_hours': metrics['entry_wait']['hours'],
+            'exit_wait_minutes': metrics['exit_wait_minutes'],
+            'active_validators': metrics['active_validators'],
+            'staking_apr': metrics['staking_apr'],
+            'total_staked_eth': metrics['total_staked_eth'],
+            'staked_percentage': metrics['staked_percentage'],
+            'signal': metrics['signal'],
+            'signal_color': metrics['signal_color'],
+            'signal_text': metrics['signal_text'],
+            'signal_emoji': metrics['signal_emoji'],
+            'ai_report': metrics['ai_report'],
+            'timestamp': metrics['timestamp']
+        })
+        
+    except Exception as e:
+        print(f"ETH Staking API Error: {e}")
+        # Return fallback data
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'entry_queue': 80000,
+            'exit_queue': 150,
+            'entry_queue_eth': 2560000,
+            'exit_queue_eth': 4800,
+            'entry_wait_days': 40.0,
+            'entry_wait_hours': 960.0,
+            'exit_wait_minutes': 3.0,
+            'active_validators': 980000,
+            'staking_apr': 3.5,
+            'total_staked_eth': 31360000,
+            'staked_percentage': 26.1,
+            'signal': 'STRONG_HOLD',
+            'signal_color': 'green',
+            'signal_text': '강력 홀딩',
+            'signal_emoji': '🟢',
+            'ai_report': '데이터 조회 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+            'timestamp': datetime.now().isoformat()
+        })
+
+
+@app.route('/api/eth/staking/history')
+@cache.cached(timeout=300)  # 5분 캐시
+def api_eth_staking_history():
+    """
+    ETH Staking History API - 7-day queue data for chart
+    Returns: array of {entry_queue, exit_queue, timestamp}
+    """
+    try:
+        if not supabase:
+            raise Exception("Database not available")
+        
+        # Get last 7 days of data (max 1000 rows = ~7 days at 10min intervals)
+        response = supabase.table('eth_staking_metrics').select(
+            'entry_queue, exit_queue, entry_wait_seconds, exit_wait_seconds, created_at'
+        ).order('created_at', desc=True).limit(1008).execute()
+        
+        if response.data:
+            # Reverse to chronological order
+            data = list(reversed(response.data))
+            return jsonify({
+                'success': True,
+                'count': len(data),
+                'data': data
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'count': 0,
+                'data': [],
+                'message': 'No historical data yet. Data collection starts when scheduler runs.'
+            })
+            
+    except Exception as e:
+        print(f"ETH Staking History Error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'count': 0,
+            'data': []
+        })
+
 
 # ============================================================
 # SMART CRYPTO SCREENER API
 # ============================================================
+
 
 SCREENER_SYMBOLS = [
     'BTC', 'ETH', 'SOL', 'BNB', 'XRP',

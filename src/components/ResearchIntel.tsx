@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ChevronDown } from 'lucide-react';
 import ContentModal from './ContentModal';
 import { supabase } from '@/lib/supabase';
 import styles from './ResearchIntel.module.css';
 import XRayTooltip from './XRayTooltip';
+
+const PAGE_SIZE = 10;
 
 interface IntelItem {
     id: string;
@@ -41,6 +44,8 @@ export default function ResearchIntel() {
     const [rssNews, setRssNews] = useState<IntelItem[]>([]);
     const [activeTab, setActiveTab] = useState<TabType>('ALL');
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
 
     useEffect(() => {
         fetchResearch();
@@ -73,7 +78,7 @@ export default function ResearchIntel() {
         }
     }
 
-    async function fetchResearch() {
+    async function fetchResearch(offset = 0) {
         if (!supabase) return;
 
         try {
@@ -81,7 +86,7 @@ export default function ResearchIntel() {
                 .from('research')
                 .select('*')
                 .order('created_at', { ascending: false })
-                .limit(10);
+                .range(offset, offset + PAGE_SIZE - 1);
 
             if (error) {
                 console.error('Error fetching research:', error);
@@ -89,11 +94,23 @@ export default function ResearchIntel() {
             }
 
             if (rows) {
-                setData(rows.map(mapRowToIntel));
+                if (offset === 0) {
+                    setData(rows.map(mapRowToIntel));
+                } else {
+                    setData(prev => [...prev, ...rows.map(mapRowToIntel)]);
+                }
+                setHasMore(rows.length === PAGE_SIZE);
             }
         } catch (err) {
             console.error(err);
         }
+        setLoading(false);
+    }
+
+    async function loadMore() {
+        if (loading || !hasMore) return;
+        setLoading(true);
+        await fetchResearch(data.length);
     }
 
     function mapRowToIntel(row: any): IntelItem {
@@ -194,61 +211,78 @@ export default function ResearchIntel() {
                         데이터를 불러오는 중이거나 게시물이 없습니다.
                     </div>
                 ) : (
-                    filteredData.map((item) => (
-                        <div
-                            key={item.id}
-                            className={`${styles.intelItem} ${item.isBreaking ? styles.breaking : ''}`}
-                            onClick={() => {
-                                if (item.link) {
-                                    window.open(item.link, '_blank');
-                                } else {
-                                    setSelectedId(item.id);
-                                }
-                            }}
-                        >
-                            {item.thumbnail && (
-                                <div className={styles.thumbnail}>
-                                    <img src={item.thumbnail} alt="" />
-                                </div>
-                            )}
-                            <div className={styles.contentWrapper}>
-                                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px' }}>
-                                    <span
-                                        className={styles.typeBadge}
-                                        style={{
-                                            color: getTypeColor(item.type),
-                                            background: `${getTypeColor(item.type)}20`,
-                                            padding: '2px 6px',
-                                            borderRadius: '4px',
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        {item.typeKo}
-                                    </span>
-                                </div>
-
-                                <div className={styles.content}>
-                                    <div className={styles.titleRow}>
-                                        <span className={styles.title}>{item.title}</span>
-
-                                        {item.isBreaking && <span className={styles.liveTag}>LIVE</span>}
+                    <>
+                        {filteredData.map((item) => (
+                            <div
+                                key={item.id}
+                                className={`${styles.intelItem} ${item.isBreaking ? styles.breaking : ''}`}
+                                onClick={() => {
+                                    if (item.link) {
+                                        window.open(item.link, '_blank');
+                                    } else {
+                                        setSelectedId(item.id);
+                                    }
+                                }}
+                            >
+                                {item.thumbnail && (
+                                    <div className={styles.thumbnail}>
+                                        <img src={item.thumbnail} alt="" />
                                     </div>
-                                    <div className={styles.meta}>
-                                        {item.source} · {item.time}
-                                        {item.tags && item.tags.length > 0 && (
-                                            <span style={{ marginLeft: '6px', fontSize: '10px', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.12)', padding: '2px 6px', borderRadius: '4px', fontWeight: 500 }}>
-                                                #{item.tags[0]}
-                                            </span>
-                                        )}
+                                )}
+                                <div className={styles.contentWrapper}>
+                                    <div style={{ display: 'flex', gap: '6px', marginBottom: '4px' }}>
+                                        <span
+                                            className={styles.typeBadge}
+                                            style={{
+                                                color: getTypeColor(item.type),
+                                                background: `${getTypeColor(item.type)}20`,
+                                                padding: '2px 6px',
+                                                borderRadius: '4px',
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            {item.typeKo}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.content}>
+                                        <div className={styles.titleRow}>
+                                            <span className={styles.title}>{item.title}</span>
+
+                                            {item.isBreaking && <span className={styles.liveTag}>LIVE</span>}
+                                        </div>
+                                        <div className={styles.meta}>
+                                            {item.source} · {item.time}
+                                            {item.tags && item.tags.length > 0 && (
+                                                <span style={{ marginLeft: '6px', fontSize: '10px', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.12)', padding: '2px 6px', borderRadius: '4px', fontWeight: 500 }}>
+                                                    #{item.tags[0]}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))
+                        ))}
+
+                        {/* Load More Button */}
+                        {hasMore && activeTab === 'ALL' && (
+                            <button
+                                className={styles.loadMoreBtn}
+                                onClick={loadMore}
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    '로딩 중...'
+                                ) : (
+                                    <>
+                                        <ChevronDown size={16} />
+                                        더보기
+                                    </>
+                                )}
+                            </button>
+                        )}
+                    </>
                 )}
-            </div>
-            <div className={styles.footer}>
-                <a href="/research" className={styles.viewAll}>전체 리서치 보기 →</a>
             </div>
 
             <ContentModal
@@ -256,6 +290,6 @@ export default function ResearchIntel() {
                 isOpen={!!selectedId}
                 onClose={() => setSelectedId(null)}
             />
-        </div>
+        </div >
     );
 }

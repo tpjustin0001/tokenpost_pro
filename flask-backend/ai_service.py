@@ -49,7 +49,7 @@ class AIService:
 
     @property
     def model(self):
-        return "gpt-4o + grok-beta"
+        return "gpt-4o + grok-4.1-fast"
 
     def _get_grok_sentiment(self, news_list):
         """
@@ -63,9 +63,9 @@ class AIService:
         news_text = "\n".join([f"- {item['title']} ({item['source']})" for item in news_list])
         
         try:
-            # Using 'grok-beta' as it is the stable endpoint for now
+            # Using 'grok-4.1-fast' as requested by user
             response = self.client_grok.chat.completions.create(
-                model="grok-beta", 
+                model="grok-4.1-fast", 
                 messages=[
                     {"role": "system", "content": "You are Grok, a real-time Social Sentiment Engine. Analyze the crypto news headlines. Output a brief, witty, uncensored, and slightly edgy paragraph about the current market 'vibe' and crowd psychology. Be bold. Output in KOREAN."},
                     {"role": "user", "content": f"Headlines:\n{news_text}"}

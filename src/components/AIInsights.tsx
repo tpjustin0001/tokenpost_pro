@@ -38,11 +38,8 @@ export default function AIInsights() {
     useEffect(() => {
         const fetchInsights = async () => {
             try {
-                // Fetch from Next.js API (which calls Supabase)
-                // Assuming we will create or use an existing endpoint.
-                // For now, let's use the same pattern as other components: custom endpoint or direct Supabase.
-                // Given the privacy, better to use an API route that reads from global_market_snapshots.
-                const response = await fetch('/api/analysis/market/latest');
+                // Fetch from Flask backend for real-time AI analysis
+                const response = await fetch('/api/python/crypto/xray/global');
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch insights');
@@ -50,22 +47,21 @@ export default function AIInsights() {
 
                 const data = await response.json();
 
-                if (data && data.data) {
+                if (data && data.grok_saying) {
                     // Transform backend data to frontend model
-                    // Backend saves: { overview: "...", sentiment: "bullish", ... }
-                    // We need to map it.
-                    // For now, let's map the 'overview' as one main insight.
                     const mappedInsights: AIInsight[] = [{
-                        id: `market-${new Date(data.created_at).getTime()}`,
-                        type: data.data.sentiment || 'neutral',
+                        id: `market-${Date.now()}`,
+                        type: data.atmosphere_score > 60 ? 'bullish' : data.atmosphere_score < 40 ? 'bearish' : 'neutral',
                         title: '글로벌 시장 브리핑',
-                        content: data.data.overview || '시장 데이터 분석 중입니다.',
-                        confidence: data.data.confidence || 85,
-                        time: new Date(data.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                        content: data.grok_saying || data.summary || '시장 데이터 분석 중입니다.',
+                        confidence: data.overallScore || 65,
+                        time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
                     }];
                     setInsights(mappedInsights);
+                    setError(null);
                 } else {
                     // If no data, keep empty to show loading/empty state
+                    setError('분석 데이터를 불러오는 중입니다...');
                 }
             } catch (err) {
                 console.error('AI Insight fetch error:', err);

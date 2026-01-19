@@ -39,7 +39,7 @@ export default function CalendarPage() {
                     .from('calendar_events')
                     .select('*')
                     .gte('event_date', pastDate.toISOString().split('T')[0])
-                    .order('event_date', { ascending: true })
+                    .order('event_date', { ascending: false })
                     .order('time', { ascending: true });
 
                 if (error) throw error;
@@ -58,7 +58,7 @@ export default function CalendarPage() {
                         date,
                         isToday: date === today,
                         items: grouped[date]
-                    })).sort((a, b) => a.date.localeCompare(b.date));
+                    })).sort((a, b) => b.date.localeCompare(a.date));
 
                     setGroups(groupArray);
                 }

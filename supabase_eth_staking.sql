@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS eth_staking_metrics (
     active_validators INT NOT NULL,
     staking_apr DECIMAL(5, 2) NOT NULL DEFAULT 0,
     total_staked_eth DECIMAL(18, 2) NOT NULL,
+    signal_status TEXT, -- 'SELL_ALERT', 'STRONG_HOLD', 'NEUTRAL'
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

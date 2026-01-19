@@ -50,7 +50,7 @@ export default function NewsPage() {
                 const { data, error } = await supabase
                     .from('news')
                     .select('*')
-                    .order('published_at', { ascending: false })
+                    .order('created_at', { ascending: false }) // Sort by created_at (KST based ingestion)
                     .limit(50);
 
                 if (error) throw error;
@@ -106,6 +106,11 @@ export default function NewsPage() {
                                 const tickers = extractTickers(searchText);
                                 const isImportant = item.is_important === true;
 
+                                // Format KST Time
+                                const kstTime = new Intl.DateTimeFormat('ko-KR', {
+                                    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul'
+                                }).format(new Date(item.created_at || new Date().toISOString()));
+
                                 return (
                                     <article
                                         key={item.id}
@@ -114,9 +119,7 @@ export default function NewsPage() {
                                     >
                                         <div className={styles.itemHeader}>
                                             <span className={styles.time}>
-                                                {item.published_at
-                                                    ? new Date(item.published_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                                    : getTimeAgo(item.created_at || new Date().toISOString())}
+                                                {kstTime}
                                             </span>
                                             <span className={styles.sourceBadge}>{item.source || 'TokenPost'}</span>
                                             {isImportant && <span className={styles.importantBadge}>⭐ 중요</span>}

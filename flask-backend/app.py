@@ -9,6 +9,7 @@ from datetime import datetime
 import os
 import sys
 from dotenv import load_dotenv
+from concurrent.futures import ThreadPoolExecutor
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
@@ -51,6 +52,16 @@ debug_env_var("XAI_API_KEY")
 debug_env_var("SUPABASE_URL")
 print("----------------------------------------------------------------")
 CORS(app)
+
+# Supabase Client
+from supabase import create_client, Client
+supabase: Client = None
+if os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_KEY"):
+    try:
+        supabase = create_client(os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_KEY"))
+        print("✅ Supabase Client Initialized in App")
+    except Exception as e:
+        print(f"❌ Failed to init Supabase in App: {e}")
 
 # Cache Config
 import concurrent.futures
@@ -329,54 +340,60 @@ def api_crypto_asset(symbol):
 # MARKET GATE API
 # ============================================================
 @app.route('/api/crypto/market-gate')
-@cache.cached(timeout=300)  # Cache for 5 minutes
+@cache.cached(timeout=30) # Short cache, DB is source of truth
 def api_market_gate():
-    """Market Gate 분석 API (100점 스코어링) - Cached 5min"""
+    """Market Gate - Fetch from DB"""
     try:
-        try:
-            # Ensure module is available
-            from crypto_market.market_gate import run_market_gate_sync
-            result = run_market_gate_sync()
+        if not supabase:
+            return jsonify({'error': 'Database not connected'}), 503
+
+        # Fetch latest
+        response = supabase.table('market_gate').select('*').order('created_at', desc=True).limit(1).execute()
+        
+        if not response.data:
+            return jsonify({'gate_color': 'GRAY', 'score': 0, 'summary': 'No data available', 'timestamp': datetime.now().isoformat()})
             
-            # 지표별 시그널 분류
-            indicators = []
-            for name, val in result.metrics.items():
-                if name == 'gate_score_components':
-                    continue
-                signal = 'Neutral'
-                if isinstance(val, (int, float)) and val is not None:
-                    if name == 'btc_ema200_slope_pct_20':
-                        signal = 'Bullish' if val > 1 else ('Bearish' if val < -1 else 'Neutral')
-                    elif name == 'fear_greed_index':
-                        signal = 'Bullish' if val > 50 else ('Bearish' if val < 30 else 'Neutral')
-                    elif name == 'funding_rate':
-                        signal = 'Bullish' if -0.0003 < val < 0.0005 else 'Bearish'
-                    elif name == 'alt_breadth_above_ema50':
-                        signal = 'Bullish' if val > 0.5 else ('Bearish' if val < 0.35 else 'Neutral')
-                
-                indicators.append({
-                    'name': name,
-                    'value': val,
-                    'signal': signal
-                })
-            
-            return jsonify({
-                'gate_color': result.gate,
-                'score': result.score,
-                'summary': f"BTC 시장 상태: {result.gate} (점수: {result.score}/100)",
-                'components': result.metrics.get('gate_score_components', {}),
-                'indicators': indicators,
-                'top_reasons': result.reasons,
-                'timestamp': datetime.now().isoformat()
-            })
-        except Exception as inner_e:
-            print(f"Market Gate Execution Error: {inner_e}")
-            raise inner_e # Trigger fallback below
+        latest = response.data[0]
+        
+        # Parse metrics_json if it's a string (though supabase-py usually returns dict for json columns)
+        metrics = latest.get('metrics_json', {})
+        if isinstance(metrics, str):
+            import json
+            metrics = json.loads(metrics)
+
+        # Construct Indicators List for Frontend
+        indicators = []
+        # We can reconstruct indicators from metrics if needed, or store them.
+        # For now, let's map the essential ones that the frontend expects.
+        # Front expects: "indicators": [{name, value, signal}]
+        # We might need to quickly re-evaluate signal from value, or store signal in DB.
+        # Storing signal in DB would be better, but we only stored metrics map.
+        # Let's re-evaluate signal here (cheap).
+        
+        def get_signal(name, val):
+            if val is None: return 'Neutral'
+            if name == 'btc_ema200_slope_pct_20': return 'Bullish' if val > 1 else ('Bearish' if val < -1 else 'Neutral')
+            if name == 'fear_greed_index': return 'Bullish' if val > 50 else ('Bearish' if val < 30 else 'Neutral')
+            if name == 'funding_rate': return 'Bullish' if -0.0003 < val < 0.0005 else 'Bearish'
+            if name == 'alt_breadth_above_ema50': return 'Bullish' if val > 0.5 else ('Bearish' if val < 0.35 else 'Neutral')
+            return 'Neutral'
+
+        for k, v in metrics.items():
+            if k == 'gate_score_components': continue
+            indicators.append({'name': k, 'value': v, 'signal': get_signal(k, v)})
+
+        return jsonify({
+            'gate_color': latest['gate_color'],
+            'score': latest['score'],
+            'summary': latest['summary'],
+            'components': metrics.get('gate_score_components', {}),
+            'indicators': indicators,
+            'top_reasons': latest.get('summary', '').split(', '), # simplistic
+            'timestamp': latest['created_at']
+        })
 
     except Exception as e:
-        print(f"Market Gate Fallback Triggered: {e}")
-    except Exception as e:
-        print(f"Market Gate Fallback Triggered: {e}")
+        print(f"Market Gate API Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 
@@ -446,29 +463,21 @@ def api_lead_lag():
 # VCP SIGNALS API
 # ============================================================
 @app.route('/api/crypto/vcp-signals')
-@cache.cached(timeout=300)
+@cache.cached(timeout=30)
 def api_vcp_signals():
-    """VCP 패턴 감지 API"""
+    """VCP 패턴 감지 API - DB Read"""
     try:
-        from crypto_market.patterns.vcp import find_vcp_candidates
+        if not supabase: return jsonify({'error': 'DB Error'}), 503
         
-        # 1. 대상 심볼 (업비트 원화 마켓 주요 코인 + 해외 주요 코인)
-        symbols = [
-            'BTC-USD', 'ETH-USD', 'SOL-USD', 'XRP-USD', 'ADA-USD',
-            'DOGE-USD', 'AVAX-USD', 'TRX-USD', 'DOT-USD', 'LINK-USD',
-            'MATIC-USD', 'SHIB-USD', 'LTC-USD', 'BCH-USD', 'ATOM-USD',
-            'UNI-USD', 'ETC-USD', 'FIL-USD', 'NEAR-USD', 'APT-USD',
-            'INJ-USD', 'RNDR-USD', 'STX-USD', 'IMX-USD', 'ARB-USD',
-            'OP-USD', 'SUI-USD', 'SEI-USD', 'TIA-USD', 'FET-USD'
-        ]
+        response = supabase.table('analysis_results').select('data_json, created_at').eq('analysis_type', 'VCP').order('created_at', desc=True).limit(1).execute()
         
-        candidates = find_vcp_candidates(symbols)
-        
-        return jsonify({
-            'signals': candidates,
-            'count': len(candidates),
-            'timestamp': datetime.now().isoformat()
-        })
+        if response.data:
+            import json
+            data = response.data[0]['data_json']
+            if isinstance(data, str): data = json.loads(data)
+            return jsonify({'signals': data, 'count': len(data), 'timestamp': response.data[0]['created_at']})
+            
+        return jsonify({'signals': [], 'count': 0, 'timestamp': datetime.now().isoformat()})
         
     except Exception as e:
         print(f"VCP API Error: {e}")
@@ -549,10 +558,11 @@ def api_eth_staking_history():
         if not supabase:
             raise Exception("Database not available")
         
-        # Get last 7 days of data (max 1000 rows = ~7 days at 10min intervals)
+        # Get last 7 days of data (max 1008 rows) 
+        # Filter out anomalous spikes > 500k (e.g. bad data)
         response = supabase.table('eth_staking_metrics').select(
             'entry_queue, exit_queue, entry_wait_seconds, exit_wait_seconds, created_at'
-        ).order('created_at', desc=True).limit(1008).execute()
+        ).lt('entry_queue', 500000).order('created_at', desc=True).limit(1008).execute()
         
         if response.data:
             # Reverse to chronological order
@@ -595,219 +605,55 @@ SCREENER_SYMBOLS = [
 ]
 
 @app.route('/api/screener/breakout')
-@cache.cached(timeout=60)
+@cache.cached(timeout=30)
 def api_screener_breakout():
-    """Tab 1: Breakout Scanner - Parallel"""
-    from market_provider import market_data_service
-    from crypto_market.indicators import rsi, relative_volume
-    
-    results = []
-    
-    def fetch_data(symbol):
-        try:
-            return market_data_service.get_asset_data(symbol)
-        except:
-            return None
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        futures = {executor.submit(fetch_data, sym): sym for sym in SCREENER_SYMBOLS}
-        for future in concurrent.futures.as_completed(futures):
-            item = future.result()
-            if not item: continue
-            
-            try:
-                df = item['raw_df']
-                current_price = item['current_price']
-                if df is None or df.empty: continue
-
-                sma20 = item['ma_20']
-                sma50 = df['Close'].tail(50).mean()
-                sma200 = df['Close'].tail(200).mean()
-                
-                # Technicals
-                rsi_val = float(rsi(df['Close'], 14).iloc[-1])
-                rvol = float(relative_volume(df['Volume'], 20))
-                
-                status_20 = 'Bullish' if current_price > sma20 else 'Bearish'
-                status_50 = 'Bullish' if current_price > sma50 else 'Bearish'
-                status_200 = 'Bull Market' if current_price > sma200 else 'Bear Market'
-                
-                is_fresh_breakout = False
-                if len(df) > 2:
-                    prev_close = df['Close'].iloc[-2]
-                    is_fresh_breakout = (prev_close < sma200 * 0.99) and (current_price > sma200)
-
-                # AI Insight Generation (Korean)
-                insight = "중립"
-                if is_fresh_breakout and rvol > 1.5:
-                    insight = "🔥 골든크로스 (강력 매수)"
-                elif current_price > sma200 and rvol > 1.2:
-                    insight = "🚀 추세 추종 (매집)"
-                elif rsi_val > 75:
-                    insight = "⚠️ 과열 주의 (익절)"
-                elif current_price > sma50:
-                    insight = "📈 상승 추세"
-                else:
-                    insight = "❄️ 조정구간"
-
-                results.append({
-                    'symbol': item['symbol'],
-                    'price': current_price,
-                    'change_24h': item['change_24h'],
-                    'change_1h': item.get('change_1h', 0),
-                    'volume': df['Volume'].iloc[-1],
-                    'sma20': sma20,
-                    'sma50': sma50,
-                    'sma200': sma200,
-                    'rsi': round(rsi_val, 1),
-                    'rvol': round(rvol, 2),
-                    'ai_insight': insight,
-                    'status_20': status_20,
-                    'status_50': status_50,
-                    'status_200': status_200,
-                    'is_fresh_breakout': bool(is_fresh_breakout),
-                    'pct_from_sma200': ((current_price - sma200) / sma200) * 100 if sma200 else 0
-                })
-            except Exception as e:
-                continue
-
-    results.sort(key=lambda x: (x['is_fresh_breakout'], x['pct_from_sma200']), reverse=True)
-    
-    return jsonify({
-        'data': results,
-        'count': len(results),
-        'timestamp': datetime.now().isoformat()
-    })
+    """Tab 1: Breakout Scanner - DB Read"""
+    try:
+        if not supabase: return jsonify({'data': [], 'count': 0}), 200
+        
+        res = supabase.table('analysis_results').select('data_json').eq('analysis_type', 'SCREENER_BREAKOUT').order('created_at', desc=True).limit(1).execute()
+        if res.data:
+            import json
+            d = res.data[0]['data_json']
+            if isinstance(d, str): d = json.loads(d)
+            return jsonify({'data': d, 'count': len(d)})
+        return jsonify({'data': [], 'count': 0})
+    except Exception as e:
+         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/screener/price-performance')
-@cache.cached(timeout=60)
+@cache.cached(timeout=30)
 def api_screener_real():
-    """Tab 2: Price Performance - Parallel"""
-    from market_provider import market_data_service
-    from crypto_market.indicators import rsi
-    
-    results = []
-    
-    def fetch_data(symbol):
-        try:
-            return market_data_service.get_asset_data(symbol)
-        except:
-            return None
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        futures = {executor.submit(fetch_data, sym): sym for sym in SCREENER_SYMBOLS}
-        for future in concurrent.futures.as_completed(futures):
-            item = future.result()
-            if not item: continue
-            
-            try:
-                df = item['raw_df']
-                current_price = item['current_price']
-                if df is None or df.empty: continue
-                
-                ath = df['High'].max()
-                atl = df['Low'].min()
-                
-                # Drawdown
-                drawdown = ((current_price - ath) / ath) * 100 if ath > 0 else 0
-                from_atl = ((current_price - atl) / atl) * 100 if atl > 0 else 0
-                
-                # RSI
-                rsi_val = float(rsi(df['Close'], 14).iloc[-1])
-
-                # AI Insight (Korean)
-                insight = "중립"
-                if drawdown < -70 and rsi_val < 30:
-                    insight = "💎 역대급 저평가 (바닥 매수)"
-                elif drawdown < -50 and rsi_val < 40:
-                    insight = "🛒 가치 투자 구간 (매집)"
-                elif rsi_val > 70:
-                    insight = "⚠️ 고점 경고 (위험)"
-                elif from_atl > 200:
-                    insight = "🚀 고공행진 중"
-                else:
-                    insight = "📉 조정 구간"
-
-                results.append({
-                    'symbol': item['symbol'],
-                    'price': current_price,
-                    'change_24h': item['change_24h'],
-                    'change_1h': item.get('change_1h', 0),
-                    'volume': df['Volume'].iloc[-1],
-                    'ath': ath,
-                    'atl': atl,
-                    'drawdown': drawdown,
-                    'from_atl': from_atl,
-                    'rsi': round(rsi_val, 1),
-                    'ai_insight': insight
-                })
-            except:
-                continue
-            
-    results.sort(key=lambda x: x['drawdown'])
-    
-    return jsonify({
-        'data': results,
-        'count': len(results),
-        'timestamp': datetime.now().isoformat()
-    })
+    """Tab 2: Price Performance - DB Read"""
+    try:
+        if not supabase: return jsonify({'data': [], 'count': 0}), 200
+        
+        res = supabase.table('analysis_results').select('data_json').eq('analysis_type', 'SCREENER_PERFORMANCE').order('created_at', desc=True).limit(1).execute()
+        if res.data:
+            import json
+            d = res.data[0]['data_json']
+            if isinstance(d, str): d = json.loads(d)
+            return jsonify({'data': d, 'count': len(d)})
+        return jsonify({'data': [], 'count': 0})
+    except Exception as e:
+         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/screener/risk')
-@cache.cached(timeout=60)
+@cache.cached(timeout=30)
 def api_screener_risk():
-    """Tab 3: Risk Scanner - Parallel"""
-    from market_provider import market_data_service
-    import numpy as np
-    
-    results = []
-    
-    def fetch_data(symbol):
-        try:
-            return market_data_service.get_asset_data(symbol)
-        except:
-            return None
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        futures = {executor.submit(fetch_data, sym): sym for sym in SCREENER_SYMBOLS}
-        for future in concurrent.futures.as_completed(futures):
-            item = future.result()
-            if not item: continue
-            
-            try:
-                df = item['raw_df']
-                current_price = item['current_price']
-                if df is None or df.empty: continue
-                
-                # Volatility (Annualized)
-                returns = df['Close'].pct_change().dropna()
-                volatility = float(returns.std() * np.sqrt(365) * 100) if len(returns) > 1 else 0
-                
-                # Simplified Risk Score (0-2 scale)
-                risk_score = volatility / 50.0 # Benchmark 50%
-                
-                if risk_score > 1.5: rating = 'Extreme'
-                elif risk_score < 0.8: rating = 'Low'
-                else: rating = 'Medium'
-                
-                results.append({
-                    'symbol': item['symbol'],
-                    'price': current_price,
-                    'change_24h': item['change_24h'],
-                    'change_1h': item.get('change_1h', 0),
-                    'volatility': volatility,
-                    'risk_score': risk_score,
-                    'rating': rating
-                })
-            except:
-                continue
-
-    results.sort(key=lambda x: x['risk_score'], reverse=True)
-    
-    return jsonify({
-        'data': results,
-        'count': len(results),
-        'timestamp': datetime.now().isoformat()
-    })
+    """Tab 3: Risk Scanner - DB Read"""
+    try:
+        if not supabase: return jsonify({'data': [], 'count': 0}), 200
+        
+        res = supabase.table('analysis_results').select('data_json').eq('analysis_type', 'SCREENER_RISK').order('created_at', desc=True).limit(1).execute()
+        if res.data:
+            import json
+            d = res.data[0]['data_json']
+            if isinstance(d, str): d = json.loads(d)
+            return jsonify({'data': d, 'count': len(d)})
+        return jsonify({'data': [], 'count': 0})
+    except Exception as e:
+         return jsonify({'error': str(e)}), 500
 
 
 # ============================================================
@@ -1060,10 +906,77 @@ def api_xray_global():
         
         # 3. Call AI with News (This is the slowest part, but data fetch is now fast)
         result = ai_service.analyze_global_market(data_summary, news_list)
+        
+        # 4. Save to Supabase for Mindshare component
+        if supabase and result and result.get('grok_saying'):
+            try:
+                # Mark previous as not latest
+                supabase.table('global_market_snapshots').update({'is_latest': False}).eq('is_latest', True).execute()
+                # Insert new
+                supabase.table('global_market_snapshots').insert({
+                    'data': result,
+                    'model_used': 'grok-4.1-fast (x_search)',
+                    'is_latest': True
+                }).execute()
+                print("✅ AI Analysis saved to Supabase")
+            except Exception as db_err:
+                print(f"⚠️ Supabase save failed: {db_err}")
+        
         return jsonify(result)
         
     except Exception as e:
         print(f"Global X-Ray Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/crypto/xray/deep', methods=['GET'])
+def api_xray_deep():
+    """
+    GPT-4o Deep Analysis Endpoint (for GlobalXRay modal)
+    """
+    try:
+        # Reuse logic to gather market data (Simplified)
+        with ThreadPoolExecutor() as executor:
+            future_global = executor.submit(market_service.get_global_metrics)
+            future_btc = executor.submit(market_service.get_asset_data, 'BTC')
+            future_eth = executor.submit(market_service.get_asset_data, 'ETH')
+            
+            global_metrics = future_global.result(timeout=5) or {}
+            try: btc_data = future_btc.result(timeout=5)
+            except: btc_data = {'current_price': 0}
+            try: eth_data = future_eth.result(timeout=5)
+            except: eth_data = {'current_price': 0}
+
+        data_summary = {
+            "Total Market Cap": f"${global_metrics.get('total_market_cap', 0):,.0f}",
+            "BTC Dominance": f"{global_metrics.get('btc_dominance', 0):.1f}%",
+            "BTC Price": f"${btc_data.get('current_price', 0):,.0f}",
+            "ETH Price": f"${eth_data.get('current_price', 0):,.0f}",
+            "Market Cap Change": f"{global_metrics.get('market_cap_change_24h', 0):.2f}%"
+        }
+
+        # Call GPT-4o
+        result = ai_service.analyze_global_deep_market(data_summary)
+
+        if not result:
+            return jsonify({"error": "Failed to generate deep analysis"}), 500
+
+        # Save to Supabase (global_deep_analysis table)
+        if supabase:
+            try:
+                supabase.table('global_deep_analysis').update({'is_latest': False}).eq('is_latest', True).execute()
+                supabase.table('global_deep_analysis').insert({
+                    'data': result,
+                    'model_used': 'gpt-4o',
+                    'is_latest': True
+                }).execute()
+                print("✅ Deep Analysis saved to Supabase (global_deep_analysis)")
+            except Exception as db_err:
+                print(f"⚠️ Supabase save failed: {db_err}")
+
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Deep X-Ray Error: {e}")
         return jsonify({"error": str(e)}), 500
 
 

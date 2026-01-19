@@ -119,8 +119,16 @@ export default function NewsFeed() {
     }
 
     function mapNewsToItem(row: RawNewsData): NewsItem {
-        const date = new Date(row.published_at || new Date().toISOString());
-        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        // User requested "Input time based on KST" (created_at)
+        const date = new Date(row.created_at || new Date().toISOString());
+
+        // Format to KST (Asia/Seoul)
+        const timeStr = new Intl.DateTimeFormat('ko-KR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+            timeZone: 'Asia/Seoul'
+        }).format(date);
 
         // Extract tickers from title and content
         const searchText = `${row.title || ''} ${row.content || ''} ${row.summary || ''}`;

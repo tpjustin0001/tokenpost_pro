@@ -1,16 +1,20 @@
-
 import os
 import sys
 from dotenv import load_dotenv
-from supabase import create_client
+from supabase import create_client, Client
 
-load_dotenv('.env.local')
+load_dotenv()
+
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_KEY")
 
 def check_db():
     print("🔎 Checking DB Data...")
-    url = os.getenv('NEXT_PUBLIC_SUPABASE_URL')
-    key = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
-    supabase = create_client(url, key)
+    if not url or not key:
+        print("Error: SUPABASE_URL or SUPABASE_KEY not found in env")
+        return
+
+    supabase: Client = create_client(url, key)
     
     res = supabase.table('calendar_events').select('title').limit(5).execute()
     for item in res.data:

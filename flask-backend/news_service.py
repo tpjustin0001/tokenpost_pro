@@ -95,5 +95,76 @@ class NewsService:
             print(f"Error fetching whale news: {e}")
             return []
 
+    def save_to_db(self, news_items, supabase_client):
+        """
+        Save news items to Supabase 'news' table.
+        Avoids duplicates by checking URL.
+        """
+        if not supabase_client or not news_items:
+            return 0
+            
+        count = 0
+        for item in news_items:
+            try:
+                # Check if exists (using URL as unique key)
+                # Note: Ideally, do a bulk upsert. For simplicity, check one by one or rely on ON CONFLICT if configured.
+                # Since we didn't set explicit UNIQUE constraint in SQL (wait, did I? Yes, 'url TEXT UNIQUE'),
+                # we can try insert and ignore error, or check first.
+                
+                # Payload matching schema
+                payload = {
+                    'title': item['title'],
+                    'source': item['source'],
+                    'url': item.get('link'),
+                    'published_at': item.get('pubDate'), # Need to parse this? It's string.
+                    'tickers': [], # TODO: Extract regex?
+                    'sentiment': 'Neutral'
+                }
+                
+                # Check duplicate
+                existing = supabase_client.table('news').select('id').eq('url', payload['url']).execute()
+                if existing.data:
+                    continue
+                    
+                supabase_client.table('news').insert(payload).execute()
+                count += 1
+                
+            except Exception as e:
+                print(f"Failed to save news item: {e}")
+                continue
+                
+        return count
+
+    def fetch_and_store_news(self, supabase_client=None):
+        """
+        Orchestrates fetching news from multiple sources and saving to DB.
+        """
+        try:
+            print("📰 Fetching News Feed...")
+            all_news = []
+            
+            # 1. Fetch General Crypto News
+            # We can target top coins + general keywords
+            targets = ['Crypto', 'Bitcoin', 'Ethereum', 'DeFi', 'Regulation']
+            for t in targets:
+                items = self.get_crypto_news(t, limit=3)
+                all_news.extend(items)
+                
+            # 2. Fetch Whale News
+            whale_items = self.get_whale_news(limit=5)
+            all_news.extend(whale_items)
+            
+            # 3. Save to DB
+            if supabase_client and all_news:
+                count = self.save_to_db(all_news, supabase_client)
+                print(f"✅ News Feed Updated: {count} new items")
+                return count
+            
+            return 0
+            
+        except Exception as e:
+            print(f"❌ Failed to update news feed: {e}")
+            return 0
+
 # Singleton
 news_service = NewsService()

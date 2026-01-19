@@ -119,15 +119,17 @@ export default function TradingChart({ symbol, interval = '5m' }: TradingChartPr
                         // KST Offset for markers
                         const time = (new Date(item.published_at).getTime() / 1000) + (9 * 60 * 60);
                         const isBullish = (item.sentiment_score || 0) > 0;
+                        const isBearish = (item.sentiment_score || 0) < 0;
+                        const isNeutral = !isBullish && !isBearish;
 
                         // Store full item in map for click retrieval
                         newsMapRef.current[item.id] = item;
 
                         return {
                             time: time,
-                            position: isBullish ? 'belowBar' : 'aboveBar',
-                            color: isBullish ? '#00E396' : '#FF4560',
-                            shape: isBullish ? 'arrowUp' : 'arrowDown',
+                            position: isBullish ? 'belowBar' : (isNeutral ? 'belowBar' : 'aboveBar'),
+                            color: isBullish ? '#00E396' : (isNeutral ? '#FEB019' : '#FF4560'),
+                            shape: isBullish ? 'arrowUp' : (isNeutral ? 'square' : 'arrowDown'),
                             id: item.id,
                             size: 2,  // 크게 표시
                         };
@@ -381,8 +383,10 @@ export default function TradingChart({ symbol, interval = '5m' }: TradingChartPr
             {selectedNews && (
                 <div className={styles.newsModal}>
                     <div className={styles.modalHeader}>
-                        <span className={`${styles.modalBadge} ${selectedNews.sentiment_score < 0 ? styles.badgeBear : styles.badgeBull}`}>
-                            {selectedNews.sentiment_score < 0 ? 'BEARISH' : 'BULLISH'}
+                        <span className={`${styles.modalBadge} ${selectedNews.sentiment_score > 0 ? styles.badgeBull : (selectedNews.sentiment_score < 0 ? styles.badgeBear : styles.badgeNeutral)}`}
+                            style={selectedNews.sentiment_score === 0 ? { backgroundColor: '#FEB019', color: '#111' } : {}}
+                        >
+                            {selectedNews.sentiment_score > 0 ? 'BULLISH' : (selectedNews.sentiment_score < 0 ? 'BEARISH' : 'NEUTRAL')}
                         </span>
                         <span className={styles.modalDate}>
                             {new Date(selectedNews.published_at).toLocaleString(undefined, {

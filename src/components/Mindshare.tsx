@@ -30,29 +30,30 @@ export default function Mindshare() {
         const fetchData = async () => {
             setLoading(true);
             try {
+                // 1. First try Supabase (cached scheduler data - fast)
                 if (supabase) {
-                    const { data: snaps, error } = await supabase
+                    const { data: snaps } = await supabase
                         .from('global_market_snapshots')
                         .select('data')
-                        .order('created_at', { ascending: false })
-                        .limit(1);
+                        .eq('is_latest', true)
+                        .limit(1)
+                        .single();
 
-                    if (error) {
-                        console.error("Supabase Error:", error);
+                    if (snaps?.data && snaps.data.grok_saying) {
+                        console.log("✅ Mindshare: Loaded from Supabase cache");
+                        setData(snaps.data);
+                        setLoading(false);
+                        return;
                     }
+                }
 
-                    if (snaps && snaps.length > 0) {
-                        setData(snaps[0].data);
-                    } else {
-                        // Fallback: Fetch directly from Backend API (Bypasses RLS)
-                        console.log("Supabase empty, trying backend API...");
-                        const res = await fetch('/api/python/analysis/latest');
-                        if (res.ok) {
-                            const json = await res.json();
-                            if (json.success && json.data) {
-                                setData(json.data);
-                            }
-                        }
+                // 2. Fallback: Call Flask API (triggers Grok - slow)
+                console.log("⚠️ Mindshare: No cache, calling Flask API...");
+                const res = await fetch('/api/python/crypto/xray/global');
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json && json.grok_saying) {
+                        setData(json);
                     }
                 }
             } catch (error) {
@@ -62,6 +63,9 @@ export default function Mindshare() {
             }
         };
         fetchData();
+        // Refresh every 5 minutes
+        const interval = setInterval(fetchData, 300000);
+        return () => clearInterval(interval);
     }, []);
 
     const getScoreColor = (score: number) => {
@@ -76,7 +80,7 @@ export default function Mindshare() {
     const sentimentLabel = data?.atmosphere_label || 'Neutral';
     const grokSaying = data?.grok_saying || "시장 데이터를 분석 중입니다...";
     const keywords = data?.market_keywords || [];
-    const tweets = data?.top_tweets || [];
+    const influencers = data?.top_influencers || data?.top_tweets || [];
     const whales = data?.whale_alerts || [];
 
     return (
@@ -136,15 +140,16 @@ export default function Mindshare() {
                 )}
 
                 {/* 4. Live X Feed */}
-                {tweets.length > 0 && (
+                {influencers.length > 0 && (
                     <div className={styles.section} style={{ marginTop: '16px' }}>
                         <h4 className={styles.sectionTitle}>🗣️ Top 5 Major Influencers (xAI Analysis)</h4>
                         <div className={styles.feedList}>
-                            {tweets.map((t: any, i: number) => (
+                            {influencers.slice(0, 5).map((t: any, i: number) => (
                                 <div key={i} className={styles.tweetItem}>
                                     <div className={styles.tweetHeader}>
                                         <span className={styles.tweetAuthor}>{t.author}</span>
                                         <span className={styles.tweetHandle}>{t.handle}</span>
+                                        {t.likes && <span style={{ color: '#ef4444', fontSize: '11px', marginLeft: '6px' }}>❤️ {t.likes}</span>}
                                         <span className={styles.tweetTime}>· {t.time}</span>
                                     </div>
                                     <p className={styles.tweetContent}>{t.content}</p>

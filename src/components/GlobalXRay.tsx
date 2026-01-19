@@ -54,7 +54,7 @@ export default function GlobalXRay({ isOpen, onClose }: GlobalXRayProps) {
                 setLoading(true);
                 try {
                     const { data, error } = await supabase
-                        .from('global_market_snapshots')
+                        .from('global_deep_analysis')
                         .select('data')
                         .order('created_at', { ascending: false })
                         .limit(1)
@@ -68,7 +68,7 @@ export default function GlobalXRay({ isOpen, onClose }: GlobalXRayProps) {
                         }
                         setAnalysis(analysisData);
                     } else {
-                        console.warn("No valid analysis snapshot found in Supabase. Using defaults.");
+                        console.warn("No valid deep analysis snapshot found in Supabase. Using defaults.");
                     }
                 } catch (e) {
                     console.error("Failed to fetch from Supabase:", e);
@@ -76,7 +76,7 @@ export default function GlobalXRay({ isOpen, onClose }: GlobalXRayProps) {
                 setLoading(false);
             } else if (isOpen) {
                 setLoading(true);
-                const data = await flaskApi.getXRayGlobal();
+                const data = await flaskApi.getXRayDeep();
 
                 if (data && typeof data === 'object' && ('overallScore' in data || 'atmosphere_score' in data || 'radar_data' in data)) {
                     const analysisData = { ...data };

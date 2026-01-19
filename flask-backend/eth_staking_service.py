@@ -63,54 +63,50 @@ class ETHStakingService:
     def get_validator_queue(self) -> Dict[str, int]:
         """
         Fetch validator entry/exit queue from Beaconcha.in
-        Returns: {beaconchain_entering, beaconchain_exiting, validatorscount}
+        Returns: {beaconchain_entering, beaconchain_exiting, validatorscount, beaconchain_entering_balance}
         """
         data = self._make_request("/validators/queue")
         
         if data:
             return {
-                'entry_queue': data.get('beaconchain_entering', 0),
+                'entry_queue_count_raw': data.get('beaconchain_entering', 0), # Discrepancy source, often low
                 'exit_queue': data.get('beaconchain_exiting', 0),
-                'validators_count': data.get('validatorscount', 0)
+                'validators_count': data.get('validatorscount', 0),
+                'entering_balance': data.get('beaconchain_entering_balance', 0) # GWEI
             }
         
-        # Fallback mock data if API fails
+        # Fallback mock data
         logger.warning("⚠️ Using fallback data for validator queue")
         return {
-            'entry_queue': 80000,
+            'entry_queue_count_raw': 80000,
             'exit_queue': 150,
-            'validators_count': 980000
+            'validators_count': 980000,
+            'entering_balance': 2560000 * 1e9 # Mock GWEI
         }
     
     def get_epoch_stats(self) -> Dict[str, Any]:
-        """
-        Fetch latest epoch statistics
-        Returns active validators count
-        """
+        """Fetch latest epoch statistics"""
         data = self._make_request("/epoch/latest")
-        
         if data:
             return {
                 'active_validators': data.get('validatorscount', 0),
                 'epoch': data.get('epoch', 0),
                 'finalized': data.get('finalized', False)
             }
-        
         return {'active_validators': 980000, 'epoch': 0, 'finalized': True}
     
-    def calculate_churn_limit(self, active_validators: int) -> int:
+    def calculate_churn_limits(self, active_validators: int) -> Dict[str, int]:
         """
-        Calculate the churn limit per epoch based on active validators
-        Formula: max(4, active_validators // 65536)
-        Note: EIP-7514 caps entry churn at 8, but exit is still based on this formula
+        Calculate churn limits.
+        Entry Churn: Capped at 8 per epoch (EIP-7514).
+        Exit Churn: max(4, active // 65536).
         """
-        return max(VALIDATORS_PER_EPOCH_BASE, active_validators // 65536)
+        exit_limit = max(VALIDATORS_PER_EPOCH_BASE, active_validators // 65536)
+        entry_limit = 8 # EIP-7514 Hard Cap
+        return {'entry': entry_limit, 'exit': exit_limit}
     
     def calculate_wait_time(self, queue_length: int, churn_limit: int) -> Dict[str, Any]:
-        """
-        Calculate estimated wait time for queue processing
-        Returns: {seconds, minutes, hours, days}
-        """
+        """Calculate estimated wait time"""
         if queue_length == 0 or churn_limit == 0:
             return {'seconds': 0, 'minutes': 0, 'hours': 0, 'days': 0}
         
@@ -127,12 +123,8 @@ class ETHStakingService:
     def determine_signal(self, entry_wait_days: float, exit_wait_minutes: float) -> Dict[str, str]:
         """
         Determine trading signal based on queue dynamics
-        
-        🔴 매도 경보: exit_wait_days > 3 (이탈 급증)
-        🟢 강력 홀딩: entry_wait_days > 10 AND exit_wait_minutes < 60
-        🟡 중립: 그 외
         """
-        exit_wait_days = exit_wait_minutes / 1440  # Convert to days
+        exit_wait_days = exit_wait_minutes / 1440
         
         if exit_wait_days > 3:
             return {
@@ -157,34 +149,23 @@ class ETHStakingService:
             }
     
     def generate_ai_report(self, metrics: Dict[str, Any]) -> str:
-        """
-        Generate AI-style report text based on metrics
-        """
-        exit_queue_eth = metrics['exit_queue'] * ETH_PER_VALIDATOR
-        entry_queue_eth = metrics['entry_queue'] * ETH_PER_VALIDATOR
+        exit_queue_eth = metrics['exit_queue_eth']
+        entry_queue_eth = metrics['entry_queue_eth']
         entry_wait_days = metrics['entry_wait']['days']
         staked_percentage = metrics['staked_percentage']
         
-        # Determine pressure status
-        pressure_status = "소멸" if exit_queue_eth < 1000 else "증가"
+        pressure_status = "소멸" if exit_queue_eth < 32000 else "증가" # Adjusted threshold
         
-        # Determine market insight
-        if staked_percentage > 25:
-            market_insight = "공급 쇼크 가능성"
-        elif staked_percentage > 20:
-            market_insight = "안정적 잠금"
-        else:
-            market_insight = "유동성 충분"
+        market_insight = "공급 쇼크 가능성" if staked_percentage > 25 else "안정적 잠금"
         
         report = (
-            f"이더리움 스테이킹 이탈 대기열이 {exit_queue_eth:,} ETH로 급감하며 "
-            f"매도 압력이 **{pressure_status}**되었습니다. "
-            f"반면 진입 대기열은 {entry_queue_eth:,} ETH로, "
-            f"대기 시간만 **{entry_wait_days:.1f}일**에 달합니다. "
-            f"현재 총 공급량의 **{staked_percentage:.2f}%**가 잠겨있어 "
-            f"**{market_insight}**으로 분석됩니다."
+            f"이더리움 스테이킹 이탈 대기열이 {exit_queue_eth:,.0f} ETH로, "
+            f"매도 압력이 **{pressure_status}** 상태입니다. "
+            f"반면 진입 대기열은 {entry_queue_eth:,.0f} ETH로 폭증하여, "
+            f"대기 시간이 **{entry_wait_days:.1f}일**에 달합니다. "
+            f"총 공급량의 **{staked_percentage:.2f}%**가 잠겨있어 "
+            f"**{market_insight}**이 지속되고 있습니다."
         )
-        
         return report
     
     def get_staking_metrics(self) -> Dict[str, Any]:
@@ -195,21 +176,32 @@ class ETHStakingService:
         
         # 1. Get queue data
         queue_data = self.get_validator_queue()
-        entry_queue = queue_data['entry_queue']
-        exit_queue = queue_data['exit_queue']
         
-        # 2. Get active validators (from queue data or epoch stats)
+        # Calculate accurate Entry Queue from Balance (Gwei -> ETH -> Count)
+        entering_balance_gwei = queue_data.get('entering_balance', 0)
+        entering_eth = entering_balance_gwei / 1e9
+        entry_queue_count = int(entering_eth / ETH_PER_VALIDATOR)
+        
+        # If API returns 0 or weird balance, fallback to raw count if plausible
+        if entry_queue_count < queue_data.get('entry_queue_count_raw', 0):
+             entry_queue_count = queue_data.get('entry_queue_count_raw', 0)
+
+        exit_queue_count = queue_data['exit_queue']
+        
+        # 2. Get active validators
         active_validators = queue_data.get('validators_count', 0)
         if active_validators == 0:
             epoch_stats = self.get_epoch_stats()
             active_validators = epoch_stats['active_validators']
         
-        # 3. Calculate churn limit
-        churn_limit = self.calculate_churn_limit(active_validators)
+        # 3. Calculate churn limits (Split Entry/Exit)
+        limits = self.calculate_churn_limits(active_validators)
+        entry_churn = limits['entry']
+        exit_churn = limits['exit']
         
         # 4. Calculate wait times
-        entry_wait = self.calculate_wait_time(entry_queue, churn_limit)
-        exit_wait = self.calculate_wait_time(exit_queue, churn_limit)
+        entry_wait = self.calculate_wait_time(entry_queue_count, entry_churn)
+        exit_wait = self.calculate_wait_time(exit_queue_count, exit_churn)
         
         # 5. Calculate staked ETH
         total_staked_eth = active_validators * ETH_PER_VALIDATOR
@@ -220,19 +212,20 @@ class ETHStakingService:
         
         # Build metrics object
         metrics = {
-            'entry_queue': entry_queue,
-            'exit_queue': exit_queue,
-            'entry_queue_eth': entry_queue * ETH_PER_VALIDATOR,
-            'exit_queue_eth': exit_queue * ETH_PER_VALIDATOR,
+            'entry_queue': entry_queue_count,
+            'exit_queue': exit_queue_count,
+            'entry_queue_eth': entry_queue_count * ETH_PER_VALIDATOR,
+            'exit_queue_eth': exit_queue_count * ETH_PER_VALIDATOR,
             'entry_wait': entry_wait,
             'exit_wait': exit_wait,
             'entry_wait_days': entry_wait['days'],
             'exit_wait_minutes': exit_wait['minutes'],
             'active_validators': active_validators,
-            'churn_limit': churn_limit,
+            'churn_limit': exit_churn, # For display, usually exit churn or just say '8' for entry
+            'churn_limits': limits,
             'total_staked_eth': total_staked_eth,
             'staked_percentage': staked_percentage,
-            'staking_apr': 3.5,  # TODO: Fetch from API if available
+            'staking_apr': 3.5, 
             **signal_data,
             'timestamp': datetime.now().isoformat()
         }
@@ -240,7 +233,7 @@ class ETHStakingService:
         # 7. Generate AI report
         metrics['ai_report'] = self.generate_ai_report(metrics)
         
-        logger.info(f"✅ ETH Staking Metrics: {signal_data['signal_text']} (Entry: {entry_wait['days']:.1f}d, Exit: {exit_wait['minutes']:.1f}m)")
+        logger.info(f"✅ ETH Staking: Entry {entry_queue_count} ({entry_wait['days']:.1f}d), Exit {exit_queue_count} ({exit_wait['minutes']:.1f}m)")
         
         return metrics
     
@@ -260,7 +253,8 @@ class ETHStakingService:
                 'exit_wait_seconds': metrics['exit_wait']['seconds'],
                 'active_validators': metrics['active_validators'],
                 'staking_apr': metrics.get('staking_apr', 0),
-                'total_staked_eth': metrics['total_staked_eth']
+                'total_staked_eth': metrics['total_staked_eth'],
+                'signal_status': metrics.get('signal', 'NEUTRAL') # Save signal
             }
             
             supabase_client.table('eth_staking_metrics').insert(payload).execute()

@@ -379,5 +379,39 @@ class MarketDataService:
             print(f"CMC Global Metrics Error: {e}")
             print(f"CMC Global Metrics Error: {e}")
             raise e
+            
+    def get_recent_large_trades(self, min_value_usd=500000):
+        """
+        Fetch recent trades from Binance and filter for Large Trades (Whales).
+        """
+        target_symbols = ['BTC', 'ETH', 'SOL', 'XRP']
+        results = []
+        
+        for sym in target_symbols:
+            try:
+                pair = f"{sym}/USDT"
+                trades = self.binance.fetch_trades(pair, limit=50) # Fetch last 50 trades
+                
+                for t in trades:
+                    # t structure: { 'amount': float, 'price': float, 'cost': float, 'side': 'buy'/'sell', 'timestamp': int, ... }
+                    cost = t['cost'] if t.get('cost') else (t['amount'] * t['price'])
+                    
+                    if cost >= min_value_usd:
+                        results.append({
+                            'symbol': sym,
+                            'type': t['side'], # 'buy' or 'sell'
+                            'price': t['price'],
+                            'amount': t['amount'],
+                            'value': cost,
+                            'timestamp': t['timestamp'],
+                            'source': 'Binance'
+                        })
+            except Exception as e:
+                # print(f"Whale Trade fetch error for {sym}: {e}")
+                continue
+                
+        # Sort by latest
+        results.sort(key=lambda x: x['timestamp'], reverse=True)
+        return results
 
 market_data_service = MarketDataService()

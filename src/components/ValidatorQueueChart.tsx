@@ -73,28 +73,28 @@ export default function ValidatorQueueChart({ data, period }: ValidatorQueueChar
             labels,
             datasets: [
                 {
-                    label: 'Entry',
+                    label: 'Entry Queue',
                     data: data.map(d => d.entry_queue),
-                    borderColor: 'rgba(100, 149, 237, 1)',
-                    backgroundColor: 'rgba(100, 149, 237, 0.1)',
+                    borderColor: 'rgb(54, 162, 235)', // Blue
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     fill: true,
-                    tension: 0.1,
+                    tension: 0.3,
                     pointRadius: 0,
-                    pointHoverRadius: 3,
-                    borderWidth: 1.5,
+                    pointHoverRadius: 4,
+                    borderWidth: 2,
                     yAxisID: 'y',
                 },
                 {
-                    label: 'Exit',
+                    label: 'Exit Queue',
                     data: data.map(d => d.exit_queue),
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    borderColor: 'rgb(255, 99, 132)', // Red/Pink
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     fill: true,
-                    tension: 0.1,
+                    tension: 0.3,
                     pointRadius: 0,
-                    pointHoverRadius: 3,
-                    borderWidth: 1.5,
-                    yAxisID: 'y1',
+                    pointHoverRadius: 4,
+                    borderWidth: 2,
+                    yAxisID: 'y1', // Keep separate axis or merge if scale is similar? Usually separate for visibility
                 }
             ],
         };
@@ -136,13 +136,14 @@ export default function ValidatorQueueChart({ data, period }: ValidatorQueueChar
             x: {
                 grid: {
                     display: false,
+                    drawBorder: false,
                 },
                 ticks: {
-                    font: { size: 9 },
-                    color: '#6b7280',
+                    font: { size: 10, family: 'Inter' },
+                    color: '#9ca3af',
                     maxRotation: 45,
                     autoSkip: true,
-                    maxTicksLimit: period === 'all' ? 12 : period === '1y' ? 12 : period === '90d' ? 10 : 8,
+                    maxTicksLimit: 8,
                 }
             },
             y: {
@@ -151,14 +152,16 @@ export default function ValidatorQueueChart({ data, period }: ValidatorQueueChar
                 position: 'left' as const,
                 grid: {
                     color: 'rgba(255, 255, 255, 0.05)',
+                    drawBorder: false,
                 },
                 ticks: {
-                    font: { size: 9 },
-                    color: '#6495ED', // Match Entry color
+                    font: { size: 10, family: 'Inter' },
+                    color: '#6b7280',
+                    padding: 8,
                     callback: function (value: string | number) {
                         if (typeof value === 'number') {
-                            if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-                            if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+                            if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`; // e.g., 2.5M
+                            if (value >= 1000) return `${(value / 1000).toFixed(0)}k`; // e.g., 500k
                             return value;
                         }
                         return value;
@@ -171,10 +174,12 @@ export default function ValidatorQueueChart({ data, period }: ValidatorQueueChar
                 position: 'right' as const,
                 grid: {
                     drawOnChartArea: false,
+                    drawBorder: false,
                 },
                 ticks: {
-                    font: { size: 9 },
-                    color: '#FF6384', // Match Exit color
+                    font: { size: 10, family: 'Inter' },
+                    color: '#6b7280', // Match left axis color for cleaner look, or keep distinct? ValidatorQueue uses gray for both generally
+                    padding: 8,
                     callback: function (value: string | number) {
                         if (typeof value === 'number') {
                             if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;

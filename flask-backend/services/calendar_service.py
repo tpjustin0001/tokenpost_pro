@@ -103,3 +103,44 @@ def fetch_investing_calendar():
     except Exception as e:
         logger.error(f"Failed to fetch Coindar RSS: {e}")
         return []
+
+def save_to_db(events, supabase_client):
+    """
+    Save events to Supabase 'calendar_events' table.
+    """
+    if not supabase_client or not events:
+        return 0
+        
+    count = 0
+    try:
+        # Get existing events for relevant dates to minimize overlap queries
+        # For simplicity, we use the UNIQUE(title, event_date) constraint and ignore duplicates on insert if possible,
+        # but Supabase-py doesn't support 'ON CONFLICT DO NOTHING' easily in one line without RPC.
+        # We'll stick to a simple loop check for safety or try bulk insert ignoring errors (if supported).
+        
+        for event in events:
+            # Check if exists
+            exists = supabase_client.table('calendar_events')\
+                .select('id')\
+                .eq('title', event['title'])\
+                .eq('event_date', event['event_date'])\
+                .execute()
+                
+            if not exists.data:
+                payload = {
+                    'title': event['title'],
+                    'country': event['country'],
+                    'impact': event['impact'],
+                    'type': event['type'],
+                    'time': event['time'],
+                    'event_date': event['event_date']
+                }
+                supabase_client.table('calendar_events').insert(payload).execute()
+                count += 1
+                
+        logger.info(f"💾 Calendar events saved: {count} new items")
+        return count
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to save calendar events: {e}")
+        return 0

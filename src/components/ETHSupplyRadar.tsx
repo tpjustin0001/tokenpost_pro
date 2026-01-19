@@ -20,6 +20,8 @@ interface ETHStakingData {
     staking_apr: number;
     total_staked_eth: number;
     staked_percentage: number;
+    churn_limit: number;
+    churn_limits?: { entry: number; exit: number };
     signal: string;
     signal_color: string;
     signal_text: string;
@@ -98,17 +100,19 @@ export default function ETHSupplyRadar() {
                 // Use fallback data
                 setData({
                     success: false,
-                    entry_queue: 80000,
-                    exit_queue: 150,
-                    entry_queue_eth: 2560000,
-                    exit_queue_eth: 4800,
-                    entry_wait_days: 40.0,
-                    entry_wait_hours: 960.0,
-                    exit_wait_minutes: 3.0,
-                    active_validators: 980000,
+                    entry_queue: 81761,
+                    exit_queue: 2,
+                    entry_queue_eth: 2616352,
+                    exit_queue_eth: 64,
+                    entry_wait_days: 45.4,
+                    entry_wait_hours: 1090.1,
+                    exit_wait_minutes: 0.9,
+                    active_validators: 978625,
                     staking_apr: 3.5,
-                    total_staked_eth: 31360000,
+                    total_staked_eth: 31316000,
                     staked_percentage: 26.1,
+                    churn_limit: 8,
+                    churn_limits: { entry: 8, exit: 14 },
                     signal: 'STRONG_HOLD',
                     signal_color: 'green',
                     signal_text: '강력 홀딩',
@@ -127,30 +131,10 @@ export default function ETHSupplyRadar() {
         return () => clearInterval(interval);
     }, []);
 
-    const formatWaitTime = (days: number, hours: number): string => {
-        if (days >= 1) {
-            const remainingHours = Math.round((days % 1) * 24);
-            return `${Math.floor(days)}일 ${remainingHours}시간`;
-        }
-        return `${Math.round(hours)}시간`;
-    };
-
-    const formatMinutes = (minutes: number): string => {
-        if (minutes < 60) {
-            return `${Math.round(minutes)}분`;
-        }
-        const hours = Math.floor(minutes / 60);
-        const remainingMinutes = Math.round(minutes % 60);
-        return `${hours}시간 ${remainingMinutes}분`;
-    };
-
-    const getSignalClass = (color: string): string => {
-        switch (color) {
-            case 'green': return styles.signalGreen;
-            case 'red': return styles.signalRed;
-            case 'yellow': return styles.signalYellow;
-            default: return styles.signalYellow;
-        }
+    const formatDuration = (days: number, hours: number) => {
+        const d = Math.floor(days);
+        const h = Math.round((days % 1) * 24);
+        return `${d} days, ${h} hours`;
     };
 
     if (loading) {
@@ -160,9 +144,6 @@ export default function ETHSupplyRadar() {
                     <h3 className={styles.title}>ETH Supply Radar</h3>
                     <span className={styles.loading}>로딩 중...</span>
                 </div>
-                <div className={styles.body}>
-                    <div className={styles.skeleton} />
-                </div>
             </div>
         );
     }
@@ -170,127 +151,132 @@ export default function ETHSupplyRadar() {
     if (!data) return null;
 
     return (
-        <div className={`${styles.widget} ${getSignalClass(data.signal_color)}`}>
+        <div className={styles.widget}>
             <div className={styles.header}>
-                <div className={styles.headerLeft}>
-                    <h3 className={styles.title}>ETH 스테이킹 레이더</h3>
-                    <span className={styles.subtitle}>대기열 기반 매도압력 예측</span>
+                <div>
+                    <h3 className={styles.title}>ETH Supply Radar</h3>
+                    <span className={styles.subtitle}>Validator Queue & Staking Metrics</span>
                 </div>
                 <div className={styles.badges}>
-                    {error && <span className={styles.badgeDemo}>DEMO</span>}
-                    <span className={styles.badgeLive}>
-                        <span className={styles.liveDot} />
-                        LIVE
+                    <span style={{ color: data.signal_color === 'green' ? '#4dabf7' : '#ff6b6b', fontWeight: 'bold' }}>
+                        {data.signal_emoji} {data.signal_text}
                     </span>
                 </div>
             </div>
 
-            <div className={styles.body}>
-                {/* Signal Status */}
-                <div className={styles.signalRow}>
-                    <div className={styles.signalSection}>
-                        <span className={styles.signalEmoji}>{data.signal_emoji}</span>
-                        <span className={styles.signalText}>{data.signal_text}</span>
+            {/* Entry / Exit Cards */}
+            <div className={styles.summaryGrid}>
+                {/* Entry Card */}
+                <div className={styles.summaryCard}>
+                    <div className={styles.cardHeader}>
+                        <span className={styles.cardTitle}>Entry Queue</span>
+                        <span className={styles.cardIcon} style={{ color: '#36a2eb' }}>📥</span>
                     </div>
-                    <span className={styles.signalDesc}>
-                        {data.signal_color === 'green'
-                            ? '이탈 적음 → 매도 압력 낮음'
-                            : data.signal_color === 'red'
-                                ? '이탈 급증 → 매도 압력 높음'
-                                : '진입/이탈 균형 상태'}
-                    </span>
-                </div>
-
-                {/* Queue Metrics */}
-                <div className={styles.metricsGrid}>
-                    <div className={styles.metricItem}>
-                        <span className={styles.metricLabel}>진입 대기</span>
-                        <span className={styles.metricValue}>
-                            {formatWaitTime(data.entry_wait_days, data.entry_wait_hours)}
-                        </span>
-                        <span className={styles.metricTrend}>
-                            ▲ {(data.entry_queue_eth / 1000000).toFixed(2)}M ETH
-                        </span>
+                    <div className={styles.cardMainValue}>
+                        {(data.entry_queue_eth || 0).toLocaleString()} ETH
                     </div>
-
-                    <div className={styles.metricItem}>
-                        <span className={styles.metricLabel}>이탈 대기</span>
-                        <span className={styles.metricValue}>
-                            {formatMinutes(data.exit_wait_minutes)}
-                        </span>
-                        <span className={styles.metricTrendDown}>
-                            ▼ {(data.exit_queue_eth / 1000).toFixed(1)}K ETH
-                        </span>
-                    </div>
-
-                    <div className={styles.metricItem}>
-                        <span className={styles.metricLabel}>잠금 비율</span>
-                        <span className={styles.metricValue}>
-                            {data.staked_percentage.toFixed(1)}%
-                        </span>
-                        <span className={styles.metricSub}>
-                            {(data.total_staked_eth / 1000000).toFixed(1)}M ETH
-                        </span>
-                    </div>
-
-                    <div className={styles.metricItem}>
-                        <span className={styles.metricLabel}>APR</span>
-                        <span className={styles.metricValue}>
-                            {data.staking_apr.toFixed(1)}%
-                        </span>
-                        <span className={styles.metricSub}>연간 수익률</span>
-                    </div>
-                </div>
-
-                {/* Validator Queue Chart */}
-                {history.length > 1 && (
-                    <div className={styles.chartSection}>
-                        <div className={styles.chartHeader}>
-                            <span className={styles.chartTitle}>
-                                Validator Queue ({period === '7d' ? '7일' : period === '30d' ? '30일' : period === '90d' ? '90일' : period === '1y' ? '1년' : '전체'})
-                            </span>
-                            <div className={styles.periodTabs}>
-                                <button
-                                    className={`${styles.periodTab} ${period === '7d' ? styles.periodTabActive : ''}`}
-                                    onClick={() => setPeriod('7d')}
-                                >7D</button>
-                                <button
-                                    className={`${styles.periodTab} ${period === '30d' ? styles.periodTabActive : ''}`}
-                                    onClick={() => setPeriod('30d')}
-                                >30D</button>
-                                <button
-                                    className={`${styles.periodTab} ${period === '90d' ? styles.periodTabActive : ''}`}
-                                    onClick={() => setPeriod('90d')}
-                                >90D</button>
-                                <button
-                                    className={`${styles.periodTab} ${period === '1y' ? styles.periodTabActive : ''}`}
-                                    onClick={() => setPeriod('1y')}
-                                >1Y</button>
-                                <button
-                                    className={`${styles.periodTab} ${period === 'all' ? styles.periodTabActive : ''}`}
-                                    onClick={() => setPeriod('all')}
-                                >All</button>
-                            </div>
+                    <div className={styles.cardSubRow}>
+                        <div className={styles.cardDetail}>
+                            <span className={styles.cardDetailLabel}>Wait:</span>
+                            <span className={styles.cardDetailValue}>{formatDuration(data.entry_wait_days, data.entry_wait_hours)}</span>
                         </div>
-                        <ValidatorQueueChart data={history} period={period} />
+                        <div className={styles.cardDetail}>
+                            <span className={styles.cardDetailLabel}>Churn:</span>
+                            <span className={styles.cardDetailValue}>{data.churn_limits?.entry || 8}/epoch</span>
+                        </div>
+                        <div className={styles.cardDetail}>
+                            <span className={styles.cardDetailLabel}>Validators:</span>
+                            <span className={styles.cardDetailValue}>{data.entry_queue.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Exit Card */}
+                <div className={`${styles.summaryCard} ${styles.exit}`}>
+                    <div className={styles.cardHeader}>
+                        <span className={styles.cardTitle}>Exit Queue</span>
+                        <span className={styles.cardIcon} style={{ color: '#ff6384' }}>📤</span>
+                    </div>
+                    <div className={styles.cardMainValue}>
+                        {(data.exit_queue_eth || 0).toLocaleString()} ETH
+                    </div>
+                    <div className={styles.cardSubRow}>
+                        {data.exit_queue_eth > 0 ? (
+                            <div className={styles.cardDetail}>
+                                <span className={styles.cardDetailLabel}>Wait:</span>
+                                <span className={styles.cardDetailValue}>{data.exit_wait_minutes < 60 ? `${Math.round(data.exit_wait_minutes)} mins` : formatDuration(data.exit_wait_minutes / 1440, 0)}</span>
+                            </div>
+                        ) : (
+                            <div className={styles.cardDetail}>
+                                <span className={styles.cardDetailLabel}>Wait:</span>
+                                <span className={styles.cardDetailValue}>0 mins</span>
+                            </div>
+                        )}
+                        <div className={styles.cardDetail}>
+                            <span className={styles.cardDetailLabel}>Churn:</span>
+                            <span className={styles.cardDetailValue}>{data.churn_limits?.exit || 14}/epoch</span>
+                        </div>
+                        <div className={styles.cardDetail}>
+                            <span className={styles.cardDetailLabel}>Validators:</span>
+                            <span className={styles.cardDetailValue}>{data.exit_queue.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Stats Row */}
+            <div className={styles.statsRow}>
+                <div className={styles.statItem}>
+                    <span className={styles.statLabel}>Active Validators</span>
+                    <span className={styles.statValue}>{data.active_validators.toLocaleString()}</span>
+                </div>
+                <div className={styles.statItem}>
+                    <span className={styles.statLabel}>Staking APR</span>
+                    <span className={styles.statValue}>{data.staking_apr}%</span>
+                </div>
+                <div className={styles.statItem}>
+                    <span className={styles.statLabel}>Staked Supply</span>
+                    <span className={styles.statValue}>{data.staked_percentage.toFixed(2)}%</span>
+                </div>
+            </div>
+
+            {/* Validator Queue Chart */}
+            <div className={styles.chartSection}>
+                <div className={styles.chartHeader}>
+                    <span className={styles.chartTitle}>
+                        Queue History ({period === '7d' ? '7D' : period === '30d' ? '30D' : period === '90d' ? '90D' : period === '1y' ? '1Y' : 'All'})
+                    </span>
+                    <div className={styles.periodTabs}>
+                        <button className={`${styles.periodTab} ${period === '7d' ? styles.periodTabActive : ''}`} onClick={() => setPeriod('7d')}>7D</button>
+                        <button className={`${styles.periodTab} ${period === '30d' ? styles.periodTabActive : ''}`} onClick={() => setPeriod('30d')}>30D</button>
+                        <button className={`${styles.periodTab} ${period === '90d' ? styles.periodTabActive : ''}`} onClick={() => setPeriod('90d')}>90D</button>
+                        <button className={`${styles.periodTab} ${period === '1y' ? styles.periodTabActive : ''}`} onClick={() => setPeriod('1y')}>1Y</button>
+                        <button className={`${styles.periodTab} ${period === 'all' ? styles.periodTabActive : ''}`} onClick={() => setPeriod('all')}>All</button>
+                    </div>
+                </div>
+                {history.length > 0 ? (
+                    <ValidatorQueueChart data={history} period={period} />
+                ) : (
+                    <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+                        데이터 수집 중...
                     </div>
                 )}
+            </div>
 
-                {/* AI Report */}
-                <div className={styles.aiReport}>
-                    <div className={styles.aiHeader}>
-                        <span className={styles.aiIcon}>💡</span>
-                        <span className={styles.aiLabel}>AI 분석</span>
-                    </div>
-                    <p className={styles.aiText}>{data.ai_report}</p>
+            {/* AI Report */}
+            <div className={styles.aiReport}>
+                <div className={styles.aiHeader}>
+                    <span className={styles.aiIcon}>💡</span>
+                    <span className={styles.aiLabel}>AI Market Insight</span>
                 </div>
+                <p className={styles.aiText}>{data.ai_report}</p>
             </div>
 
             <div className={styles.footer}>
                 <span className={styles.timestamp}>
-                    업데이트: {new Date(data.timestamp).toLocaleTimeString('ko-KR')}
+                    Updated: {new Date(data.timestamp).toLocaleTimeString('ko-KR')}
                 </span>
-                <span className={styles.source}>Beaconcha.in</span>
+                <span className={styles.source}>Source: Beaconcha.in</span>
             </div>
         </div>
     );

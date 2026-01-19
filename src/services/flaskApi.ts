@@ -111,6 +111,21 @@ export const flaskApi = {
         }
     },
 
+    async getXRayDeep(): Promise<any | null> {
+        try {
+            const res = await fetch(`${API_PREFIX}/crypto/xray/deep`);
+            if (!res.ok) {
+                const text = await res.text();
+                console.error(`Deep X-Ray Fetch Failed: ${res.status} ${res.statusText}`, text);
+                throw new Error(`Failed to fetch Deep X-Ray: ${res.status}`);
+            }
+            return await res.json();
+        } catch (error) {
+            console.error('Error fetching Deep X-Ray:', error);
+            return null;
+        }
+    },
+
     async getListings(limit: number = 20): Promise<any[]> {
         try {
             const res = await fetch(`${API_PREFIX}/crypto/listings?limit=${limit}`);

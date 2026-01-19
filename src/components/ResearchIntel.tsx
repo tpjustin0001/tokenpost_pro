@@ -136,7 +136,12 @@ export default function ResearchIntel() {
             typeKo,
             title: row.title,
             source: row.author || 'TokenPost',
-            time: getTimeAgo(row.created_at),
+            time: new Intl.DateTimeFormat('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: 'Asia/Seoul'
+            }).format(new Date(row.created_at)),
             isPro,
             isBreaking: type === 'BREAKING',
             thumbnail: row.thumbnail_url || row.image_url || undefined,

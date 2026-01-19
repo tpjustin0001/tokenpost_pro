@@ -23,15 +23,20 @@ export default function EventTicker() {
                     return;
                 }
 
-                // Fetch past week + upcoming events (show more context)
-                const pastDate = new Date();
-                pastDate.setDate(pastDate.getDate() - 7); // 7 days ago
-                console.log('[EventTicker] Fetching events from:', pastDate.toISOString().split('T')[0]);
+                // Calculate "Today 00:00:00 KST" in ISO UTC format
+                // KST is UTC+9. So "Today 00:00 KST" is "Yesterday 15:00 UTC"
+                const now = new Date();
+                const kstOffset = 9 * 60 * 60 * 1000;
+                const kstNow = new Date(now.getTime() + kstOffset);
+
+                // Get KST date string: YYYY-MM-DD
+                const kstDateStr = kstNow.toISOString().split('T')[0];
+                console.log('[EventTicker] Fetching events from KST Date:', kstDateStr);
 
                 const { data, error } = await supabase
                     .from('calendar_events')
                     .select('*')
-                    .gte('event_date', pastDate.toISOString().split('T')[0])
+                    .gte('event_date', kstDateStr) // Filter by KST Date
                     .order('event_date', { ascending: true })
                     .order('time', { ascending: true })
                     .limit(20);

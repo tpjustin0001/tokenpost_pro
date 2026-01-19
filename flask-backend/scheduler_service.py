@@ -234,6 +234,7 @@ class SchedulerService:
                     'created_at': datetime.now().isoformat()
                 }).execute()
                 logger.info(f"✅ VCP Scan Saved: {len(candidates)} found")
+        except Exception as e:
             logger.error(f"❌ VCP Scan Failed: {e}")
 
     def update_calendar_events(self):

@@ -1086,14 +1086,20 @@ def sync_calendar():
 # ============================================================
 # MAIN
 # ============================================================
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5001))
-    debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
-    
-    # Check Critical Keys
-    cmc_key = os.getenv('COINMARKETCAP_API_KEY')
-    print(f"🔑 CMC Key Present: {'Yes' if cmc_key else 'No (Metrics/Dominance will be 0)'}")
-    
     print(f"🚀 TokenPost PRO API starting on port {port}...")
     app.run(host='0.0.0.0', port=port, debug=debug)
-# Force Redeploy: Wed Jan 14 00:10:51 KST 2026
+
+# ============================================================
+# START SCHEDULER (Gunicorn/Prod)
+# ============================================================
+# This ensures the scheduler runs when hosted via Gunicorn
+# "WERKZEUG_RUN_MAIN" check avoids double-start in local dev reloader
+if not os.environ.get("WERKZEUG_RUN_MAIN") or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+    try:
+        from scheduler_service import scheduler_service
+        # Start scheduler if not already running (Internal check in service)
+        print("⏰ Starting Scheduler from app.py...")
+        scheduler_service.start()
+    except Exception as e:
+        print(f"❌ Failed to start Scheduler in app.py: {e}")
+

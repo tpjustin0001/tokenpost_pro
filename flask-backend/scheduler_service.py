@@ -39,35 +39,46 @@ class SchedulerService:
 
     def start(self):
         if not self.scheduler.running:
+            self.scheduler.start()
+            logger.info("🚀 Scheduler started. Adding jobs sequentially to prevent CPU spike...")
+            import time
+
             # 1. ETH Staking (Every 10 mins)
             self.scheduler.add_job(self.update_eth_staking, IntervalTrigger(minutes=10), id='eth', replace_existing=True)
+            time.sleep(2)
             
             # 2. Grok Market Pulse (Every 1 hour)
             self.scheduler.add_job(self.update_market_analysis, IntervalTrigger(hours=1), id='grok_pulse', replace_existing=True)
+            time.sleep(3)
             
-            # 3. GPT Deep Analysis (Every 4 hours) - NEW
+            # 3. GPT Deep Analysis (Every 4 hours)
             self.scheduler.add_job(self.update_deep_analysis, IntervalTrigger(hours=4), id='gpt_deep', replace_existing=True)
+            time.sleep(2)
 
             # 4. News Feed (Every 15 mins)
             self.scheduler.add_job(self.update_news_feed, IntervalTrigger(minutes=15), id='news', replace_existing=True)
+            time.sleep(2)
             
             # 5. Whale Alerts (Every 5 mins)
             self.scheduler.add_job(self.run_whale_monitor, IntervalTrigger(minutes=5), id='whale', replace_existing=True)
+            time.sleep(2)
 
             # 6. Market Gate (Every 1 hour)
             self.scheduler.add_job(self.run_market_gate, IntervalTrigger(hours=1), id='gate', replace_existing=True)
+            time.sleep(2)
 
             # 7. VCP Scan (Every 4 hours)
             self.scheduler.add_job(self.run_vcp_scan, IntervalTrigger(hours=4), id='vcp', replace_existing=True)
+            time.sleep(2)
 
             # 8. Screener Scan (Every 1 hour)
             self.scheduler.add_job(self.run_screeners, IntervalTrigger(hours=1), id='screener', replace_existing=True)
+            time.sleep(2)
 
             # 9. Calendar Events (Every 12 hours)
             self.scheduler.add_job(self.update_calendar_events, IntervalTrigger(hours=12), id='calendar', replace_existing=True)
             
-            self.scheduler.start()
-            logger.info("🚀 Scheduler started with all jobs.")
+            logger.info("✅ All scheduler jobs added successfully.")
             atexit.register(lambda: self.scheduler.shutdown())
 
     def update_eth_staking(self):

@@ -151,11 +151,26 @@ export default function HomePage() {
     );
   }
 
-  // Import motion dynamically to avoid SSR mismatch if needed, but 'use client' handles it usually.
-  // We need to use valid motion components.
-  const MotionMain = motion.main;
-  const MotionSection = motion.section;
-  const MotionDiv = motion.div;
+  // Staggered Loading State
+  const [loadStage, setLoadStage] = useState(0);
+
+  useEffect(() => {
+    // Stage 0: Immediate (Layout)
+    // Stage 1: Ticker & Header (500ms)
+    // Stage 2: Chart (1000ms)
+    // Stage 3: Pulse (1500ms)
+    // Stage 4: News & Research (2000ms)
+
+    const timers = [
+      setTimeout(() => setLoadStage(1), 500),
+      setTimeout(() => setLoadStage(2), 1000),
+      setTimeout(() => setLoadStage(3), 1500),
+      setTimeout(() => setLoadStage(4), 2000),
+      setTimeout(() => setLoadStage(5), 2500),
+    ];
+
+    return () => timers.forEach(clearTimeout);
+  }, []);
 
   return (
     <LoginGate>
@@ -164,7 +179,7 @@ export default function HomePage() {
 
         <div className={styles.mainArea}>
           <MetricsBar />
-          <EventTicker />
+          {loadStage >= 1 && <EventTicker />}
 
           <MotionMain
             id="main-content"
@@ -176,7 +191,7 @@ export default function HomePage() {
             <MotionDiv className={styles.xrayHeader} variants={itemVariants}>
               <h2 className={styles.pageTitle}>대시보드</h2>
               <div className={styles.headerRight}>
-                <KimchiPremium />
+                {loadStage >= 5 && <KimchiPremium />}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                   <GlobalXRayButton onClick={() => setGlobalXRayOpen(true)} />
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>AI 거시경제 분석</span>
@@ -184,69 +199,67 @@ export default function HomePage() {
               </div>
             </MotionDiv>
 
-            {/* Main Chart Section */}
-            <MotionDiv className={styles.chartSection} variants={itemVariants}>
-              <div className={styles.chartHeader}>
-                <div className={styles.chartControlsLeft}>
-                  <div className={styles.chartTabs}>
-                    {CHART_SYMBOLS.map(sym => (
-                      <button
-                        key={sym.id}
-                        className={`${styles.chartTab} ${activeSymbol === sym.id ? styles.active : ''}`}
-                        onClick={() => setActiveSymbol(sym.id)}
-                      >
-                        {sym.name}
-                      </button>
-                    ))}
+            {/* Main Chart Section - Stage 2 */}
+            {loadStage >= 2 && (
+              <MotionDiv className={styles.chartSection} variants={itemVariants}>
+                <div className={styles.chartHeader}>
+                  <div className={styles.chartControlsLeft}>
+                    <div className={styles.chartTabs}>
+                      {CHART_SYMBOLS.map(sym => (
+                        <button
+                          key={sym.id}
+                          className={`${styles.chartTab} ${activeSymbol === sym.id ? styles.active : ''}`}
+                          onClick={() => setActiveSymbol(sym.id)}
+                        >
+                          {sym.name}
+                        </button>
+                      ))}
+                    </div>
+                    <div className={styles.dividerVertical} />
+                    <div className={styles.chartTabs}>
+                      {CHART_INTERVALS.map(int => (
+                        <button
+                          key={int.id}
+                          className={`${styles.chartTab} ${activeInterval === int.id ? styles.active : ''}`}
+                          onClick={() => setActiveInterval(int.id)}
+                        >
+                          {int.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className={styles.dividerVertical} />
-                  <div className={styles.chartTabs}>
-                    {CHART_INTERVALS.map(int => (
-                      <button
-                        key={int.id}
-                        className={`${styles.chartTab} ${activeInterval === int.id ? styles.active : ''}`}
-                        onClick={() => setActiveInterval(int.id)}
-                      >
-                        {int.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <span className={styles.chartLabel}>
-                  {activeSymbol}/USDT · {CHART_INTERVALS.find(i => i.id === activeInterval)?.label}
-                  <span style={{ fontSize: '11px', color: '#ef4444', marginLeft: '12px', fontWeight: 500 }}>
-                    ※ 정확한 뉴스 확인은 1분봉 권장
+                  <span className={styles.chartLabel}>
+                    {activeSymbol}/USDT · {CHART_INTERVALS.find(i => i.id === activeInterval)?.label}
+                    <span style={{ fontSize: '11px', color: '#ef4444', marginLeft: '12px', fontWeight: 500 }}>
+                      ※ 정확한 뉴스 확인은 1분봉 권장
+                    </span>
                   </span>
-                </span>
-              </div>
-              <TradingChart symbol={activeSymbol} interval={activeInterval} />
-            </MotionDiv>
+                </div>
+                <TradingChart symbol={activeSymbol} interval={activeInterval} />
+              </MotionDiv>
+            )}
 
-            {/* Section: ETH Staking Intelligence */}
-            {/* <MotionSection className={styles.dashboardSection} variants={itemVariants}>
-              <h2 className={styles.sectionHeading}>ETH 스테이킹 인텔리전스</h2>
-              <div className={styles.singleColumnGrid}>
-                <ETHSupplyRadar />
-              </div>
-            </MotionSection> */}
+            {/* Section: Market Pulse (Sentiment & Volatility) - Stage 3 */}
+            {loadStage >= 3 && (
+              <MotionSection className={styles.dashboardSection} variants={itemVariants}>
+                <h2 className={styles.sectionHeading}>마켓 펄스</h2>
+                <div className={styles.twoColumnGrid}>
+                  <Mindshare />
+                  <PricePerformance />
+                </div>
+              </MotionSection>
+            )}
 
-            {/* Section: Market Pulse (Sentiment & Volatility) */}
-            <MotionSection className={styles.dashboardSection} variants={itemVariants}>
-              <h2 className={styles.sectionHeading}>마켓 펄스</h2>
-              <div className={styles.twoColumnGrid}>
-                <Mindshare />
-                <PricePerformance />
-              </div>
-            </MotionSection>
-
-            {/* Section: Breaking & Insights */}
-            <MotionSection className={styles.dashboardSection} variants={itemVariants}>
-              <h2 className={styles.sectionHeading}>속보 및 인사이트</h2>
-              <div className={styles.twoColumnGrid}>
-                <NewsFeed />
-                <ResearchIntel />
-              </div>
-            </MotionSection>
+            {/* Section: Breaking & Insights - Stage 4 */}
+            {loadStage >= 4 && (
+              <MotionSection className={styles.dashboardSection} variants={itemVariants}>
+                <h2 className={styles.sectionHeading}>속보 및 인사이트</h2>
+                <div className={styles.twoColumnGrid}>
+                  <NewsFeed />
+                  <ResearchIntel />
+                </div>
+              </MotionSection>
+            )}
           </MotionMain>
         </div>
 

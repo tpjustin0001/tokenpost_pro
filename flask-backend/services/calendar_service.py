@@ -11,16 +11,37 @@ logger = logging.getLogger(__name__)
 # OpenAI Client (Lazy Init)
 def get_client():
     key = os.getenv("OPENAI_API_KEY")
+    if not key:
+        # Fallback check for debug environment
+        try:
+             # Should be loaded by app.py or .env file already, but just in case
+             pass
+        except: pass
     return OpenAI(api_key=key) if key else None
 
 def translate_text(text):
     """
     Translate text to Korean using GPT-4o-mini
     """
-    client = get_client()
-    if not client:
-        return text # Fallback
+    try:
+        client = get_client()
+        if not client:
+            return text # Fallback to English
 
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a crypto translator. Translate event title to Korean. Keep it short."},
+                {"role": "user", "content": text}
+            ],
+            max_tokens=60,
+            temperature=0.3,
+            timeout=5
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        logger.error(f"Translation failed: {e}")
+        return text
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -138,7 +159,29 @@ def save_to_db(events, supabase_client):
                 supabase_client.table('calendar_events').insert(payload).execute()
                 count += 1
                 
-        logger.info(f"💾 Calendar events saved: {count} new items")
+        # Inject Hardcoded Macro Events (Jan/Feb 2026)
+        # In a real app, this would come from a Macro API
+        macro_events = [
+            {"time": "22:30", "title": "미국 소비자물가지수 (CPI)", "country": "🇺🇸", "impact": "High", "type": "Macro", "event_date": "2026-01-16"},
+            {"time": "04:00", "title": "FOMC 금리 결정", "country": "🇺🇸", "impact": "High", "type": "Macro", "event_date": "2026-01-29"},
+            {"time": "22:30", "title": "미국 비농업 고용 지수", "country": "🇺🇸", "impact": "High", "type": "Macro", "event_date": "2026-02-06"},
+            {"time": "22:30", "title": "미국 PPI (생산자물가지수)", "country": "🇺🇸", "impact": "Medium", "type": "Macro", "event_date": "2026-02-13"},
+            {"time": "22:30", "title": "미국 GDP (4분기 확정치)", "country": "🇺🇸", "impact": "High", "type": "Macro", "event_date": "2026-02-26"}
+        ]
+        
+        for m in macro_events:
+             # Check if exists (simple check)
+            exists = supabase_client.table('calendar_events')\
+                .select('id')\
+                .eq('title', m['title'])\
+                .eq('event_date', m['event_date'])\
+                .execute()
+            
+            if not exists.data:
+                supabase_client.table('calendar_events').insert(m).execute()
+                count += 1
+
+        logger.info(f"💾 Calendar events saved: {count} new items (including Macro)")
         return count
         
     except Exception as e:

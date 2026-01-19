@@ -63,9 +63,9 @@ class AIService:
         news_text = "\n".join([f"- {item['title']} ({item['source']})" for item in news_list])
         
         try:
-            # Using 'grok-4.1-fast' for Live Search
+            # Using 'grok-2-latest' for Live Search
             response = self.client_grok.chat.completions.create(
-                model="grok-4.1-fast", 
+                model="grok-2-latest", 
                 messages=[
                     {"role": "system", "content": """
                     You are a Real-Time Crypto Data Agent.

@@ -1088,6 +1088,39 @@ def sync_calendar():
 # ============================================================
 # MAIN
 # ============================================================
+@app.route('/api/test/market/<symbol>', methods=['GET'])
+def test_market_fetch(symbol):
+    """
+    Directly test market data fetching for a symbol.
+    Returns verbose details about success/failure.
+    """
+    import traceback
+    result = {
+        "target": symbol,
+        "status": "unknown",
+        "data": None,
+        "error": None,
+        "traceback": None
+    }
+    
+    try:
+        from market_provider import market_data_service
+        data = market_data_service.get_asset_data(symbol.upper())
+        result["status"] = "success"
+        
+        # Simplify data for response
+        if 'raw_df' in data:
+            del data['raw_df'] # Cannot serialize DF
+            
+        result["data"] = data
+        return jsonify(result), 200
+        
+    except Exception as e:
+        result["status"] = "failed"
+        result["error"] = str(e)
+        result["traceback"] = traceback.format_exc()
+        return jsonify(result), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
     debug = os.environ.get('FLASK_ENV') == 'development' or os.environ.get('FLASK_DEBUG') == '1'

@@ -8,7 +8,6 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 
 # Services
-from market_provider import market_data_service
 from news_service import news_service
 from ai_service import ai_service
 from eth_staking_service import eth_staking_service
@@ -129,6 +128,7 @@ class SchedulerService:
         logger.info("⏰ Running Grok Market Pulse...")
         try:
             # Reuse logic similar to app.py
+            from market_provider import market_data_service
             global_metrics = market_data_service.get_global_metrics()
             btc_data = market_data_service.get_asset_data('BTC')
             eth_data = market_data_service.get_asset_data('ETH')
@@ -160,6 +160,7 @@ class SchedulerService:
         logger.info("⏰ Running GPT Deep Analysis...")
         try:
             # Same data headers
+            from market_provider import market_data_service
             global_metrics = market_data_service.get_global_metrics()
             btc_data = market_data_service.get_asset_data('BTC')
             eth_data = market_data_service.get_asset_data('ETH')
@@ -233,6 +234,7 @@ class SchedulerService:
         logger.info("⏰ Running VCP Scan...")
         try:
             # Get Top 50 symbols for scan
+            from market_provider import market_data_service
             listings = market_data_service.get_crypto_listings(limit=50)
             symbols = [item['symbol'] for item in listings]
             

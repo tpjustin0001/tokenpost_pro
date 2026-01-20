@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import Sidebar from '@/components/Sidebar';
 import styles from './page.module.css';
@@ -15,53 +15,76 @@ interface CalendarEvent {
     event_date: string;
 }
 
-interface DateGroup {
-    date: string;
-    isToday: boolean;
-    items: CalendarEvent[];
-}
+type ViewMode = 'today' | 'week' | 'month';
+
+const COUNTRY_FLAGS: Record<string, string> = {
+    'USD': '🇺🇸',
+    'EUR': '🇪🇺',
+    'JPY': '🇯🇵',
+    'CNY': '🇨🇳',
+    'KRW': '🇰🇷',
+    'GBP': '🇬🇧',
+};
+
+const TYPE_COLORS: Record<string, string> = {
+    '금리': '#f59e0b',
+    'PMI': '#3b82f6',
+    '물가': '#ef4444',
+    'GDP': '#10b981',
+    '고용': '#8b5cf6',
+    '소매': '#ec4899',
+    '주택': '#06b6d4',
+    '무역': '#84cc16',
+    '연설': '#6366f1',
+    '정책': '#f97316',
+    '기자회견': '#d946ef',
+    '심리지수': '#14b8a6',
+    '제조업': '#0ea5e9',
+    '기타': '#6b7280',
+};
 
 export default function CalendarPage() {
-    const [groups, setGroups] = useState<DateGroup[]>([]);
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState<ViewMode>('today');
+    const [selectedCountry, setSelectedCountry] = useState<string>('all');
+
+    // Get KST dates
+    const { today, weekEnd, monthEnd } = useMemo(() => {
+        const now = new Date();
+        const kstOffset = 9 * 60 * 60 * 1000;
+        const kstNow = new Date(now.getTime() + kstOffset);
+        const todayStr = kstNow.toISOString().split('T')[0];
+
+        const weekEndDate = new Date(kstNow);
+        weekEndDate.setDate(weekEndDate.getDate() + (7 - weekEndDate.getDay()));
+        const weekEndStr = weekEndDate.toISOString().split('T')[0];
+
+        const monthEndDate = new Date(kstNow.getFullYear(), kstNow.getMonth() + 1, 0);
+        const monthEndStr = monthEndDate.toISOString().split('T')[0];
+
+        return { today: todayStr, weekEnd: weekEndStr, monthEnd: monthEndStr };
+    }, []);
 
     useEffect(() => {
         async function fetchEvents() {
             try {
                 if (!supabase) return;
 
-                // Fetch events from past 7 days onwards
-                const pastDate = new Date();
-                pastDate.setDate(pastDate.getDate() - 7);
-                const today = new Date().toISOString().split('T')[0];
+                const endDate = viewMode === 'today' ? today
+                    : viewMode === 'week' ? weekEnd
+                        : monthEnd;
 
                 const { data, error } = await supabase
                     .from('calendar_events')
                     .select('*')
-                    .gte('event_date', pastDate.toISOString().split('T')[0])
-                    .order('event_date', { ascending: false })
+                    .gte('event_date', today)
+                    .lte('event_date', endDate)
+                    .order('event_date', { ascending: true })
                     .order('time', { ascending: true });
 
                 if (error) throw error;
-
-                if (data) {
-                    // Group by date
-                    const grouped: Record<string, CalendarEvent[]> = {};
-                    data.forEach((event: CalendarEvent) => {
-                        const date = event.event_date;
-                        if (!grouped[date]) grouped[date] = [];
-                        grouped[date].push(event);
-                    });
-
-                    // Convert to array
-                    const groupArray: DateGroup[] = Object.keys(grouped).map(date => ({
-                        date,
-                        isToday: date === today,
-                        items: grouped[date]
-                    })).sort((a, b) => b.date.localeCompare(a.date));
-
-                    setGroups(groupArray);
-                }
+                setEvents(data || []);
             } catch (err) {
                 console.error('Failed to fetch calendar:', err);
             } finally {
@@ -69,15 +92,40 @@ export default function CalendarPage() {
             }
         }
 
+        setLoading(true);
         fetchEvents();
-    }, []);
+    }, [viewMode, today, weekEnd, monthEnd]);
 
-    const getImpactScore = (impact: string) => {
-        switch (impact?.toLowerCase()) {
-            case 'high': return 3;
-            case 'medium': return 2;
-            default: return 1;
+    // Group events by date
+    const groupedEvents = useMemo(() => {
+        let filtered = events;
+        if (selectedCountry !== 'all') {
+            filtered = events.filter(e => e.country === selectedCountry);
         }
+
+        const groups: Record<string, CalendarEvent[]> = {};
+        filtered.forEach(event => {
+            if (!groups[event.event_date]) groups[event.event_date] = [];
+            groups[event.event_date].push(event);
+        });
+        return groups;
+    }, [events, selectedCountry]);
+
+    // Count events by impact
+    const stats = useMemo(() => {
+        const high = events.filter(e => e.impact === 'HIGH').length;
+        const medium = events.filter(e => e.impact === 'MEDIUM').length;
+        const low = events.filter(e => e.impact === 'LOW').length;
+        return { high, medium, low, total: events.length };
+    }, [events]);
+
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr + 'T00:00:00');
+        const days = ['일', '월', '화', '수', '목', '금', '토'];
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const dayName = days[date.getDay()];
+        return { month, day, dayName, isToday: dateStr === today };
     };
 
     return (
@@ -85,72 +133,146 @@ export default function CalendarPage() {
             <Sidebar />
             <div className={styles.mainArea}>
                 <main className={styles.content}>
-                    <div className={styles.pageHeader}>
-                        <div>
-                            <h1 className={styles.pageTitle}>경제 캘린더</h1>
-                            <p className={styles.pageDesc}>주요 암호화폐 일정 및 글로벌 거시경제 지표</p>
+                    {/* Header */}
+                    <div className={styles.header}>
+                        <div className={styles.headerLeft}>
+                            <h1 className={styles.title}>📅 경제 캘린더</h1>
+                            <p className={styles.subtitle}>글로벌 거시경제 주요 일정</p>
                         </div>
-                        <div className={styles.controls}>
-                            <button className={styles.controlBtn}>필터</button>
-                            <button className={styles.controlBtn}>내보내기</button>
+                        <div className={styles.headerRight}>
+                            <div className={styles.statBox}>
+                                <span className={styles.statValue}>{stats.total}</span>
+                                <span className={styles.statLabel}>전체</span>
+                            </div>
+                            <div className={`${styles.statBox} ${styles.high}`}>
+                                <span className={styles.statValue}>{stats.high}</span>
+                                <span className={styles.statLabel}>HIGH</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div className={styles.calendarGrid}>
+                    {/* Tab Navigation */}
+                    <div className={styles.tabContainer}>
+                        <div className={styles.tabs}>
+                            <button
+                                className={`${styles.tab} ${viewMode === 'today' ? styles.active : ''}`}
+                                onClick={() => setViewMode('today')}
+                            >
+                                오늘
+                            </button>
+                            <button
+                                className={`${styles.tab} ${viewMode === 'week' ? styles.active : ''}`}
+                                onClick={() => setViewMode('week')}
+                            >
+                                이번주
+                            </button>
+                            <button
+                                className={`${styles.tab} ${viewMode === 'month' ? styles.active : ''}`}
+                                onClick={() => setViewMode('month')}
+                            >
+                                이번달
+                            </button>
+                        </div>
+                        <div className={styles.filters}>
+                            <select
+                                className={styles.countryFilter}
+                                value={selectedCountry}
+                                onChange={(e) => setSelectedCountry(e.target.value)}
+                            >
+                                <option value="all">모든 국가</option>
+                                <option value="USD">🇺🇸 미국</option>
+                                <option value="EUR">🇪🇺 유럽</option>
+                                <option value="JPY">🇯🇵 일본</option>
+                                <option value="CNY">🇨🇳 중국</option>
+                                <option value="KRW">🇰🇷 한국</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Events List */}
+                    <div className={styles.eventContainer}>
                         {loading ? (
-                            <div className={styles.loadingState}>
-                                로딩 중...
+                            <div className={styles.loading}>
+                                <div className={styles.spinner}></div>
+                                <p>일정을 불러오는 중...</p>
                             </div>
-                        ) : groups.length === 0 ? (
-                            <div style={{
-                                gridColumn: '1 / -1',
-                                textAlign: 'center',
-                                padding: '60px',
-                                background: 'rgba(255,255,255,0.02)',
-                                borderRadius: '12px',
-                                color: 'var(--text-muted)'
-                            }}>
-                                <h2>📆 등록된 일정이 없습니다</h2>
-                                <p style={{ marginTop: '10px' }}>오늘 예정된 주요 경제 지표가 없습니다.</p>
+                        ) : Object.keys(groupedEvents).length === 0 ? (
+                            <div className={styles.empty}>
+                                <span className={styles.emptyIcon}>📭</span>
+                                <h3>예정된 일정이 없습니다</h3>
+                                <p>선택한 기간에 등록된 경제 일정이 없습니다.</p>
                             </div>
                         ) : (
-                            groups.map((group) => (
-                                <div key={group.date} className={styles.dateGroup}>
-                                    <div className={styles.dateHeader}>
-                                        {group.date}
-                                        {group.isToday && <span className={styles.todayBadge}>오늘</span>}
-                                    </div>
-                                    <div className={styles.eventList}>
-                                        {group.items.map((event) => {
-                                            const importance = getImpactScore(event.impact);
-                                            return (
-                                                <div key={event.id} className={styles.eventItem}>
-                                                    <div className={styles.eventTime}>{event.time?.slice(0, 5)}</div>
+                            Object.entries(groupedEvents).map(([date, dateEvents]) => {
+                                const { month, day, dayName, isToday } = formatDate(date);
+                                return (
+                                    <div key={date} className={styles.dateGroup}>
+                                        <div className={`${styles.dateHeader} ${isToday ? styles.todayHeader : ''}`}>
+                                            <div className={styles.dateInfo}>
+                                                <span className={styles.dateNumber}>{day}</span>
+                                                <div className={styles.dateMeta}>
+                                                    <span className={styles.dateMonth}>{month}월</span>
+                                                    <span className={styles.dateDay}>{dayName}요일</span>
+                                                </div>
+                                                {isToday && <span className={styles.todayBadge}>TODAY</span>}
+                                            </div>
+                                            <span className={styles.eventCount}>{dateEvents.length}개 일정</span>
+                                        </div>
 
-                                                    <div className={styles.eventInfo}>
-                                                        <div className={styles.eventTitle}>
-                                                            <span className={styles.country}>{event.country}</span>
-                                                            {event.title}
+                                        <div className={styles.eventList}>
+                                            {dateEvents.map((event) => (
+                                                <div
+                                                    key={event.id}
+                                                    className={`${styles.eventCard} ${event.impact === 'HIGH' ? styles.highImpact : ''}`}
+                                                >
+                                                    <div className={styles.eventTime}>
+                                                        {event.time?.slice(0, 5)}
+                                                    </div>
+
+                                                    <div className={styles.eventContent}>
+                                                        <div className={styles.eventTop}>
+                                                            <span className={styles.countryFlag}>
+                                                                {COUNTRY_FLAGS[event.country] || '🌍'}
+                                                            </span>
+                                                            <span className={styles.countryCode}>{event.country}</span>
+                                                            <span
+                                                                className={styles.eventType}
+                                                                style={{
+                                                                    backgroundColor: `${TYPE_COLORS[event.type] || TYPE_COLORS['기타']}20`,
+                                                                    color: TYPE_COLORS[event.type] || TYPE_COLORS['기타']
+                                                                }}
+                                                            >
+                                                                {event.type}
+                                                            </span>
                                                         </div>
-                                                        <div className={styles.eventType}>{event.type}</div>
+                                                        <div className={styles.eventTitle}>{event.title}</div>
                                                     </div>
 
                                                     <div className={styles.eventImpact}>
-                                                        <div className={styles.importance}>
+                                                        <div className={styles.impactStars}>
                                                             {[1, 2, 3].map((star) => (
-                                                                <span key={star} className={`${styles.star} ${star <= importance ? styles.active : ''}`}>★</span>
+                                                                <span
+                                                                    key={star}
+                                                                    className={`${styles.star} ${(event.impact === 'HIGH' && star <= 3) ||
+                                                                            (event.impact === 'MEDIUM' && star <= 2) ||
+                                                                            (event.impact === 'LOW' && star <= 1)
+                                                                            ? styles.filled : ''
+                                                                        }`}
+                                                                >
+                                                                    ★
+                                                                </span>
                                                             ))}
                                                         </div>
-                                                        <span className={`${styles.impactValue} ${importance === 3 ? styles.high : styles.med}`}>
+                                                        <span className={`${styles.impactLabel} ${styles[event.impact?.toLowerCase() || 'low']}`}>
                                                             {event.impact}
                                                         </span>
                                                     </div>
                                                 </div>
-                                            );
-                                        })}
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 </main>

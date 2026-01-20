@@ -862,19 +862,16 @@ def api_xray_asset(symbol):
         result = ai_service.analyze_asset(symbol, data_summary, news_list)
         return jsonify(result)
         
+    except ValueError as ve:
+        # 심볼을 찾을 수 없는 경우 (MarketDataService에서 ValueError 발생)
+        print(f"Asset Not Found ({symbol}): {ve}")
+        return jsonify({"error": "Asset not found", "details": str(ve)}), 404
+
     except Exception as e:
-        from ai_service import ai_service
+        import traceback
+        traceback.print_exc()
         print(f"Asset X-Ray Error ({symbol}): {e}")
-        
-        error_msg = str(e)
-        user_msg = None
-        
-        if "Symbol" in error_msg and "not found" in error_msg:
-             user_msg = f"⚠️ 바이낸스 및 CMC에서 '{symbol}'을 찾을 수 없습니다. CMC API 키를 확인해주세요."
-        else:
-             user_msg = f"⚠️ 데이터 조회 중 오류가 발생했습니다: {error_msg}"
-             
-        return jsonify(ai_service._get_mock_asset_analysis(symbol, user_msg))
+        return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
 
 
 @app.route('/api/crypto/xray/global')

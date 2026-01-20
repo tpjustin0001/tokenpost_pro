@@ -64,43 +64,30 @@ export default function MarketGate() {
     const { data: ethData } = useSWR('/api/python/crypto/asset/ETH', fetcher, { refreshInterval: 10000 });
     const { data: xrpData } = useSWR('/api/python/crypto/asset/XRP', fetcher, { refreshInterval: 10000 });
 
+    const KRW_USD_RATE = 1480;
+
+    const processCoinData = (data: any, symbol: string, name: string): CoinData => {
+        const isKrw = data.source?.includes('KRW');
+        const multiplier = isKrw ? 1 : KRW_USD_RATE;
+
+        return {
+            symbol,
+            name,
+            price: (data.current_price || 0) * multiplier,
+            change24h: data.price_change_24h || 0,
+            trend: data.trend || 'Neutral',
+            volatility: data.volatility || 'Normal',
+            volume: data.volume_signal || 'Normal',
+            ma20: (data.ma_20 || 0) * multiplier,
+            ma50: (data.ma_50 || 0) * multiplier,
+            currency: 'KRW', // Always converted to KRW for display
+        };
+    };
+
     const coins: CoinData[] = [
-        btcData && {
-            symbol: 'BTC',
-            name: '비트코인',
-            price: btcData.current_price || 0,
-            change24h: btcData.price_change_24h || 0,
-            trend: btcData.trend || 'Neutral',
-            volatility: btcData.volatility || 'Normal',
-            volume: btcData.volume_signal || 'Normal',
-            ma20: btcData.ma_20 || 0,
-            ma50: btcData.ma_50 || 0,
-            currency: btcData.source?.includes('KRW') ? 'KRW' : 'USD',
-        },
-        ethData && {
-            symbol: 'ETH',
-            name: '이더리움',
-            price: ethData.current_price || 0,
-            change24h: ethData.price_change_24h || 0,
-            trend: ethData.trend || 'Neutral',
-            volatility: ethData.volatility || 'Normal',
-            volume: ethData.volume_signal || 'Normal',
-            ma20: ethData.ma_20 || 0,
-            ma50: ethData.ma_50 || 0,
-            currency: ethData.source?.includes('KRW') ? 'KRW' : 'USD',
-        },
-        xrpData && {
-            symbol: 'XRP',
-            name: '리플',
-            price: xrpData.current_price || 0,
-            change24h: xrpData.price_change_24h || 0,
-            trend: xrpData.trend || 'Neutral',
-            volatility: xrpData.volatility || 'Normal',
-            volume: xrpData.volume_signal || 'Normal',
-            ma20: xrpData.ma_20 || 0,
-            ma50: xrpData.ma_50 || 0,
-            currency: xrpData.source?.includes('KRW') ? 'KRW' : 'USD',
-        },
+        btcData && processCoinData(btcData, 'BTC', '비트코인'),
+        ethData && processCoinData(ethData, 'ETH', '이더리움'),
+        xrpData && processCoinData(xrpData, 'XRP', '리플'),
     ].filter(Boolean) as CoinData[];
 
     const isLoading = !btcData && !ethData && !xrpData;
@@ -135,7 +122,7 @@ export default function MarketGate() {
                                 </div>
                                 <div className={styles.priceSection}>
                                     <span className={styles.price}>
-                                        ₩{coin.price.toLocaleString()}
+                                        ₩{coin.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                     </span>
                                     <span className={coin.change24h >= 0 ? styles.positive : styles.negative}>
                                         {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%

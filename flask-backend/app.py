@@ -292,7 +292,8 @@ def api_crypto_asset(symbol):
         from market_provider import market_data_service
         print(f"[DEBUG] market_provider imported. Fetching data...")
         
-        data = market_data_service.get_asset_data(symbol)
+        # Prefer KRW source (Upbit) for market pulse / single asset view
+        data = market_data_service.get_asset_data(symbol, prefer_krw=True)
         
         # Calculate volatility based on ATR or price range
         df = data.get('raw_df')

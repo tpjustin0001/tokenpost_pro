@@ -25,18 +25,29 @@ class MarketDataService:
         self.cmc_api_key = os.getenv('COINMARKETCAP_API_KEY')
         self.cmc_base_url = "https://pro-api.coinmarketcap.com"
 
-    def get_asset_data(self, symbol):
+    def get_asset_data(self, symbol, prefer_krw=False):
         """
         Orchestrator: Uses Binance (USDT) as primary source for consistency.
         Returns: { 'df': DataFrame, 'source':Str, 'current_price':Float, 'currency': 'USD', ... }
         """
         symbol = symbol.upper()
         
-        # 0. Clean Symbol (e.g. "BTC" -> "BTC")
+        # 0. Clean Symbol
         base_symbol = symbol.replace('-USD', '').replace('/USD', '').replace('KRW-', '').replace('USDT-', '')
 
         result = None
         
+        # A. If KRW preferred (e.g., for Market Pulse/Gate), try Upbit FIRST
+        if prefer_krw:
+            try:
+                result = self._fetch_upbit(base_symbol)
+                # Return immediately if found (keep as KRW)
+                if result:
+                    return result
+            except Exception as e:
+                print(f"[Market] Upbit preferred failed for {symbol}: {e}")
+                pass
+
         # 1. Try Binance (USDT) - Primary source for USD consistency
         try:
             result = self._fetch_binance(base_symbol)
@@ -58,16 +69,27 @@ class MarketDataService:
         if not result:
             try:
                 data = self._fetch_upbit(base_symbol)
-                # Convert KRW to USD for consistency
-                usd_krw_rate = 1450.0
-                try:
-                    ticker = self.upbit.fetch_ticker('USDT/KRW')
-                    usd_krw_rate = ticker['last']
-                except Exception:
-                    pass
-                data['current_price'] = data['current_price'] / usd_krw_rate
-                data['currency'] = "USD"
-                data['source'] = "Upbit (converted)"
+                
+                # If we explicitly wanted KRW but failed earlier, we should return this as KRW? 
+                # No, if prefer_krw was True, we tried A and failed. 
+                # If we are here, it matches logic 3 (fallback), so convert to USD for consistency
+                # UNLESS prefer_krw is set? Let's check.
+                # If prefer_krw is True, we probably want KRW even if we fell back here?
+                # But _fetch_upbit returns KRW by default. 
+                # So we only convert if NOT prefer_krw.
+                
+                if not prefer_krw:
+                    # Convert KRW to USD for consistency
+                    usd_krw_rate = 1450.0
+                    try:
+                        ticker = self.upbit.fetch_ticker('USDT/KRW')
+                        usd_krw_rate = ticker['last']
+                    except Exception:
+                        pass
+                    data['current_price'] = data['current_price'] / usd_krw_rate
+                    data['currency'] = "USD"
+                    data['source'] = "Upbit (converted)"
+                
                 result = data
             except Exception as e:
                 pass

@@ -27,42 +27,55 @@ class MarketDataService:
 
     def get_asset_data(self, symbol):
         """
-        Orchestrator: Tries Upbit (KRW) -> Binance (USDT) -> CMC.
-        Returns: { 'df': DataFrame, 'source':Str, 'current_price':Float, ... }
+        Orchestrator: Uses Binance (USDT) as primary source for consistency.
+        Returns: { 'df': DataFrame, 'source':Str, 'current_price':Float, 'currency': 'USD', ... }
         """
         symbol = symbol.upper()
         
         # 0. Clean Symbol (e.g. "BTC" -> "BTC")
         base_symbol = symbol.replace('-USD', '').replace('/USD', '').replace('KRW-', '').replace('USDT-', '')
 
-        # 1. Try Upbit (KRW) FIRST for Korean Context
+        result = None
+        
+        # 1. Try Binance (USDT) - Primary source for USD consistency
         try:
-            return self._fetch_upbit(base_symbol)
+            result = self._fetch_binance(base_symbol)
         except Exception as e:
-            print(f"⚠️ [Market] Upbit failed for {symbol}: {e}")
-            pass # Fallback to Binance
-            
-        # 2. Try Binance (USDT)
-        try:
-            return self._fetch_binance(base_symbol)
-        except Exception as e:
-            print(f"⚠️ [Market] Binance failed for {symbol}: {e}")
+            # print(f"[Market] Binance failed for {symbol}: {e}")
             pass # Fall through to CMC
 
-        # 3. Try CoinMarketCap
-        if self.cmc_api_key:
+        # 2. Try CoinMarketCap as fallback
+        if not result and self.cmc_api_key:
             try:
-                # print(f"Attempting CMC fetch for {symbol}...")
-                # First try to get OHLCV (Rich Data)
-                return self._fetch_cmc_ohlcv(base_symbol)
+                result = self._fetch_cmc_ohlcv(base_symbol)
             except Exception as e:
-                # print(f"CMC OHLCV failed ({e}), falling back to Quote endpoints...")
                 try:
-                    return self._fetch_cmc_quote(base_symbol) 
+                    result = self._fetch_cmc_quote(base_symbol)
                 except Exception as e2:
                     pass
         
-        raise ValueError(f"Failed to fetch data from Upbit, Binance, AND CoinMarketCap for {symbol}")
+        # 3. Try Upbit as last resort (convert to USD for display consistency)
+        if not result:
+            try:
+                data = self._fetch_upbit(base_symbol)
+                # Convert KRW to USD for consistency
+                usd_krw_rate = 1450.0
+                try:
+                    ticker = self.upbit.fetch_ticker('USDT/KRW')
+                    usd_krw_rate = ticker['last']
+                except Exception:
+                    pass
+                data['current_price'] = data['current_price'] / usd_krw_rate
+                data['currency'] = "USD"
+                data['source'] = "Upbit (converted)"
+                result = data
+            except Exception as e:
+                pass
+        
+        if result:
+            return result
+            
+        raise ValueError(f"Failed to fetch data from Binance, CMC, or Upbit for {symbol}")
 
     def _fetch_upbit(self, symbol):
         """Fetch from Upbit (KRW Pair)"""
@@ -304,7 +317,7 @@ class MarketDataService:
                             'volume24h': quote['volume_24h'],
                             'fdv': quote.get('fully_diluted_market_cap', 0)
                         })
-                    print(f"✅ Fetched {len(results)} listings from CMC.")
+                    print(f"Fetched {len(results)} listings from CMC.")
                     return results
             except Exception as e:
                 print(f"CMC Listings error: {e}")
@@ -341,7 +354,7 @@ class MarketDataService:
                         'fdv': 0
                     })
                     rank += 1
-            print(f"⚠️ Fetched {len(results)} listings from Binance (Fallback).")
+            print(f"Fetched {len(results)} listings from Binance (Fallback).")
             return results
         except Exception as e:
             print(f"Binance Fallback error: {e}")

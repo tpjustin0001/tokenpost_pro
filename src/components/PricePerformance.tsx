@@ -58,8 +58,8 @@ export default function PricePerformance() {
                         description="실시간 가격 등락 정보가 곧 표시됩니다."
                     />
                 ) : (
-                    data.map((coin) => (
-                        <div key={coin.symbol} className={styles.row}>
+                    data.map((coin, index) => (
+                        <div key={`${coin.symbol}-${index}`} className={styles.row}>
                             <div className={styles.coinInfo}>
                                 {coin.icon && (
                                     <img

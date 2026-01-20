@@ -14,11 +14,9 @@ import ETHSupplyRadar from '@/components/ETHSupplyRadar';
 import LoginGate from '@/components/LoginGate';
 import { handleCallback, saveTokens, fetchProfile, saveUserProfile } from '@/services/authService';
 
-import { StablecoinInterestChart, BlockchainRevChart, ETFFlowsChart } from '@/components/DataWidgets';
+
 import NewsFeed from '@/components/NewsFeed';
 import ResearchIntel from '@/components/ResearchIntel';
-import TokenUnlocks from '@/components/TokenUnlocks';
-import WhaleTracker from '@/components/WhaleTracker';
 import GlobalXRay, { GlobalXRayButton } from '@/components/GlobalXRay';
 import styles from './page.module.css';
 
@@ -155,22 +153,19 @@ export default function HomePage() {
   const [loadStage, setLoadStage] = useState(0);
 
   useEffect(() => {
-    // Stage 0: Immediate (Layout)
-    // Stage 1: Ticker & Header (500ms)
-    // Stage 2: Chart (1000ms)
-    // Stage 3: Pulse (1500ms)
-    // Stage 4: News & Research (2000ms)
-
-    const timers = [
-      setTimeout(() => setLoadStage(1), 500),
-      setTimeout(() => setLoadStage(2), 1000),
-      setTimeout(() => setLoadStage(3), 1500),
-      setTimeout(() => setLoadStage(4), 2000),
-      setTimeout(() => setLoadStage(5), 2500),
-    ];
-
-    return () => timers.forEach(clearTimeout);
+    // Stage 1: Initial Render
+    setTimeout(() => setLoadStage(1), 100);
+    // Stage 2: Chart
+    setTimeout(() => setLoadStage(2), 600);
+    // Stage 3: Market Pulse
+    setTimeout(() => setLoadStage(3), 1000);
+    // Stage 4: News Feed
+    setTimeout(() => setLoadStage(4), 1400);
+    // Stage 5: Final (Widgets)
+    setTimeout(() => setLoadStage(5), 1800);
   }, []);
+
+  console.log('[DEBUG-PAGE] Current loadStage:', loadStage);
 
   // Import motion dynamically to avoid SSR mismatch if needed, but 'use client' handles it usually.
   // We need to use valid motion components.
@@ -187,93 +182,84 @@ export default function HomePage() {
           <MetricsBar />
           {loadStage >= 1 && <EventTicker />}
 
-          <MotionMain
+          <main
             id="main-content"
             className={styles.content}
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
           >
-            <MotionDiv className={styles.xrayHeader} variants={itemVariants}>
+            <div className={styles.xrayHeader}>
               <h2 className={styles.pageTitle}>대시보드</h2>
               <div className={styles.headerRight}>
-                {loadStage >= 5 && <KimchiPremium />}
+                <KimchiPremium />
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                   <GlobalXRayButton onClick={() => setGlobalXRayOpen(true)} />
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>AI 거시경제 분석</span>
                 </div>
               </div>
-            </MotionDiv>
+            </div>
 
-            {/* Main Chart Section - Stage 2 */}
-            {loadStage >= 2 && (
-              <MotionDiv className={styles.chartSection} variants={itemVariants}>
-                <div className={styles.chartHeader}>
-                  <div className={styles.chartControlsLeft}>
-                    <div className={styles.chartTabs}>
-                      {CHART_SYMBOLS.map(sym => (
-                        <button
-                          key={sym.id}
-                          className={`${styles.chartTab} ${activeSymbol === sym.id ? styles.active : ''}`}
-                          onClick={() => setActiveSymbol(sym.id)}
-                        >
-                          {sym.name}
-                        </button>
-                      ))}
-                    </div>
-                    <div className={styles.dividerVertical} />
-                    <div className={styles.chartTabs}>
-                      {CHART_INTERVALS.map(int => (
-                        <button
-                          key={int.id}
-                          className={`${styles.chartTab} ${activeInterval === int.id ? styles.active : ''}`}
-                          onClick={() => setActiveInterval(int.id)}
-                        >
-                          {int.label}
-                        </button>
-                      ))}
-                    </div>
+            {/* Main Chart Section */}
+            <div className={styles.chartSection}>
+              <div className={styles.chartHeader}>
+                <div className={styles.chartControlsLeft}>
+                  <div className={styles.chartTabs}>
+                    {CHART_SYMBOLS.map(sym => (
+                      <button
+                        key={sym.id}
+                        className={`${styles.chartTab} ${activeSymbol === sym.id ? styles.active : ''}`}
+                        onClick={() => setActiveSymbol(sym.id)}
+                      >
+                        {sym.name}
+                      </button>
+                    ))}
                   </div>
-                  <span className={styles.chartLabel}>
-                    {activeSymbol}/USDT · {CHART_INTERVALS.find(i => i.id === activeInterval)?.label}
-                    <span style={{ fontSize: '11px', color: '#ef4444', marginLeft: '12px', fontWeight: 500 }}>
-                      ※ 정확한 뉴스 확인은 1분봉 권장
-                    </span>
+                  <div className={styles.dividerVertical} />
+                  <div className={styles.chartTabs}>
+                    {CHART_INTERVALS.map(int => (
+                      <button
+                        key={int.id}
+                        className={`${styles.chartTab} ${activeInterval === int.id ? styles.active : ''}`}
+                        onClick={() => setActiveInterval(int.id)}
+                      >
+                        {int.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <span className={styles.chartLabel}>
+                  {activeSymbol}/USDT · {CHART_INTERVALS.find(i => i.id === activeInterval)?.label}
+                  <span style={{ fontSize: '11px', color: '#ef4444', marginLeft: '12px', fontWeight: 500 }}>
+                    ※ 정확한 뉴스 확인은 1분봉 권장
                   </span>
-                </div>
-                <TradingChart symbol={activeSymbol} interval={activeInterval} />
-              </MotionDiv>
-            )}
+                </span>
+              </div>
+              <TradingChart symbol={activeSymbol} interval={activeInterval} />
+            </div>
 
-            {/* Section: Market Pulse (Sentiment & Volatility) - Stage 3 */}
-            {loadStage >= 3 && (
-              <MotionSection className={styles.dashboardSection} variants={itemVariants}>
-                <h2 className={styles.sectionHeading}>마켓 펄스</h2>
-                <div className={styles.twoColumnGrid}>
-                  <Mindshare />
-                  <PricePerformance />
-                </div>
-              </MotionSection>
-            )}
+            {/* Section: Market Pulse */}
+            <section className={styles.dashboardSection}>
+              <h2 className={styles.sectionHeading}>마켓 펄스</h2>
+              <div className={styles.twoColumnGrid}>
+                <Mindshare />
+                <PricePerformance />
+              </div>
+            </section>
 
-            {/* Section: Breaking & Insights - Stage 4 */}
-            {loadStage >= 4 && (
-              <MotionSection className={styles.dashboardSection} variants={itemVariants}>
-                <h2 className={styles.sectionHeading}>속보 및 인사이트</h2>
-                <div className={styles.twoColumnGrid}>
-                  <NewsFeed />
-                  <ResearchIntel />
-                </div>
-              </MotionSection>
-            )}
-          </MotionMain>
+            {/* Section: News & Research */}
+            <section className={styles.dashboardSection}>
+              <h2 className={styles.sectionHeading}>속보 및 인사이트</h2>
+              <div className={styles.twoColumnGrid}>
+                <NewsFeed />
+                <ResearchIntel />
+              </div>
+            </section>
+
+          </main>
         </div>
-
-        <GlobalXRay
-          isOpen={globalXRayOpen}
-          onClose={() => setGlobalXRayOpen(false)}
-        />
       </div>
+      <GlobalXRay
+        isOpen={globalXRayOpen}
+        onClose={() => setGlobalXRayOpen(false)}
+      />
     </LoginGate>
   );
 }

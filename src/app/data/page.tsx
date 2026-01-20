@@ -3,12 +3,11 @@
 import { useState } from 'react';
 
 import Sidebar from '@/components/Sidebar';
-import LeadLagAnalysis from '@/components/LeadLagAnalysis';
 import { useMarketMetrics } from '@/hooks/useMarketMetrics';
 import SmartScreener from '@/components/data/SmartScreener';
 import TokenUnlocks from '@/components/TokenUnlocks';
 import WhaleTracker from '@/components/WhaleTracker';
-import { StablecoinInterestChart } from '@/components/DataWidgets';
+import { StablecoinInterestChart, BlockchainRevChart, ETFFlowsChart } from '@/components/DataWidgets';
 import styles from './page.module.css';
 
 function formatNumber(num: number): string {
@@ -82,11 +81,14 @@ export default function DataPage() {
                     {/* 4. Liquidity & Macro */}
                     <section className={styles.section}>
                         <h2 className={styles.sectionTitle}>유동성 & 거시 경제 (Liquidity & Macro)</h2>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                             <StablecoinInterestChart />
-                            <LeadLagAnalysis />
+                            <BlockchainRevChart />
+                            <ETFFlowsChart />
                         </div>
                     </section>
+
+
 
                 </main>
             </div>

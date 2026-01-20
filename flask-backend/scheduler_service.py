@@ -32,7 +32,7 @@ class SchedulerService:
         if url and key:
             try:
                 self.supabase = create_client(url, key)
-                logger.info("✅ Supabase Client Initialized for Scheduler")
+                logger.info("Supabase Client Initialized for Scheduler")
             except Exception as e:
                 logger.error(f"❌ Failed to init Supabase: {e}")
 
@@ -77,7 +77,7 @@ class SchedulerService:
             # 9. Calendar Events (Every 12 hours)
             self.scheduler.add_job(self.update_calendar_events, IntervalTrigger(hours=12), id='calendar', replace_existing=True)
             
-            logger.info("✅ All scheduler jobs added successfully.")
+            logger.info("All scheduler jobs added successfully.")
             atexit.register(lambda: self.scheduler.shutdown())
 
     def update_eth_staking(self):
@@ -99,7 +99,7 @@ class SchedulerService:
                     'data_json': breakout,
                     'created_at': datetime.now().isoformat()
                 }).execute()
-                logger.info("✅ Screener Breakout Saved")
+                logger.info("Screener Breakout Saved")
 
             # 2. Performance
             perf = screener_service.run_price_performance_scan()
@@ -109,7 +109,7 @@ class SchedulerService:
                     'data_json': perf,
                     'created_at': datetime.now().isoformat()
                 }).execute()
-                logger.info("✅ Screener Performance Saved")
+                logger.info("Screener Performance Saved")
 
             # 3. Risk
             risk = screener_service.run_risk_scan()
@@ -119,7 +119,7 @@ class SchedulerService:
                     'data_json': risk,
                     'created_at': datetime.now().isoformat()
                 }).execute()
-                logger.info("✅ Screener Risk Saved")
+                logger.info("Screener Risk Saved")
         except Exception as e:
             logger.error(f"❌ Screener Job Failed: {e}")
 

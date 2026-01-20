@@ -12,6 +12,7 @@ interface TickerData {
     change_1h?: number;
     volume?: number;
     is_breakout?: boolean;
+    is_fresh_breakout?: boolean;
     volatility?: number;
     risk_score?: number;
     rating?: 'Low' | 'Medium' | 'Extreme';
@@ -19,6 +20,14 @@ interface TickerData {
     rvol?: number;
     ai_insight?: string;
     drawdown?: number;
+    // Enhanced signal fields
+    signal_type?: 'BUY' | 'SELL' | 'HOLD' | 'WATCH';
+    signal_strength?: number; // 1-5
+    signal_reason?: string;
+    macd_signal?: string;
+    bb_position?: number;
+    support?: number;
+    resistance?: number;
 }
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
@@ -65,8 +74,77 @@ export default function SmartScreener() {
         }));
     };
 
-    // Trend Badge Helper
+    // Signal Strength Dots Helper
+    const renderStrengthDots = (strength: number) => {
+        const filled = Math.min(5, Math.max(1, strength));
+        return (
+            <span style={{ fontSize: '10px', letterSpacing: '1px', marginLeft: '4px' }}>
+                {'●'.repeat(filled)}{'○'.repeat(5 - filled)}
+            </span>
+        );
+    };
+
+    // Enhanced Signal Badge Helper
+    const renderSignalBadge = (item: any) => {
+        const signalType = item.signal_type || 'HOLD';
+        const strength = item.signal_strength || 1;
+        const reason = item.signal_reason || '';
+
+        // Color coding by action type
+        const styleMap: Record<string, { bg: string; color: string; icon: any }> = {
+            'BUY': { bg: 'rgba(16, 185, 129, 0.15)', color: '#059669', icon: TrendingUp },
+            'SELL': { bg: 'rgba(239, 68, 68, 0.12)', color: '#dc2626', icon: ArrowDown },
+            'WATCH': { bg: 'rgba(245, 158, 11, 0.15)', color: '#d97706', icon: Activity },
+            'HOLD': { bg: '#f3f4f6', color: '#6b7280', icon: Shield }
+        };
+
+        const badgeStyle = styleMap[signalType] || styleMap['HOLD'];
+        const Icon = badgeStyle.icon;
+
+        const typeLabels: Record<string, string> = {
+            'BUY': '매수',
+            'SELL': '매도',
+            'WATCH': '관망',
+            'HOLD': '보류'
+        };
+
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '3px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        padding: '4px 10px', borderRadius: '12px',
+                        fontSize: '12px', fontWeight: 700,
+                        backgroundColor: badgeStyle.bg, color: badgeStyle.color,
+                        whiteSpace: 'nowrap'
+                    }}>
+                        {Icon && <Icon size={12} />}
+                        {typeLabels[signalType]}
+                    </span>
+                    <span style={{ color: badgeStyle.color, fontSize: '11px' }}>
+                        {renderStrengthDots(strength)}
+                    </span>
+                </div>
+                {reason && (
+                    <span style={{
+                        fontSize: '11px', color: '#6b7280', fontWeight: 500,
+                        whiteSpace: 'nowrap', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis'
+                    }}>
+                        {reason}
+                    </span>
+                )}
+            </div>
+        );
+    };
+
+    // Legacy Trend Badge Helper (for backward compatibility)
     const renderTrendBadge = (item: any) => {
+        // Use new signal-based rendering if available
+        if (item.signal_type) {
+            return renderSignalBadge(item);
+        }
+
+        // Fallback to old text-based logic
         const text = item.ai_insight || '-';
         const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '');
 
@@ -121,34 +199,36 @@ export default function SmartScreener() {
         const list = data.data as TickerData[];
 
         if (tab === 'breakout') {
-            const breakouts = list.filter(i => i.is_breakout).length;
-            const topGainer = [...list].sort((a, b) => (b.change_24h || 0) - (a.change_24h || 0))[0];
+            // Enhanced counts based on signal_type and signal_strength
+            const strongBuySignals = list.filter(i => i.signal_type === 'BUY' && (i.signal_strength || 0) >= 4).length;
+            const warningSignals = list.filter(i => i.signal_type === 'SELL' || (i.signal_type === 'WATCH' && (i.signal_strength || 0) >= 3)).length;
+            const bestOpportunity = [...list].filter(i => i.signal_type === 'BUY').sort((a, b) => (b.signal_strength || 0) - (a.signal_strength || 0))[0];
 
             return (
                 <>
                     <div className={styles.card}>
                         <div className={styles.cardHeader}>
                             <TrendingUp size={14} className={styles.cardIcon} color="#10b981" />
-                            <span className={styles.cardTitle}>상승 추세</span>
+                            <span className={styles.cardTitle}>강력 매수 신호</span>
                         </div>
-                        <span className={styles.cardValue}>{list.filter(i => (i.change_24h || 0) > 0).length}</span>
-                        <span className={styles.cardDesc}>24시간 가격 상승</span>
+                        <span className={styles.cardValue}>{strongBuySignals}</span>
+                        <span className={styles.cardDesc}>신호 강도 4-5점</span>
                     </div>
                     <div className={styles.card}>
                         <div className={styles.cardHeader}>
-                            <Activity size={14} className={styles.cardIcon} color="#f59e0b" />
-                            <span className={styles.cardTitle}>돌파 신호</span>
+                            <AlertTriangle size={14} className={styles.cardIcon} color="#ef4444" />
+                            <span className={styles.cardTitle}>주의 신호</span>
                         </div>
-                        <span className={styles.cardValue}>{breakouts}</span>
-                        <span className={styles.cardDesc}>고점 근접 (상위 2%)</span>
+                        <span className={styles.cardValue}>{warningSignals}</span>
+                        <span className={styles.cardDesc}>매도/관망 권고</span>
                     </div>
                     <div className={styles.card}>
                         <div className={styles.cardHeader}>
                             <BarChart2 size={14} className={styles.cardIcon} color="#3b82f6" />
-                            <span className={styles.cardTitle}>최고 상승</span>
+                            <span className={styles.cardTitle}>최고 기회</span>
                         </div>
-                        <span className={styles.cardValue}>{topGainer?.symbol || '-'}</span>
-                        <span className={styles.cardDesc}>+{topGainer?.change_24h?.toFixed(1) || '0.0'}% (24시간)</span>
+                        <span className={styles.cardValue}>{bestOpportunity?.symbol || '-'}</span>
+                        <span className={styles.cardDesc}>{bestOpportunity?.signal_reason?.slice(0, 20) || '분석 중...'}</span>
                     </div>
                 </>
             );
@@ -287,43 +367,62 @@ export default function SmartScreener() {
                             <tr>
                                 <th>자산</th>
                                 <th onClick={() => handleSort('price')} style={{ cursor: 'pointer' }}>현재가 <SortIcon column="price" /></th>
-                                <th onClick={() => handleSort('ai_insight')} style={{ cursor: 'pointer' }}>AI 분석 (Insight) <SortIcon column="ai_insight" /></th>
-                                <th onClick={() => handleSort('rsi')} style={{ cursor: 'pointer' }}>RSI (14) <SortIcon column="rsi" /></th>
-                                <th onClick={() => handleSort('rvol')} style={{ cursor: 'pointer' }}>거래강도 (RVol) <SortIcon column="rvol" /></th>
+                                <th onClick={() => handleSort('signal_strength')} style={{ cursor: 'pointer' }}>신호 <SortIcon column="signal_strength" /></th>
+                                <th onClick={() => handleSort('rsi')} style={{ cursor: 'pointer' }}>RSI <SortIcon column="rsi" /></th>
+                                <th onClick={() => handleSort('rvol')} style={{ cursor: 'pointer' }}>거래량 <SortIcon column="rvol" /></th>
                             </tr>
                         </thead>
                         <tbody>
-                            {list.map(item => (
-                                <tr key={item.symbol}>
-                                    <td>
-                                        <div className={styles.assetCell}>
-                                            <img src={getCoinIconUrl(item.symbol)} alt="" className={styles.coinIcon} />
-                                            <span className={styles.symbol}>{item.symbol}</span>
-                                            {item.is_breakout && (
-                                                <span className={styles.badge} style={{ backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                                                    <TrendingUp size={10} /> 돌파
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td>₩{formatPrice(item.price)}</td>
-                                    <td style={{ fontWeight: 600 }}>
-                                        {renderTrendBadge(item)}
-                                    </td>
-                                    <td>
-                                        <span style={{
-                                            padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
-                                            background: (item.rsi || 50) > 70 ? '#fee2e2' : (item.rsi || 50) < 30 ? '#d1fae5' : '#f3f4f6',
-                                            color: (item.rsi || 50) > 70 ? '#ef4444' : (item.rsi || 50) < 30 ? '#059669' : '#6b7280'
-                                        }}>
-                                            {item.rsi || '-'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        {item.rvol ? `x${item.rvol.toFixed(1)}` : '-'}
-                                    </td>
-                                </tr>
-                            ))}
+                            {list.map(item => {
+                                const isHighConfidence = item.signal_type === 'BUY' && (item.signal_strength || 0) >= 4;
+                                const isWarning = item.signal_type === 'SELL';
+                                return (
+                                    <tr
+                                        key={item.symbol}
+                                        style={{
+                                            background: isHighConfidence
+                                                ? 'rgba(16, 185, 129, 0.05)'
+                                                : isWarning
+                                                    ? 'rgba(239, 68, 68, 0.03)'
+                                                    : undefined,
+                                            borderLeft: isHighConfidence ? '3px solid #10b981' : isWarning ? '3px solid #ef4444' : undefined
+                                        }}
+                                    >
+                                        <td>
+                                            <div className={styles.assetCell}>
+                                                <img src={getCoinIconUrl(item.symbol)} alt="" className={styles.coinIcon} />
+                                                <span className={styles.symbol}>{item.symbol}</span>
+                                                {item.is_fresh_breakout && (
+                                                    <span className={styles.badge} style={{ backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                                        <TrendingUp size={10} /> 돌파
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td>${formatPrice(item.price)}</td>
+                                        <td style={{ fontWeight: 600 }}>
+                                            {renderTrendBadge(item)}
+                                        </td>
+                                        <td>
+                                            <span style={{
+                                                padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
+                                                background: (item.rsi || 50) > 70 ? '#fee2e2' : (item.rsi || 50) < 30 ? '#d1fae5' : '#f3f4f6',
+                                                color: (item.rsi || 50) > 70 ? '#ef4444' : (item.rsi || 50) < 30 ? '#059669' : '#6b7280'
+                                            }}>
+                                                {item.rsi || '-'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span style={{
+                                                color: (item.rvol || 1) > 1.5 ? '#059669' : '#6b7280',
+                                                fontWeight: (item.rvol || 1) > 1.5 ? 600 : 400
+                                            }}>
+                                                {item.rvol ? `x${item.rvol.toFixed(1)}` : '-'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </>
@@ -353,7 +452,7 @@ export default function SmartScreener() {
                                             <span className={styles.symbol}>{item.symbol}</span>
                                         </div>
                                     </td>
-                                    <td>₩{formatPrice(item.price)}</td>
+                                    <td>${formatPrice(item.price)}</td>
                                     <td>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                             <div style={{ flex: 1, height: '6px', background: '#e5e7eb', borderRadius: '3px', maxWidth: '60px' }}>
@@ -410,7 +509,7 @@ export default function SmartScreener() {
                                             <span className={styles.symbol}>{item.symbol}</span>
                                         </div>
                                     </td>
-                                    <td>₩{formatPrice(item.price)}</td>
+                                    <td>${formatPrice(item.price)}</td>
                                     <td>{item.volatility?.toFixed(2) || '-'}%</td>
                                     <td>{item.risk_score?.toFixed(1) || '-'}</td>
                                     <td>

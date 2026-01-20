@@ -8,7 +8,7 @@ from market_provider import MarketDataService
 from datetime import datetime
 
 def verify_data():
-    print(f"[{datetime.now()}] 🔍 Verifying Real Data Connection...")
+    print(f"[{datetime.now()}] Verifying Real Data Connection...")
     service = MarketDataService()
     
     symbol = "BTC"

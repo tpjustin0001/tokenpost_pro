@@ -40,14 +40,16 @@ function getTimeAgo(dateString: string): string {
 }
 
 export default function ResearchIntel() {
+    console.log('[DEBUG-RESEARCH] ResearchIntel Component Function Called');
+    const [activeTab, setActiveTab] = useState<TabType>('ALL');
     const [data, setData] = useState<IntelItem[]>([]);
     const [rssNews, setRssNews] = useState<IntelItem[]>([]);
-    const [activeTab, setActiveTab] = useState<TabType>('ALL');
+    const [loading, setLoading] = useState(true);
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
 
     useEffect(() => {
+        console.log('[DEBUG-RESEARCH] ResearchIntel Mounted');
         fetchResearch();
         fetchRssNews();
 
@@ -79,7 +81,11 @@ export default function ResearchIntel() {
     }
 
     async function fetchResearch(offset = 0) {
-        if (!supabase) return;
+        if (!supabase) {
+            console.error('Supabase client not initialized');
+            setLoading(false);
+            return;
+        }
 
         try {
             const { data: rows, error } = await supabase
@@ -90,6 +96,7 @@ export default function ResearchIntel() {
 
             if (error) {
                 console.error('Error fetching research:', error);
+                setLoading(false);
                 return;
             }
 
@@ -161,7 +168,7 @@ export default function ResearchIntel() {
             : rssNews; // NEWS tab uses RSS feed
 
     const breakingCount = data.filter(item => item.isBreaking).length;
-    const selectedItem = data.find(item => item.id === selectedId) || rssNews.find(item => item.id === selectedId);
+    const viewItem = data.find(item => item.id === selectedId) || rssNews.find(item => item.id === selectedId);
 
     const getTypeColor = (type: string) => {
         switch (type) {
@@ -291,7 +298,7 @@ export default function ResearchIntel() {
             </div>
 
             <ContentModal
-                contentData={selectedItem}
+                contentData={viewItem || null}
                 isOpen={!!selectedId}
                 onClose={() => setSelectedId(null)}
             />

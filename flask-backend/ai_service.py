@@ -80,7 +80,7 @@ class AIService:
         market_info = market_context or "BTC 가격 확인 중..."
         
         try:
-            print(f"🔍 Grok: Live Search X for crypto insights... ({current_time})")
+            print(f"Grok: Live Search X for crypto insights... ({current_time})")
             
             response = self.client_grok.chat.completions.create(
                 model="grok-4-1-fast",
@@ -127,7 +127,7 @@ JSON Response Format:
             
             result_text = response.choices[0].message.content
             sources_used = getattr(response.usage, 'num_sources_used', 0)
-            print(f"✅ Grok Search Complete: {len(result_text)} chars, {sources_used} sources")
+            print(f"Grok Search Complete: {len(result_text)} chars, {sources_used} sources")
             
             # Parse JSON
             parsed = self._clean_and_parse_json(result_text)
@@ -235,7 +235,7 @@ JSON Response Format:
         # Get real Fear & Greed from Alternative.me
         real_fng = self._fetch_real_fear_greed()
         if real_fng:
-            print(f"✅ Real F&G: {real_fng['score']} ({real_fng['label']})")
+            print(f"Real F&G: {real_fng['score']} ({real_fng['label']})")
             result['atmosphere_score'] = real_fng['score']
             label_map = {
                 'Extreme Fear': '극단적 공포',
@@ -247,7 +247,7 @@ JSON Response Format:
             result['atmosphere_label'] = label_map.get(real_fng['label'], real_fng['label'])
         
         self._set_cache_data(cache_key, result)
-        print(f"✅ Grok-only analysis complete: {len(result.get('top_influencers', []))} issues")
+        print(f"Grok-only analysis complete: {len(result.get('top_influencers', []))} issues")
 
         return result
     
@@ -332,7 +332,7 @@ REQUIRED JSON STRUCTURE (Must match exactly):
             parsed['timestamp'] = datetime.now().isoformat()
             
             self._set_cache_data(cache_key, parsed)
-            print("✅ GPT-4o Deep Analysis Complete")
+            print("GPT-4o Deep Analysis Complete")
             return parsed
 
         except Exception as e:

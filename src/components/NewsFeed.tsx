@@ -61,6 +61,7 @@ function extractTickers(content: string): string[] {
 }
 
 export default function NewsFeed() {
+    console.log('[DEBUG-NEWS] NewsFeed Component Function Called');
     const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -69,6 +70,7 @@ export default function NewsFeed() {
     const [filter, setFilter] = useState<string>('ALL');
 
     useEffect(() => {
+        console.log('[DEBUG-NEWS] NewsFeed Mounted');
         fetchNews();
 
         // Subscribe to changes
@@ -87,7 +89,11 @@ export default function NewsFeed() {
     }, []);
 
     async function fetchNews(offset = 0) {
-        if (!supabase) return;
+        if (!supabase) {
+            console.error('Supabase client not initialized');
+            setLoading(false);
+            return;
+        }
 
         const { data, error } = await supabase
             .from('news')
@@ -97,6 +103,7 @@ export default function NewsFeed() {
 
         if (error) {
             console.error('Error fetching news:', error);
+            setLoading(false);
             return;
         }
 

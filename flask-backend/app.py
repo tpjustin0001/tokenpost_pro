@@ -8,6 +8,15 @@ from flask_cors import CORS
 from datetime import datetime
 import os
 import sys
+import traceback
+
+# Force UTF-8 encoding for Windows console (Safe Wrap)
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
 
@@ -27,22 +36,22 @@ load_dotenv()
 if not os.environ.get('RAILWAY_ENVIRONMENT'):
     env_local_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env.local')
     if os.path.exists(env_local_path):
-        print(f"📂 Loading .env.local from: {env_local_path}")
+        print(f"Loading .env.local from: {env_local_path}")
         load_dotenv(env_local_path)
 
 print("----------------------------------------------------------------")
-print(f"🚀 [DEBUG] APP STARTING...")
-print(f"🚀 [DEBUG] ENV PORT: {os.environ.get('PORT')}")
-print(f"🚀 [DEBUG] CWD: {os.getcwd()}")
+print(f"[DEBUG] APP STARTING...")
+print(f"[DEBUG] ENV PORT: {os.environ.get('PORT')}")
+print(f"[DEBUG] CWD: {os.getcwd()}")
 
 def debug_env_var(name):
     val = os.environ.get(name)
     if not val:
-        print(f"❌ {name}: NOT SET")
+        print(f"[ERROR] {name}: NOT SET")
     else:
         # Mask: first 4 ... last 4
         masked = val[:4] + "*" * 6 + val[-4:] if len(val) > 8 else "********"
-        print(f"✅ {name}: {masked}")
+        print(f"[OK] {name}: {masked}")
 
 print("--- ENV VAR CHECK ---")
 debug_env_var("COINMARKETCAP_API_KEY")
@@ -59,9 +68,9 @@ supabase: Client = None
 if os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_KEY"):
     try:
         supabase = create_client(os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_KEY"))
-        print("✅ Supabase Client Initialized in App")
+        print("[OK] Supabase Client Initialized in App")
     except Exception as e:
-        print(f"❌ Failed to init Supabase in App: {e}")
+        print(f"[ERROR] Failed to init Supabase in App: {e}")
 
 # Cache Config
 import concurrent.futures
@@ -69,9 +78,9 @@ import concurrent.futures
 try:
     from flask_caching import Cache
     cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache'})
-    print("✅ Flask-Caching loaded successfully.")
+    print("[OK] Flask-Caching loaded successfully.")
 except ImportError:
-    print("⚠️ Flask-Caching module not found. Caching disabled.")
+    print("[WARN] Flask-Caching module not found. Caching disabled.")
     # Mock Cache to prevent crash
     class MockCache:
         def cached(self, timeout=60):
@@ -110,13 +119,13 @@ if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or os.environ.get('RAILWAY_ENVI
         scheduler_service.start()
         # Optionally trigger one immediately for instant data? 
         # scheduler_service.scheduler.add_job(scheduler_service.update_market_analysis, 'date', run_date=datetime.now())
-        print("✅ Scheduler Service initialized.")
+        print("[OK] Scheduler Service initialized.")
     except Exception as e:
-        print(f"⚠️ Scheduler failed to start: {e}")
+        print(f"[WARN] Scheduler failed to start: {e}")
 
 # DEBUG: Version Check
 API_VERSION = "1.0.2-fix-gitignore-env"
-print(f"🚀 Starting TokenPost PRO API - Version: {API_VERSION}")
+print(f"[START] Starting TokenPost PRO API - Version: {API_VERSION}")
 
 @app.route('/api/version')
 def api_version():
@@ -154,7 +163,7 @@ app.wsgi_app = VercelMiddleware(app.wsgi_app)
 def handle_exception(e):
     """Return JSON instead of HTML for HTTP errors."""
     import traceback
-    # print(traceback.format_exc()) # Log to Vercel Console
+    print(traceback.format_exc()) # Log to Vercel Console
     return jsonify({
         "error": str(e),
         "traceback": traceback.format_exc()
@@ -279,9 +288,9 @@ def api_crypto_asset(symbol):
     symbol = symbol.upper()
     
     try:
-        print(f"🔍 [DEBUG] Importing market_provider for {symbol}...")
+        print(f"[DEBUG] Importing market_provider for {symbol}...")
         from market_provider import market_data_service
-        print(f"✅ [DEBUG] market_provider imported. Fetching data...")
+        print(f"[DEBUG] market_provider imported. Fetching data...")
         
         data = market_data_service.get_asset_data(symbol)
         
@@ -328,6 +337,8 @@ def api_crypto_asset(symbol):
         })
         
     except Exception as e:
+        print(f"[ERROR] Failed to fetch data for {symbol}: {e}")
+        traceback.print_exc()
         return jsonify({
             'error': str(e),
             'symbol': symbol,
@@ -670,9 +681,9 @@ supabase: Client = None
 if SUPABASE_URL and SUPABASE_KEY:
     try:
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-        print("✅ Supabase Client initialized.")
+        print("[OK] Supabase Client initialized.")
     except Exception as e:
-        print(f"⚠️ Failed to initialize Supabase: {e}")
+        print(f"[WARN] Failed to initialize Supabase: {e}")
 
 
 # ============================================================
@@ -920,7 +931,7 @@ def api_xray_global():
                     'model_used': 'grok-4.1-fast (x_search)',
                     'is_latest': True
                 }).execute()
-                print("✅ AI Analysis saved to Supabase")
+                print("AI Analysis saved to Supabase")
             except Exception as db_err:
                 print(f"⚠️ Supabase save failed: {db_err}")
         
@@ -971,7 +982,7 @@ def api_xray_deep():
                     'model_used': 'gpt-4o',
                     'is_latest': True
                 }).execute()
-                print("✅ Deep Analysis saved to Supabase (global_deep_analysis)")
+                print("Deep Analysis saved to Supabase (global_deep_analysis)")
             except Exception as db_err:
                 print(f"⚠️ Supabase save failed: {db_err}")
 
@@ -1122,9 +1133,10 @@ def test_market_fetch(symbol):
         return jsonify(result), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5001))
+    # Deployment Safety: Use provided PORT or default to 5002
+    port = int(os.environ.get('PORT', 5002))
     debug = os.environ.get('FLASK_ENV') == 'development' or os.environ.get('FLASK_DEBUG') == '1'
-    print(f"🚀 TokenPost PRO API starting on port {port}...")
+    print(f"[START] TokenPost PRO API starting on port {port}...")
     app.run(host='0.0.0.0', port=port, debug=debug)
 
 # ============================================================

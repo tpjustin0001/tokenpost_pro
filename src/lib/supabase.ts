@@ -6,8 +6,19 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 // Create client only if credentials are available
 let supabase: SupabaseClient | null = null;
 
+console.log('[DEBUG] Init Supabase...');
+console.log('URL:', supabaseUrl ? 'Set' : 'Missing');
+console.log('Key:', supabaseAnonKey ? 'Set' : 'Missing');
+
 if (supabaseUrl && supabaseAnonKey) {
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
+    try {
+        supabase = createClient(supabaseUrl, supabaseAnonKey);
+        console.log('[DEBUG] Supabase Client Created');
+    } catch (e) {
+        console.error('[ERROR] Supabase Create Failed:', e);
+    }
+} else {
+    console.warn('⚠️ Supabase credentials missing in environment variables');
 }
 
 export { supabase };

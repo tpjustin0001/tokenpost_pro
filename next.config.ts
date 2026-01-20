@@ -18,8 +18,16 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     // REWRITE: Vercel Frontend -> Render/Railway Backend
-    // Default to Railway if env var is missing (e.g. Local Dev)
-    let backendUrl = process.env.BACKEND_URL || 'https://tokenpostpro-production.up.railway.app';
+    // Default to Localhost in Development, Railway in Production
+    let backendUrl = process.env.BACKEND_URL;
+
+    if (!backendUrl) {
+      if (process.env.NODE_ENV === 'development') {
+        backendUrl = 'http://127.0.0.1:5001';
+      } else {
+        backendUrl = 'https://tokenpostpro-production.up.railway.app';
+      }
+    }
 
     // Ensure protocol exists (Fix for Vercel Build Error)
     if (!backendUrl.startsWith('http')) {

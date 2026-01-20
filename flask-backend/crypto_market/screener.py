@@ -1,7 +1,7 @@
 
 import concurrent.futures
 from market_provider import market_data_service
-from crypto_market.indicators import rsi, relative_volume
+from crypto_market.indicators import rsi, relative_volume, macd, bollinger_bands, find_support_resistance
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -15,9 +15,99 @@ SCREENER_SYMBOLS = [
     'ARB', 'OP', 'SUI', 'SEI', 'TIA'
 ]
 
+
+def calculate_signal(rsi_val, rvol, macd_data, bb_data, sr_data, current_price, sma200, is_fresh_breakout):
+    """
+    Calculate signal type, strength, and reason based on multiple indicators.
+    Returns: (signal_type, signal_strength, signal_reason)
+    """
+    score = 0
+    reasons = []
+
+    # 1. Trend Analysis (SMA200)
+    above_200 = current_price > sma200 if sma200 else False
+    if above_200:
+        score += 1
+        reasons.append("장기 상승 추세")
+
+    # 2. Breakout Detection
+    if is_fresh_breakout:
+        score += 2
+        reasons.append("200일선 돌파")
+
+    # 3. MACD Signal
+    if macd_data['crossover'] == 'bullish_cross':
+        score += 2
+        reasons.append("MACD 골든크로스")
+    elif macd_data['crossover'] == 'bearish_cross':
+        score -= 2
+        reasons.append("MACD 데드크로스")
+    elif macd_data['histogram'] > 0:
+        score += 1
+
+    # 4. RSI Analysis
+    if rsi_val < 30:
+        score += 2
+        reasons.append("과매도 구간 (RSI {:.0f})".format(rsi_val))
+    elif rsi_val < 40:
+        score += 1
+        reasons.append("저평가 구간")
+    elif rsi_val > 75:
+        score -= 2
+        reasons.append("과열 주의 (RSI {:.0f})".format(rsi_val))
+    elif rsi_val > 65:
+        score -= 1
+
+    # 5. Volume Analysis
+    if rvol > 2.0:
+        score += 2
+        reasons.append("거래량 급증 ({:.1f}x)".format(rvol))
+    elif rvol > 1.5:
+        score += 1
+        reasons.append("거래량 증가")
+    elif rvol < 0.5:
+        score -= 1
+
+    # 6. Bollinger Band Position
+    if bb_data['position'] < 0.1:
+        score += 1
+        reasons.append("하단밴드 근접")
+    elif bb_data['position'] > 0.9:
+        score -= 1
+        reasons.append("상단밴드 근접")
+
+    # 7. Support/Resistance Proximity
+    if sr_data['support_distance'] < 2:
+        score += 1
+        reasons.append("지지선 근접")
+    if sr_data['resistance_distance'] < 2:
+        reasons.append("저항선 근접")
+
+    # Determine signal type and strength
+    if score >= 4:
+        signal_type = "BUY"
+        signal_strength = min(5, score - 1)
+    elif score >= 2:
+        signal_type = "WATCH"
+        signal_strength = 3
+    elif score <= -3:
+        signal_type = "SELL"
+        signal_strength = min(5, abs(score) - 1)
+    elif score <= -1:
+        signal_type = "HOLD"
+        signal_strength = 2
+    else:
+        signal_type = "HOLD"
+        signal_strength = 1
+
+    signal_reason = " + ".join(reasons[:3]) if reasons else "중립"
+
+    return signal_type, signal_strength, signal_reason
+
+
 class ScreenerService:
     def run_breakout_scan(self):
-        """Tab 1: Breakout Scanner"""
+        """Tab 1: Breakout Scanner - Enhanced with professional signals"""
         results = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = {executor.submit(market_data_service.get_asset_data, sym): sym for sym in SCREENER_SYMBOLS}
@@ -36,27 +126,21 @@ class ScreenerService:
                     
                     rsi_val = float(rsi(df['Close'], 14).iloc[-1])
                     rvol = float(relative_volume(df['Volume'], 20))
+                    macd_data = macd(df['Close'])
+                    bb_data = bollinger_bands(df['Close'])
+                    sr_data = find_support_resistance(df)
                     
-                    status_20 = 'Bullish' if current_price > sma20 else 'Bearish'
-                    status_50 = 'Bullish' if current_price > sma50 else 'Bearish'
-                    status_200 = 'Bull Market' if current_price > sma200 else 'Bear Market'
-                    
+                    # Fresh breakout detection
                     is_fresh_breakout = False
                     if len(df) > 2:
                         prev_close = df['Close'].iloc[-2]
                         is_fresh_breakout = (prev_close < sma200 * 0.99) and (current_price > sma200)
 
-                    insight = "중립"
-                    if is_fresh_breakout and rvol > 1.5:
-                        insight = "🔥 골든크로스 (강력 매수)"
-                    elif current_price > sma200 and rvol > 1.2:
-                        insight = "🚀 추세 추종 (매집)"
-                    elif rsi_val > 75:
-                        insight = "⚠️ 과열 주의 (익절)"
-                    elif current_price > sma50:
-                        insight = "📈 상승 추세"
-                    else:
-                        insight = "❄️ 조정구간"
+                    # Calculate signal
+                    signal_type, signal_strength, signal_reason = calculate_signal(
+                        rsi_val, rvol, macd_data, bb_data, sr_data, 
+                        current_price, sma200, is_fresh_breakout
+                    )
 
                     results.append({
                         'symbol': item['symbol'],
@@ -69,21 +153,25 @@ class ScreenerService:
                         'sma200': sma200,
                         'rsi': round(rsi_val, 1),
                         'rvol': round(rvol, 2),
-                        'ai_insight': insight,
-                        'status_20': status_20,
-                        'status_50': status_50,
-                        'status_200': status_200,
+                        'macd_signal': macd_data['crossover'],
+                        'bb_position': round(bb_data['position'], 2),
+                        'support': sr_data['support'],
+                        'resistance': sr_data['resistance'],
+                        'signal_type': signal_type,
+                        'signal_strength': signal_strength,
+                        'signal_reason': signal_reason,
                         'is_fresh_breakout': bool(is_fresh_breakout),
-                        'pct_from_sma200': ((current_price - sma200) / sma200) * 100 if sma200 else 0
+                        'pct_from_sma200': round(((current_price - sma200) / sma200) * 100 if sma200 else 0, 1)
                     })
-                except Exception:
+                except Exception as e:
                     continue
 
-        results.sort(key=lambda x: (x['is_fresh_breakout'], x['pct_from_sma200']), reverse=True)
+        # Sort by signal strength (highest first), then by breakout status
+        results.sort(key=lambda x: (x['signal_strength'], x['is_fresh_breakout']), reverse=True)
         return results
 
     def run_price_performance_scan(self):
-        """Tab 2: Price Performance"""
+        """Tab 2: Price Performance - Value investing signals"""
         results = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = {executor.submit(market_data_service.get_asset_data, sym): sym for sym in SCREENER_SYMBOLS}
@@ -102,18 +190,41 @@ class ScreenerService:
                     drawdown = ((current_price - ath) / ath) * 100 if ath > 0 else 0
                     from_atl = ((current_price - atl) / atl) * 100 if atl > 0 else 0
                     rsi_val = float(rsi(df['Close'], 14).iloc[-1])
+                    bb_data = bollinger_bands(df['Close'])
 
-                    insight = "중립"
+                    # Value signal calculation
+                    score = 0
+                    reasons = []
+                    
                     if drawdown < -70 and rsi_val < 30:
-                        insight = "💎 역대급 저평가 (바닥 매수)"
+                        score = 5
+                        reasons.append("역대급 저평가")
+                        reasons.append("RSI 과매도")
                     elif drawdown < -50 and rsi_val < 40:
-                        insight = "🛒 가치 투자 구간 (매집)"
-                    elif rsi_val > 70:
-                        insight = "⚠️ 고점 경고 (위험)"
-                    elif from_atl > 200:
-                        insight = "🚀 고공행진 중"
+                        score = 4
+                        reasons.append("가치투자 구간")
+                    elif drawdown < -30:
+                        score = 3
+                        reasons.append("조정 구간")
+                    elif rsi_val > 75:
+                        score = -2
+                        reasons.append("과열 경고")
+                    elif from_atl > 300:
+                        score = -1
+                        reasons.append("고공행진 중")
+                    
+                    if bb_data['position'] < 0.15:
+                        score += 1
+                        reasons.append("하단밴드")
+
+                    if score >= 4:
+                        signal_type = "BUY"
+                    elif score >= 2:
+                        signal_type = "WATCH"
+                    elif score <= -1:
+                        signal_type = "SELL"
                     else:
-                        insight = "📉 조정 구간"
+                        signal_type = "HOLD"
 
                     results.append({
                         'symbol': item['symbol'],
@@ -123,19 +234,23 @@ class ScreenerService:
                         'volume': df['Volume'].iloc[-1],
                         'ath': ath,
                         'atl': atl,
-                        'drawdown': drawdown,
-                        'from_atl': from_atl,
+                        'drawdown': round(drawdown, 1),
+                        'from_atl': round(from_atl, 1),
                         'rsi': round(rsi_val, 1),
-                        'ai_insight': insight
+                        'bb_position': round(bb_data['position'], 2),
+                        'signal_type': signal_type,
+                        'signal_strength': max(1, abs(score)),
+                        'signal_reason': " + ".join(reasons[:2]) if reasons else "중립"
                     })
                 except:
                     continue
         
+        # Sort by drawdown (most oversold first)
         results.sort(key=lambda x: x['drawdown'])
         return results
 
     def run_risk_scan(self):
-        """Tab 3: Risk Scanner"""
+        """Tab 3: Risk Scanner - Volatility and risk assessment"""
         results = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = {executor.submit(market_data_service.get_asset_data, sym): sym for sym in SCREENER_SYMBOLS}
@@ -150,23 +265,48 @@ class ScreenerService:
                     
                     returns = df['Close'].pct_change().dropna()
                     volatility = float(returns.std() * np.sqrt(365) * 100) if len(returns) > 1 else 0
-                    risk_score = volatility / 50.0 
                     
-                    if risk_score > 1.5: rating = 'Extreme'
-                    elif risk_score < 0.8: rating = 'Low'
-                    else: rating = 'Medium'
+                    # Enhanced risk scoring
+                    rsi_val = float(rsi(df['Close'], 14).iloc[-1])
+                    bb_data = bollinger_bands(df['Close'])
+                    
+                    # Risk score (higher = riskier)
+                    risk_score = volatility / 50.0
+                    
+                    # Adjust for current conditions
+                    if rsi_val > 70 or rsi_val < 30:
+                        risk_score += 0.3  # Extreme RSI increases risk
+                    if bb_data['position'] > 0.9 or bb_data['position'] < 0.1:
+                        risk_score += 0.2  # Near band edges increases risk
+                    
+                    if risk_score > 1.5:
+                        rating = 'Extreme'
+                        signal_reason = "고위험 - 변동성 {:.0f}%".format(volatility)
+                    elif risk_score < 0.7:
+                        rating = 'Low'
+                        signal_reason = "저위험 - 안정적"
+                    else:
+                        rating = 'Medium'
+                        signal_reason = "보통 - 변동성 {:.0f}%".format(volatility)
                     
                     results.append({
                         'symbol': item['symbol'],
                         'price': current_price,
                         'change_24h': item['change_24h'],
                         'change_1h': item.get('change_1h', 0),
-                        'volatility': volatility,
-                        'risk_score': risk_score,
-                        'rating': rating
+                        'volatility': round(volatility, 1),
+                        'risk_score': round(risk_score, 2),
+                        'rating': rating,
+                        'rsi': round(rsi_val, 1),
+                        'bb_position': round(bb_data['position'], 2),
+                        'signal_reason': signal_reason
                     })
                 except:
                     continue
+        
+        # Sort by risk score (lowest risk first)
+        results.sort(key=lambda x: x['risk_score'])
         return results
+
 
 screener_service = ScreenerService()

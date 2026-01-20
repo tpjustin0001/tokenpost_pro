@@ -9,13 +9,13 @@ from crypto_market.market_gate import run_market_gate_sync
 from market_provider import MarketDataService
 
 def verify_market_gate():
-    print("🔍 Diagnostic: Running Market Gate Logic...")
+    print("Diagnostic: Running Market Gate Logic...")
     
     try:
         # 1. Fetch Data manually to ensure we have it
         service = MarketDataService()
         btc_data = service.get_asset_data("BTC")
-        print(f"✅ Data Fetched: BTC Price ${btc_data['current_price']:,}")
+        print(f"Data Fetched: BTC Price ${btc_data['current_price']:,}")
         
         # 2. Run Gate Logic
         print("🚀 Executing run_market_gate_sync()...")

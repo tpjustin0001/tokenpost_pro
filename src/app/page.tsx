@@ -172,6 +172,12 @@ export default function HomePage() {
     return () => timers.forEach(clearTimeout);
   }, []);
 
+  // Import motion dynamically to avoid SSR mismatch if needed, but 'use client' handles it usually.
+  // We need to use valid motion components.
+  const MotionMain = motion.main;
+  const MotionSection = motion.section;
+  const MotionDiv = motion.div;
+
   return (
     <LoginGate>
       <div className={styles.appLayout}>

@@ -66,8 +66,8 @@ class SchedulerService:
             self.scheduler.add_job(self.run_market_gate, IntervalTrigger(hours=1), id='gate', replace_existing=True)
             time.sleep(2)
 
-            # 7. VCP Scan (Every 4 hours)
-            self.scheduler.add_job(self.run_vcp_scan, IntervalTrigger(hours=4), id='vcp', replace_existing=True)
+            # 7. VCP Scan (Every 1 hour)
+            self.scheduler.add_job(self.run_vcp_scan, IntervalTrigger(hours=1), id='vcp', replace_existing=True)
             time.sleep(2)
 
             # 8. Screener Scan (Every 1 hour)

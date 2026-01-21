@@ -18,31 +18,23 @@ interface VCPSignal {
     atrPct: number;
     volRatio: number;
     currency: string;
+    // New Fields
+    pivotPrice?: number;
+    dryUpRatio?: number;
+    reasons?: string[];
+    volContracting?: boolean;
 }
 
-// Local coin icon paths (stored in public/icons/coins/)
+// Local coin icon paths
 function getCoinIconUrl(symbol: string): string {
     const supported = [
-        // Top 10
         'BTC', 'ETH', 'XRP', 'SOL', 'BNB', 'DOGE', 'ADA', 'TRX', 'AVAX', 'LINK',
-        // 11-20
         'TON', 'SHIB', 'DOT', 'XLM', 'BCH', 'SUI', 'HBAR', 'LTC', 'PEPE', 'UNI',
-        // 21-30
         'NEAR', 'APT', 'ICP', 'ETC', 'MATIC', 'TAO', 'AAVE', 'FIL', 'STX', 'VET',
-        // 31-40
         'ATOM', 'INJ', 'RNDR', 'IMX', 'ARB', 'OP', 'MKR', 'GRT', 'THETA', 'FTM',
-        // 41-50
         'ALGO', 'SEI', 'TIA', 'SAND', 'MANA', 'XTZ', 'AXS', 'LDO', 'WOO', 'ZEC',
-        // 51-60
         'JUP', 'BONK', 'STRK', 'PYTH', 'BLUR', 'WEMIX', 'GALA', 'YFI', 'FRAX', 'ONT',
-        // 61-70
-        'ZRX', 'RAY', 'EOS', 'MASK', 'APE', 'CRO', 'CFX', 'FLOW', 'ONE', 'AR',
-        // 71-80
-        'LUNA', 'EGLD', 'ENS', 'DYDX', 'ICX', 'COMP', 'SUSHI', 'SNX', 'PENDLE', 'HT',
-        // 81-90
-        'AGIX', 'OCEAN', 'NEO', 'KAVA', 'ANKR', 'IOTA', 'CRV', 'IO', 'POL', 'WLFI',
-        // 91-100
-        'KCS', 'W', 'DAI', 'WBTC', 'STETH', 'USDT', 'USDC', 'BUSD', '1INCH', 'CC'
+        'ZRX', 'RAY', 'EOS', 'MASK', 'APE', 'CRO', 'CFX', 'FLOW', 'ONE', 'AR'
     ];
     const sym = symbol.toUpperCase();
     if (supported.includes(sym)) {
@@ -58,13 +50,14 @@ export default function VCPScanner() {
         '/api/python/crypto/vcp-signals',
         fetcher,
         {
-            refreshInterval: 300000, // 5분
+            refreshInterval: 180000, // 3 mins
             revalidateOnFocus: false,
         }
     );
-    const [filter, setFilter] = useState<'ALL' | 'A' | 'B' | 'C'>('ALL');
 
-    // Use API data
+    const [gradeFilter, setGradeFilter] = useState<'ALL' | 'A' | 'B'>('ALL');
+    const [typeFilter, setTypeFilter] = useState<'ALL' | 'BREAKOUT' | 'APPROACHING'>('ALL');
+
     const rawSignals = data?.signals || [];
 
     const signals: VCPSignal[] = rawSignals.map((s: any) => ({
@@ -75,24 +68,33 @@ export default function VCPScanner() {
         pivotHigh: s.pivot_high || 0,
         currentPrice: s.current_price || 0,
         breakoutPct: s.breakout_pct || 0,
-        c1: s.c1 || 30,
-        c2: s.c2 || 20,
-        c3: s.c3 || 15,
-        atrPct: s.atr_pct || 3.5,
-        volRatio: s.vol_ratio || 1.5,
+        c1: s.c1 || 0,
+        c2: s.c2 || 0,
+        c3: s.c3 || 0,
+        atrPct: s.atr_pct || 0,
+        volRatio: s.vol_ratio || 0,
         currency: s.currency || 'USD',
+        // New Mappings
+        pivotPrice: s.pivot_price || s.pivot_high,
+        dryUpRatio: s.dry_up_ratio || 1.0,
+        reasons: s.reasons || [],
+        volContracting: s.vol_contracting
     }));
 
-    const filteredSignals = (filter === 'ALL' ? signals : signals.filter(s => s.grade === filter))
-        .filter(s => s.currentPrice > 0 && s.currency === 'KRW') // Upbit Only (KRW)
-        .sort((a, b) => {
-            // 1. Score Descending
-            if (b.score !== a.score) return b.score - a.score;
-            // 2. Grade Ascending (A < B < C)
-            if (a.grade !== b.grade) return a.grade.localeCompare(b.grade);
-            // 3. Vol Ratio Descending
-            return (b.volRatio || 0) - (a.volRatio || 0);
-        });
+    const filteredSignals = signals
+        .filter(s => gradeFilter === 'ALL' || s.grade === gradeFilter)
+        .filter(s => typeFilter === 'ALL' || s.signalType === typeFilter)
+        .filter(s => s.currentPrice > 0)
+        .sort((a, b) => b.score - a.score);
+
+    const countA = signals.filter(s => s.grade === 'A').length;
+    const countBreakout = signals.filter(s => s.signalType === 'BREAKOUT').length;
+
+    const signalLabels: Record<string, string> = {
+        BREAKOUT: '돌파 발생',
+        APPROACHING: '돌파 임박',
+        RETEST_OK: '눌림목 지지',
+    };
 
     const gradeColors: Record<string, string> = {
         A: '#10b981',
@@ -101,164 +103,197 @@ export default function VCPScanner() {
         D: '#6b7280',
     };
 
-    const signalLabels: Record<string, string> = {
-        BREAKOUT: '돌파',
-        APPROACHING: '접근 중',
-        RETEST_OK: '리테스트 확인',
-    };
-
-    // Signal counts for HUD
-    const countA = signals.filter(s => s.grade === 'A').length;
-    const countB = signals.filter(s => s.grade === 'B').length;
-    const countC = signals.filter(s => s.grade === 'C').length;
-    const totalSignals = signals.length;
-
     return (
-        <div className="card">
-            {/* Enhanced Header */}
+        <div className={styles.card}>
+            {/* Header */}
             <div className={styles.header}>
                 <div className={styles.headerMain}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '20px' }}>📊</span>
-                        <h2 className={styles.title}>
-                            <span style={{ color: '#093687', fontWeight: 900 }}>AI</span> 차트 패턴 분석
-                        </h2>
-                    </div>
-                    <span className="badge badge-live">실시간</span>
-                </div>
-                <div className={styles.tabs}>
-                    {['ALL', 'A', 'B', 'C'].map((tab) => (
-                        <button
-                            key={tab}
-                            className={`${styles.tab} ${filter === tab ? styles.active : ''}`}
-                            onClick={() => setFilter(tab as typeof filter)}
-                        >
-                            {tab === 'ALL' ? '전체' : `${tab}등급`}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Scanner HUD */}
-            <div className={styles.hud}>
-                <div className={styles.hudItem}>
-                    <span className={styles.hudLabel}>스캔 결과</span>
-                    <span className={styles.hudValue}>{totalSignals}개</span>
+                    <span style={{ fontSize: '24px' }}>💎</span>
+                    <h2 className={styles.title}>
+                        Minervini VCP Scanner
+                    </h2>
                 </div>
                 <div className={styles.hudBadges}>
-                    <span className={styles.hudBadge} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
-                        A등급: {countA}
+                    <span className={styles.hudBadge} style={{ color: '#10b981', background: 'rgba(16,185,129,0.1)' }}>
+                        A등급 {countA}개
                     </span>
-                    <span className={styles.hudBadge} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6' }}>
-                        B등급: {countB}
-                    </span>
-                    <span className={styles.hudBadge} style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
-                        C등급: {countC}
+                    <span className={styles.hudBadge} style={{ color: '#ec4899', background: 'rgba(236,72,153,0.1)' }}>
+                        돌파 {countBreakout}개
                     </span>
                 </div>
             </div>
 
-            {/* VCP Logic Guide */}
+            {/* Guide */}
             <div className={styles.guide}>
-                <div className={styles.guideIcon}>📉</div>
+                <div className={styles.guideIcon}>📘</div>
                 <div className={styles.guideText}>
-                    <strong>VCP (Volatility Contraction Pattern)</strong>
-                    <span>가격 파동이 점차 줄어들며(C1→C2→C3) 힘을 응축하다가, 저항선을 뚫고 폭발적으로 상승하기 직전의 차트 패턴입니다. (마크 미너비니 전략)</span>
+                    <strong>프로 트레이더를 위한 VCP 분석</strong>
+                    변동성이 줄어들며(Contraction) 거래량이 마르는(Dry-up) 순간을 포착하여, 폭발적인 상승 직전의 종목을 발굴합니다.
                 </div>
             </div>
 
-            {/* Column Legend */}
-            <div className={styles.legend}>
-                <div className={styles.legendItem}>
-                    <strong>시그널</strong>
-                    <span>돌파=신고가 돌파, 접근중=돌파 임박, 리테스트=재확인</span>
-                </div>
-                <div className={styles.legendItem}>
-                    <strong>점수</strong>
-                    <span>0~100점. 이평선 정배열, 거래량, 패턴 완성도 반영</span>
-                </div>
-                <div className={styles.legendItem}>
-                    <strong>돌파율</strong>
-                    <span>52주 고점 대비 현재가 (+ = 돌파, - = 미달)</span>
-                </div>
-                <div className={styles.legendItem}>
-                    <strong>축소율</strong>
-                    <span>30일→20일→10일 변동폭. 숫자가 줄어들면 VCP 성립</span>
-                </div>
+            {/* Filters */}
+            <div className={styles.filterBar}>
+                <button
+                    className={`${styles.filterBtn} ${gradeFilter === 'ALL' ? styles.active : ''}`}
+                    onClick={() => setGradeFilter('ALL')}
+                >
+                    전체 등급
+                </button>
+                <button
+                    className={`${styles.filterBtn} ${gradeFilter === 'A' ? styles.active : ''}`}
+                    onClick={() => setGradeFilter('A')}
+                >
+                    A등급 (강력)
+                </button>
+                <button
+                    className={`${styles.filterBtn} ${gradeFilter === 'B' ? styles.active : ''}`}
+                    onClick={() => setGradeFilter('B')}
+                >
+                    B등급 (우수)
+                </button>
+                <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', margin: '0 8px' }} />
+                <button
+                    className={`${styles.filterBtn} ${typeFilter === 'ALL' ? styles.active : ''}`}
+                    onClick={() => setTypeFilter('ALL')}
+                >
+                    모든 상태
+                </button>
+                <button
+                    className={`${styles.filterBtn} ${typeFilter === 'BREAKOUT' ? styles.active : ''}`}
+                    onClick={() => setTypeFilter('BREAKOUT')}
+                >
+                    🚀 돌파 발생
+                </button>
+                <button
+                    className={`${styles.filterBtn} ${typeFilter === 'APPROACHING' ? styles.active : ''}`}
+                    onClick={() => setTypeFilter('APPROACHING')}
+                >
+                    👀 돌파 임박
+                </button>
             </div>
 
+            {/* Table Header */}
+            <div className={styles.tableHeader}>
+                <span>종목 (Symbol)</span>
+                <span>가격 / Pivot</span>
+                <span>등급</span>
+                <span>상태 (Signal)</span>
+                <span>점수 (Score)</span>
+                <span>변동성 (VCP)</span>
+                <span>거래량 (Vol)</span>
+            </div>
+
+            {/* Content */}
             <div className={styles.content}>
                 {isLoading ? (
-                    <div className={styles.loading}>VCP 패턴 스캔 중...</div>
+                    <div style={{ padding: '40px', textAlign: 'center', color: '#9ca3af' }}>
+                        AI 엔진이 차트 패턴을 정밀 분석 중입니다...
+                    </div>
                 ) : filteredSignals.length === 0 ? (
-                    <div className={styles.empty}>해당 등급의 시그널이 없습니다</div>
+                    <div style={{ padding: '40px', textAlign: 'center', color: '#9ca3af' }}>
+                        현재 조건에 부합하는 종목이 없습니다.
+                    </div>
                 ) : (
-                    <div className={styles.table}>
-                        <div className={styles.tableHeader}>
-                            <span>심볼</span>
-                            <span>현재가</span>
-                            <span>등급</span>
-                            <span>시그널</span>
-                            <span>점수</span>
-                            <span>돌파율</span>
-                            <span>축소율</span>
-                        </div>
-                        {filteredSignals.map((signal) => (
-                            <div key={signal.symbol} className={styles.tableRow}>
-                                <div className={styles.symbolCell}>
-                                    <img
-                                        src={getCoinIconUrl(signal.symbol)}
-                                        alt={signal.symbol}
-                                        className={styles.coinIcon}
-                                        onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.src = `https://ui-avatars.com/api/?name=${signal.symbol}&background=6366f1&color=fff&size=64&bold=true`;
-                                        }}
-                                    />
-                                    <span className={styles.symbolText}>{signal.symbol}</span>
-                                </div>
+                    filteredSignals.map((signal) => (
+                        <div key={signal.symbol} className={styles.tableRow}>
+                            {/* 1. Symbol */}
+                            <div className={styles.symbolCell}>
+                                <img
+                                    src={getCoinIconUrl(signal.symbol)}
+                                    alt={signal.symbol}
+                                    className={styles.coinIcon}
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = `https://ui-avatars.com/api/?name=${signal.symbol}&background=1f2937&color=fff`;
+                                    }}
+                                />
+                                <span className={styles.symbolText}>{signal.symbol}</span>
+                            </div>
+
+                            {/* 2. Price / Pivot */}
+                            <div className={styles.priceDisplay}>
                                 <span className={styles.priceCell}>
                                     {signal.currency === 'KRW' ? '₩' : '$'}{signal.currentPrice.toLocaleString()}
                                 </span>
+                                {signal.pivotPrice && (
+                                    <span className={styles.pivotContext}>
+                                        Pivot {signal.currency === 'KRW' ? '₩' : '$'}{signal.pivotPrice.toLocaleString()} ({signal.breakoutPct > 0 ? '+' : ''}{signal.breakoutPct.toFixed(1)}%)
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* 3. Grade */}
+                            <div
+                                className={styles.gradeTag}
+                                style={{
+                                    background: `${gradeColors[signal.grade]}20`,
+                                    color: gradeColors[signal.grade]
+                                }}
+                            >
+                                {signal.grade}
+                            </div>
+
+                            {/* 4. Signal Type */}
+                            <div className={styles.signalTag}>
                                 <span
-                                    className={styles.grade}
+                                    className={styles.signalMain}
                                     style={{
-                                        background: `${gradeColors[signal.grade]}20`,
-                                        color: gradeColors[signal.grade]
+                                        color: signal.signalType === 'BREAKOUT' ? '#34d399' :
+                                            signal.signalType === 'APPROACHING' ? '#fbbf24' : '#60a5fa',
+                                        background: signal.signalType === 'BREAKOUT' ? 'rgba(52, 211, 153, 0.15)' :
+                                            signal.signalType === 'APPROACHING' ? 'rgba(251, 191, 36, 0.15)' : 'rgba(96, 165, 250, 0.15)'
                                     }}
                                 >
-                                    {signal.grade}
-                                </span>
-                                <span className={`${styles.signalType} ${styles[signal.signalType.toLowerCase()]}`}>
                                     {signalLabels[signal.signalType]}
-                                    <span style={{ display: 'block', fontSize: '10px', marginTop: '2px', fontWeight: 500, color: 'rgba(0,0,0,0.5)' }}>
-                                        Vol {signal.volRatio?.toFixed(1)}x
+                                </span>
+                                {(signal.reasons && signal.reasons.length > 0) && (
+                                    <span className={styles.signalSub}>
+                                        {signal.reasons[0]}
                                     </span>
-                                </span>
-                                <span className={styles.score}>
-                                    <div className={styles.scoreBar}>
-                                        <div
-                                            className={styles.scoreFill}
-                                            style={{
-                                                width: `${signal.score}%`,
-                                                background: signal.score >= 70 ? '#10b981' : signal.score >= 50 ? '#f59e0b' : '#ef4444'
-                                            }}
-                                        />
-                                    </div>
-                                    <span>{signal.score}</span>
-                                </span>
-                                <span className={signal.breakoutPct >= 0 ? styles.positive : styles.negative}>
-                                    {signal.breakoutPct >= 0 ? '+' : ''}{signal.breakoutPct.toFixed(1)}%
-                                </span>
-                                <span className={styles.contraction}>
-                                    {signal.c1.toFixed(0)}→{signal.c2.toFixed(0)}→{signal.c3.toFixed(0)}
-                                </span>
+                                )}
                             </div>
-                        ))}
-                    </div>
-                )
-                }
-            </div >
-        </div >
+
+                            {/* 5. Score */}
+                            <div className={styles.scoreWrapper}>
+                                <div className={styles.scoreTrack}>
+                                    <div
+                                        className={styles.scoreFill}
+                                        style={{
+                                            width: `${signal.score}%`,
+                                            background: signal.score >= 80 ? '#10b981' :
+                                                signal.score >= 50 ? '#f59e0b' : '#ef4444'
+                                        }}
+                                    />
+                                </div>
+                                <span>{signal.score}</span>
+                            </div>
+
+                            {/* 6. VCP Contractions */}
+                            <div className={styles.dataCell}>
+                                <span style={{ color: '#d1d5db' }}>{signal.c1.toFixed(0)}%</span>
+                                <span style={{ margin: '0 2px', color: '#6b7280' }}>→</span>
+                                <span style={{ color: '#9ca3af' }}>{signal.c2.toFixed(0)}%</span>
+                                <span style={{ margin: '0 2px', color: '#6b7280' }}>→</span>
+                                <span style={{ color: '#10b981', fontWeight: 700 }}>{signal.c3.toFixed(0)}%</span>
+                            </div>
+
+                            {/* 7. Volume Dry Up */}
+                            <div className={styles.dataCell}>
+                                {signal.dryUpRatio ? (
+                                    <span style={{
+                                        color: signal.dryUpRatio < 0.7 ? '#34d399' : '#9ca3af',
+                                        fontWeight: signal.dryUpRatio < 0.7 ? 700 : 400
+                                    }}>
+                                        {Math.round(signal.dryUpRatio * 100)}%
+                                    </span>
+                                ) : '-'}
+                                <span style={{ fontSize: '10px', color: '#6b7280', marginLeft: '4px' }}>of Avg</span>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
     );
 }

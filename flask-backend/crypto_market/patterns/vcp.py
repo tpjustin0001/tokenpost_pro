@@ -4,181 +4,184 @@ import numpy as np
 from datetime import datetime
 from market_provider import market_data_service
 
+
+import pandas as pd
+import numpy as np
+from datetime import datetime
+from market_provider import market_data_service
+
 def find_vcp_candidates(symbols):
     """
-    Scans list of symbols for VCP (Volatility Contraction Pattern) characteristics.
-    Uses market_data_service (CCXT/Binance) for reliability.
+    Scans list of symbols for Mark Minervini's VCP (Volatility Contraction Pattern).
+    Focuses on High Value Signals:
+    1. Trend Template (Stage 2 Uptrend)
+    2. Volatility Contraction (2-4 contractions, decreasing depth)
+    3. Volume Dry-Up (Supply exhaustion)
+    4. Pivot Point (Buy signal)
     """
     candidates = []
     
-    # Fixed list of Top 100 tickers by market cap (matching frontend icons)
+    # Target Major Mid-Large Caps for reliable patterns
     SUPPORTED_TICKERS = [
-        # Top 10
         'BTC', 'ETH', 'XRP', 'SOL', 'BNB', 'DOGE', 'ADA', 'TRX', 'AVAX', 'LINK',
-        # 11-20
         'TON', 'SHIB', 'DOT', 'XLM', 'BCH', 'SUI', 'HBAR', 'LTC', 'PEPE', 'UNI',
-        # 21-30
         'NEAR', 'APT', 'ICP', 'ETC', 'MATIC', 'TAO', 'AAVE', 'FIL', 'STX', 'VET',
-        # 31-40
         'ATOM', 'INJ', 'RNDR', 'IMX', 'ARB', 'OP', 'MKR', 'GRT', 'THETA', 'FTM',
-        # 41-50
         'ALGO', 'SEI', 'TIA', 'SAND', 'MANA', 'XTZ', 'AXS', 'LDO', 'WOO', 'ZEC',
-        # 51-60
         'JUP', 'BONK', 'STRK', 'PYTH', 'BLUR', 'WEMIX', 'GALA', 'YFI', 'FRAX', 'ONT',
-        # 61-70
-        'ZRX', 'RAY', 'EOS', 'MASK', 'APE', 'CRO', 'CFX', 'FLOW', 'ONE', 'AR',
-        # 71-80
-        'LUNA', 'EGLD', 'ENS', 'DYDX', 'ICX', 'COMP', 'SUSHI', 'SNX', 'PENDLE', 'HT',
-        # 81-90
-        'AGIX', 'OCEAN', 'NEO', 'KAVA', 'ANKR', 'IOTA', 'CRV', 'IO', 'POL', 'WLFI',
-        # 91-100
-        'KCS', 'W', 'DAI', 'WBTC', 'STETH', 'USDT', 'USDC', 'BUSD', '1INCH', 'CC'
+        'ZRX', 'RAY', 'EOS', 'MASK', 'APE', 'CRO', 'CFX', 'FLOW', 'ONE', 'AR'
     ]
     
-    clean_symbols = SUPPORTED_TICKERS
-         
-    # Ensure they are unique
-    clean_symbols = list(set(clean_symbols))
+    clean_symbols = list(set(SUPPORTED_TICKERS))
     
     for symbol in clean_symbols:
         try:
-            # Fetch Data via Market Provider (Binance/Upbit)
-            # This returns a standardized dict with 'raw_df'
-            data = market_data_service.get_asset_data(symbol)
+            data = market_data_service.get_asset_data(symbol, prefer_krw=True)
             df = data.get('raw_df')
             
-            if df is None or df.empty or len(df) < 150:
+            if df is None or df.empty or len(df) < 200:
                 continue
                 
             close = df['Close']
             current_price = data['current_price']
             
-            # --- Condition 1: Long-term Trend (Mark Minervini Template) ---
+            # ---------------------------------------------------------
+            # 1. Trend Template (Mark Minervini's Stage 2 Criteria)
+            # ---------------------------------------------------------
             sma50 = close.tail(50).mean()
             sma150 = close.tail(150).mean()
-            sma200 = close.tail(200).mean() if len(df) >= 200 else sma150
+            sma200 = close.tail(200).mean()
             
-            # Track trend alignment for scoring (not filtering)
-            above_sma50 = current_price > sma50
-            above_sma150 = current_price > sma150
-            above_sma200 = current_price > sma200
-            sma_aligned = sma50 > sma150 > sma200  # Perfect alignment
-                
-            # 3. Price > 25% above 52-week low
-            low_52w = close.min()
-            above_52w_low = current_price > low_52w * 1.25
-                
-            # 4. Price within 35% of 52-week high
-            high_52w = close.max()
-            near_52w_high = current_price > high_52w * 0.65
+            # Conditions
+            c1 = current_price > sma150 and current_price > sma200
+            c2 = sma150 > sma200
+            c3 = sma200 > sma200 * 1.01 # 200 SMA trending up (mock slope check needed or simple comparison)
+            # Ideally compare sma200 now vs 1 month ago
+            sma200_1m_ago = close.iloc[-30:-1].tail(200).mean() # Approx
+            c3 = sma200 > sma200_1m_ago
             
-            # --- RSI Calculation (14-period) ---
-            delta = close.diff()
-            gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-            loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-            rs = gain / loss
-            rsi = 100 - (100 / (1 + rs))
-            current_rsi = rsi.iloc[-1] if not rsi.empty else 50
-                
-            # --- Condition 2: Volatility Contraction ---
-            vol_recent = close.tail(10).std()
-            vol_prev = close.iloc[-30:-10].std()
+            c4 = sma50 > sma150 and sma50 > sma200
+            c5 = current_price > sma50
             
-            vol_contracting = vol_recent < vol_prev
+            low_52w = close.tail(365).min()
+            high_52w = close.tail(365).max()
             
-            # --- Condition 3: Volume Contraction ---
-            avg_vol_20 = df['Volume'].tail(20).mean()
-            curr_vol = df['Volume'].tail(3).mean()
-            vol_ratio = curr_vol / avg_vol_20 if avg_vol_20 > 0 else 1.0
+            c6 = current_price > low_52w * 1.30 # At least 30% above 52w low
+            c7 = current_price > high_52w * 0.75 # Within 25% of 52w high (Consolidating near highs)
             
-            # --- Metrics Calculation for Frontend ---
-            pivot_high = high_52w
-            breakout_pct = ((current_price - pivot_high) / pivot_high) * 100
-            
-            # Contraction Depths
-            def get_depth(window):
-                sub = df.tail(window)
-                h = sub['High'].max()
-                l = sub['Low'].min()
-                return ((h - l) / h) * 100 if h > 0 else 0
+            # Trend Score
+            trend_passed = c1 and c2 and c4 and c5 and c6 and c7
+            if not trend_passed:
+                # Allow slight misses for crypto volatility, but score them lower
+                pass
 
-            c1 = get_depth(30)
-            c2 = get_depth(20)
-            c3 = get_depth(10)
+            # ---------------------------------------------------------
+            # 2. VCP Contraction Detection
+            # ---------------------------------------------------------
+            # Logic: Find recent swing highs and lows to detect waves (T1, T2, T3)
+            # A valid VCP should have diminishing depth (e.g., -20%, -10%, -5%)
             
-            # ATR %
-            day_high = df['High'].iloc[-1]
-            day_low = df['Low'].iloc[-1]
-            atr_approx = ((day_high - day_low) / current_price) * 100
+            window = 60 # Look at last 60 days for the base
+            base_df = df.tail(window).copy()
+            base_high = base_df['High'].max()
             
-            # --- Enhanced Score Calculation (0-100) ---
-            score = 20  # Lowered base score (Stricter)
+            # Simple contraction metric: StdDev of price in recent chunks
+            vol_last_10 = base_df['Close'].tail(10).std()
+            vol_prev_20 = base_df['Close'].iloc[-30:-10].std()
             
-            # Trend conditions (+30 max)
-            if above_sma50: score += 8
-            if above_sma150: score += 7
-            if above_sma200: score += 5
-            if sma_aligned: score += 10  # Critical for high score
+            is_contracting = vol_last_10 < vol_prev_20 * 0.8
             
-            # Price position (+15 max)
-            if above_52w_low: score += 5
-            if near_52w_high: score += 10
+            # Depth Calculation (Drawdown from recent high)
+            recent_high = base_df['High'].tail(20).max()
+            depth_pct = ((recent_high - current_price) / recent_high) * 100
             
-            # VCP Pattern (+25 max)
-            if vol_contracting: score += 10
-            if c3 < c2 < c1: score += 15  # Classic VCP tightening
+            # Time Consolidation
+            days_since_high = (base_df.index[-1] - base_df['High'].tail(20).idxmax()) if not isinstance(base_df.index, pd.RangeIndex) else 0 # Complicated with default integer index
             
-            # Volume analysis (+10 max)
-            if vol_ratio < 0.6: score += 10  # Stricter volume dry-up (0.7 -> 0.6)
-            elif vol_ratio > 1.8: score += 5  # Strong breakout volume
+            # ---------------------------------------------------------
+            # 3. Volume Dry-Up
+            # ---------------------------------------------------------
+            vol_sma_50 = df['Volume'].tail(50).mean()
+            vol_recent_avg = df['Volume'].tail(5).mean()
             
-            # RSI adjustment (+5 max, -10 penalty)
-            if 50 <= current_rsi <= 70: score += 5
-            elif current_rsi > 75: score -= 10  # Stricter overbought penalty (80 -> 75)
+            # We want volume to be below average during the tightest part
+            volume_dry_up = vol_recent_avg < vol_sma_50 * 0.7
             
-            # Signal Type
-            signal_type = 'APPROACHING'
-            if breakout_pct > 0: signal_type = 'BREAKOUT'
-            elif breakout_pct > -2: signal_type = 'RETEST_OK'
-            elif c3 < 5.0: signal_type = 'APPROACHING'
+            dry_up_ratio = vol_recent_avg / vol_sma_50
             
-            # Determine grade based on score
-            final_score = min(99, max(10, score))
+            # ---------------------------------------------------------
+            # 4. Pivot Point & Signal
+            # ---------------------------------------------------------
+            # Ideally buying when it breaks above the pivot (recent minor high)
+            pivot_price = recent_high
+            dist_to_pivot = ((pivot_price - current_price) / current_price) * 100
             
-            # Cap score if trend is not perfect (Stricter)
-            if not sma_aligned and final_score > 85:
-                final_score = 85
-            if final_score >= 80: grade = 'A'
-            elif final_score >= 65: grade = 'B'
-            elif final_score >= 50: grade = 'C'
+            # ---------------------------------------------------------
+            # Scoring System (0-100)
+            # ---------------------------------------------------------
+            score = 0
+            
+            # A. Trend (40pts)
+            if c1 and c2: score += 10
+            if c4: score += 10
+            if c5: score += 10
+            if c7: score += 10 # Near 52w high is crucial for Leader stocks
+            
+            # B. Pattern Structure (30pts)
+            if is_contracting: score += 15
+            if depth_pct < 10: score += 15 # Tight close
+            elif depth_pct < 15: score += 10
+            
+            # C. Volume (20pts)
+            if volume_dry_up: score += 20
+            elif dry_up_ratio < 1.0: score += 10
+            
+            # D. Momentum (10pts)
+            rsi = 50 # Default
+            try:
+                delta = close.diff()
+                gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+                loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+                rs = gain / loss
+                rsi = 100 - (100 / (1 + rs))
+                rsi = rsi.iloc[-1]
+            except: pass
+            
+            if 50 < rsi < 70: score += 10 # Sweet spot
+            
+            # Grade Assignment
+            if score >= 85: grade = 'A'
+            elif score >= 70: grade = 'B'
+            elif score >= 50: grade = 'C'
             else: grade = 'D'
-                
-            # Filter out invalid prices
-            if current_price <= 0:
-                continue
-
-            candidates.append({
-                'symbol': symbol,
-                'score': final_score,
-                'grade': grade,
-                'signal_type': signal_type,
-                'pivot_high': pivot_high,
-                'current_price': current_price,
-                'breakout_pct': breakout_pct,
-                'c1': c1,
-                'c2': c2,
-                'c3': c3,
-                'atr_pct': atr_approx,
-                'vol_ratio': vol_ratio,
-                'rsi': current_rsi,
-                'currency': 'KRW' if 'KRW' in data.get('source', '') else 'USD'
-            })
+            
+            # Detailed Reason for UI
+            reasons = []
+            if c7: reasons.append("52주 신고가 근접")
+            if is_contracting: reasons.append("변동성 축소 확인")
+            if volume_dry_up: reasons.append(f"거래량 급감 (평소 대비 {int(dry_up_ratio*100)}%)")
+            if depth_pct < 5: reasons.append("초밀집 구간 (Pivot 임박)")
+            
+            # Construct Result
+            if score >= 50: # Only return actionable candidates
+                candidates.append({
+                    'symbol': symbol,
+                    'score': score,
+                    'grade': grade,
+                    'current_price': current_price,
+                    'pivot_price': pivot_price,
+                    'depth_pct': depth_pct,
+                    'dry_up_ratio': dry_up_ratio,
+                    'vol_contracting': is_contracting,
+                    'reasons': reasons,
+                    'currency': 'KRW' if 'KRW' in data.get('source', '') else 'USD',
+                    'timestamp': datetime.now().isoformat()
+                })
                 
         except Exception as e:
-            # print(f"Error checking {symbol}: {e}")
             continue
             
-    # Sort by Score
+    # Sort
     candidates.sort(key=lambda x: x['score'], reverse=True)
     return candidates
 

@@ -1,7 +1,11 @@
 
 import concurrent.futures
 from market_provider import market_data_service
-from crypto_market.indicators import rsi, relative_volume, macd, bollinger_bands, find_support_resistance
+from crypto_market.indicators import (
+    rsi, relative_volume, macd, bollinger_bands, 
+    find_support_resistance, detect_rsi_divergence, 
+    calculate_risk_reward, get_entry_quality
+)
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -16,98 +20,54 @@ SCREENER_SYMBOLS = [
 ]
 
 
-def calculate_signal(rsi_val, rvol, macd_data, bb_data, sr_data, current_price, sma200, is_fresh_breakout):
+def generate_action_guide(item):
     """
-    Calculate signal type, strength, and reason based on multiple indicators.
-    Returns: (signal_type, signal_strength, signal_reason)
+    투자자가 바로 실행할 수 있는 한글 가이드 생성
     """
-    score = 0
-    reasons = []
-
-    # 1. Trend Analysis (SMA200)
-    above_200 = current_price > sma200 if sma200 else False
-    if above_200:
-        score += 1
-        reasons.append("장기 상승 추세")
-
-    # 2. Breakout Detection
-    if is_fresh_breakout:
-        score += 2
-        reasons.append("200일선 돌파")
-
-    # 3. MACD Signal
-    if macd_data['crossover'] == 'bullish_cross':
-        score += 2
-        reasons.append("MACD 골든크로스")
-    elif macd_data['crossover'] == 'bearish_cross':
-        score -= 2
-        reasons.append("MACD 데드크로스")
-    elif macd_data['histogram'] > 0:
-        score += 1
-
-    # 4. RSI Analysis
-    if rsi_val < 30:
-        score += 2
-        reasons.append("과매도 구간 (RSI {:.0f})".format(rsi_val))
-    elif rsi_val < 40:
-        score += 1
-        reasons.append("저평가 구간")
-    elif rsi_val > 75:
-        score -= 2
-        reasons.append("과열 주의 (RSI {:.0f})".format(rsi_val))
-    elif rsi_val > 65:
-        score -= 1
-
-    # 5. Volume Analysis
-    if rvol > 2.0:
-        score += 2
-        reasons.append("거래량 급증 ({:.1f}x)".format(rvol))
-    elif rvol > 1.5:
-        score += 1
-        reasons.append("거래량 증가")
-    elif rvol < 0.5:
-        score -= 1
-
-    # 6. Bollinger Band Position
-    if bb_data['position'] < 0.1:
-        score += 1
-        reasons.append("하단밴드 근접")
-    elif bb_data['position'] > 0.9:
-        score -= 1
-        reasons.append("상단밴드 근접")
-
-    # 7. Support/Resistance Proximity
-    if sr_data['support_distance'] < 2:
-        score += 1
-        reasons.append("지지선 근접")
-    if sr_data['resistance_distance'] < 2:
-        reasons.append("저항선 근접")
-
-    # Determine signal type and strength
-    if score >= 4:
-        signal_type = "BUY"
-        signal_strength = min(5, score - 1)
-    elif score >= 2:
-        signal_type = "WATCH"
-        signal_strength = 3
-    elif score <= -3:
-        signal_type = "SELL"
-        signal_strength = min(5, abs(score) - 1)
-    elif score <= -1:
-        signal_type = "HOLD"
-        signal_strength = 2
-    else:
-        signal_type = "HOLD"
-        signal_strength = 1
-
-    signal_reason = " + ".join(reasons[:3]) if reasons else "중립"
-
-    return signal_type, signal_strength, signal_reason
+    signal_type = item['grade_data']['grade'] # A, B, C, D
+    rr_ratio = item['rr_ratio']
+    current_price = item['price']
+    support = item['support']
+    resistance = item['resistance']
+    rsi_val = item['rsi']
+    
+    # 기본 가이드 템플릿
+    action = "관망"
+    guide_msg = "뚜렷한 진입 신호가 없습니다."
+    
+    if signal_type in ['A', 'B']:
+        action = "매수 고려"
+        # R/R 가이드
+        rr_desc = "매우 좋음" if rr_ratio >= 3 else "좋음"
+        
+        reasons = item['grade_data']['reasons']
+        main_reason = reasons[0] if reasons else "기술적 지표 호전"
+        
+        guide_msg = f"{main_reason}. 지지선({support:,.0f})을 손절 기준으로 잡고 진입 시 {rr_desc} 수익 구간 기대 가능."
+        
+        if rsi_val < 30:
+            guide_msg = f"RSI 과매도({rsi_val:.0f}) 구간으로 반등 기대. " + guide_msg
+            
+    elif signal_type == 'D':
+        if rsi_val > 70:
+            action = "매도/익절 고려"
+            guide_msg = f"RSI 과열({rsi_val:.0f}) 및 저항선 근접. 보유 물량 축소 고려."
+        else:
+            action = "진입 주의"
+            guide_msg = "하락 리스크가 높거나 변동성이 큽니다. 확실한 지지 확인 전까지 관망."
+            
+    return {
+        'action': action,
+        'entry_zone': f"{support * 1.005:,.0f} ~ {current_price:,.0f}",
+        'stop_loss': f"{support * 0.98:,.0f}", # 지지선 2% 아래
+        'target': f"{resistance:,.0f}",
+        'guide': guide_msg
+    }
 
 
 class ScreenerService:
     def run_breakout_scan(self):
-        """Tab 1: Breakout Scanner - Enhanced with professional signals"""
+        """Tab 1: Breakout Scanner - Enhanced with Actionable Guides"""
         results = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = {executor.submit(market_data_service.get_asset_data, sym): sym for sym in SCREENER_SYMBOLS}
@@ -119,9 +79,9 @@ class ScreenerService:
                     df = item['raw_df']
                     current_price = item['current_price']
                     if df is None or df.empty: continue
-
-                    sma20 = item['ma_20']
-                    sma50 = df['Close'].tail(50).mean()
+                    
+                    # 1. 기술적 지표 계산
+                    sma20 = item['ma_20'] if item.get('ma_20') else df['Close'].tail(20).mean()
                     sma200 = df['Close'].tail(200).mean()
                     
                     rsi_val = float(rsi(df['Close'], 14).iloc[-1])
@@ -130,26 +90,22 @@ class ScreenerService:
                     bb_data = bollinger_bands(df['Close'])
                     sr_data = find_support_resistance(df)
                     
-                    # Fresh breakout detection
-                    is_fresh_breakout = False
-                    if len(df) > 2:
-                        prev_close = df['Close'].iloc[-2]
-                        is_fresh_breakout = (prev_close < sma200 * 0.99) and (current_price > sma200)
-
-                    # Calculate signal
-                    signal_type, signal_strength, signal_reason = calculate_signal(
-                        rsi_val, rvol, macd_data, bb_data, sr_data, 
-                        current_price, sma200, is_fresh_breakout
-                    )
-
-                    results.append({
+                    # 다이버전스 감지 (신규)
+                    divergence = detect_rsi_divergence(df['Close'], rsi(df['Close'], 14))
+                    
+                    # 2. 위험보상비율 계산 (신규)
+                    rr_ratio = calculate_risk_reward(current_price, sr_data['support'], sr_data['resistance'])
+                    
+                    # 3. 진입 적합도 평가 (신규)
+                    grade_data = get_entry_quality(rr_ratio, rsi_val, macd_data['crossover'], divergence)
+                    
+                    # 4. 데이터셋 구성
+                    data_item = {
                         'symbol': item['symbol'],
                         'price': current_price,
                         'change_24h': item['change_24h'],
                         'change_1h': item.get('change_1h', 0),
                         'volume': df['Volume'].iloc[-1],
-                        'sma20': sma20,
-                        'sma50': sma50,
                         'sma200': sma200,
                         'rsi': round(rsi_val, 1),
                         'rvol': round(rvol, 2),
@@ -157,21 +113,31 @@ class ScreenerService:
                         'bb_position': round(bb_data['position'], 2),
                         'support': sr_data['support'],
                         'resistance': sr_data['resistance'],
-                        'signal_type': signal_type,
-                        'signal_strength': signal_strength,
-                        'signal_reason': signal_reason,
-                        'is_fresh_breakout': bool(is_fresh_breakout),
+                        'rr_ratio': rr_ratio,
+                        'divergence': divergence,
+                        'grade_data': grade_data, # score, grade, label, reasons
                         'pct_from_sma200': round(((current_price - sma200) / sma200) * 100 if sma200 else 0, 1)
-                    })
+                    }
+                    
+                    # 5. 투자 가이드 생성 (신규)
+                    data_item['action_guide'] = generate_action_guide(data_item)
+                    
+                    # 기존 프론트엔드 호환성 유지 래퍼 (signal_type, strength 등)
+                    data_item['signal_type'] = "BUY" if grade_data['grade'] in ['A', 'B'] else ("SELL" if grade_data['grade'] == 'D' and rsi_val > 70 else "WATCH")
+                    data_item['signal_strength'] = grade_data['score']
+                    data_item['signal_reason'] = data_item['action_guide']['guide']
+
+                    results.append(data_item)
                 except Exception as e:
+                    # print(f"Scan Error {future}: {e}")
                     continue
 
-        # Sort by signal strength (highest first), then by breakout status
-        results.sort(key=lambda x: (x['signal_strength'], x['is_fresh_breakout']), reverse=True)
+        # 정렬: 등급(A->D) 순, 그 다음 점수 순
+        results.sort(key=lambda x: x['grade_data']['score'], reverse=True)
         return results
 
     def run_price_performance_scan(self):
-        """Tab 2: Price Performance - Value investing signals"""
+        """Tab 2: Value & Price Performance"""
         results = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = {executor.submit(market_data_service.get_asset_data, sym): sym for sym in SCREENER_SYMBOLS}
@@ -190,67 +156,43 @@ class ScreenerService:
                     drawdown = ((current_price - ath) / ath) * 100 if ath > 0 else 0
                     from_atl = ((current_price - atl) / atl) * 100 if atl > 0 else 0
                     rsi_val = float(rsi(df['Close'], 14).iloc[-1])
-                    bb_data = bollinger_bands(df['Close'])
-
-                    # Value signal calculation
+                    
+                    sr_data = find_support_resistance(df)
+                    rr_ratio = calculate_risk_reward(current_price, sr_data['support'], sr_data['resistance'])
+                    
+                    # 저평가 점수
                     score = 0
-                    reasons = []
+                    if drawdown < -70: score += 2
+                    if rsi_val < 30: score += 2
+                    if rr_ratio > 3: score += 2
                     
-                    if drawdown < -70 and rsi_val < 30:
-                        score = 5
-                        reasons.append("역대급 저평가")
-                        reasons.append("RSI 과매도")
-                    elif drawdown < -50 and rsi_val < 40:
-                        score = 4
-                        reasons.append("가치투자 구간")
-                    elif drawdown < -30:
-                        score = 3
-                        reasons.append("조정 구간")
-                    elif rsi_val > 75:
-                        score = -2
-                        reasons.append("과열 경고")
-                    elif from_atl > 300:
-                        score = -1
-                        reasons.append("고공행진 중")
+                    # 간단 가이드
+                    guide = "관망"
+                    if score >= 4: guide = "강력 매수 기회 (저평가)"
+                    elif score >= 2: guide = "분할 매수 고려"
                     
-                    if bb_data['position'] < 0.15:
-                        score += 1
-                        reasons.append("하단밴드")
-
-                    if score >= 4:
-                        signal_type = "BUY"
-                    elif score >= 2:
-                        signal_type = "WATCH"
-                    elif score <= -1:
-                        signal_type = "SELL"
-                    else:
-                        signal_type = "HOLD"
-
                     results.append({
                         'symbol': item['symbol'],
                         'price': current_price,
                         'change_24h': item['change_24h'],
-                        'change_1h': item.get('change_1h', 0),
-                        'volume': df['Volume'].iloc[-1],
                         'ath': ath,
-                        'atl': atl,
                         'drawdown': round(drawdown, 1),
                         'from_atl': round(from_atl, 1),
                         'rsi': round(rsi_val, 1),
-                        'bb_position': round(bb_data['position'], 2),
-                        'signal_type': signal_type,
-                        'signal_strength': max(1, abs(score)),
-                        'signal_reason': " + ".join(reasons[:2]) if reasons else "중립"
+                        'rr_ratio': rr_ratio,
+                        'value_score': score,
+                        'action_guide': guide,
+                        'support': sr_data['support']
                     })
                 except:
                     continue
         
-        # Sort by drawdown (most oversold first)
+        # 저평가 순 (Drawdown 큰 순서)
         results.sort(key=lambda x: x['drawdown'])
         return results
 
     def run_risk_scan(self):
-        """Tab 3: Risk Scanner - Volatility and risk assessment"""
+        """Tab 3: Risk & Volatility Analysis"""
         results = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = {executor.submit(market_data_service.get_asset_data, sym): sym for sym in SCREENER_SYMBOLS}
@@ -266,45 +208,33 @@ class ScreenerService:
                     returns = df['Close'].pct_change().dropna()
                     volatility = float(returns.std() * np.sqrt(365) * 100) if len(returns) > 1 else 0
                     
-                    # Enhanced risk scoring
                     rsi_val = float(rsi(df['Close'], 14).iloc[-1])
                     bb_data = bollinger_bands(df['Close'])
                     
-                    # Risk score (higher = riskier)
-                    risk_score = volatility / 50.0
+                    # 리스크 점수 (높을수록 위험)
+                    risk_score = volatility / 20.0 # 기본 변동성 점수
                     
-                    # Adjust for current conditions
-                    if rsi_val > 70 or rsi_val < 30:
-                        risk_score += 0.3  # Extreme RSI increases risk
-                    if bb_data['position'] > 0.9 or bb_data['position'] < 0.1:
-                        risk_score += 0.2  # Near band edges increases risk
+                    if rsi_val > 70 or rsi_val < 30: risk_score += 1.5
+                    if bb_data['position'] > 0.95 or bb_data['position'] < 0.05: risk_score += 1.0
                     
-                    if risk_score > 1.5:
-                        rating = 'Extreme'
-                        signal_reason = "고위험 - 변동성 {:.0f}%".format(volatility)
-                    elif risk_score < 0.7:
-                        rating = 'Low'
-                        signal_reason = "저위험 - 안정적"
-                    else:
-                        rating = 'Medium'
-                        signal_reason = "보통 - 변동성 {:.0f}%".format(volatility)
+                    rating = 'Low'
+                    if risk_score > 5: rating = 'Extreme'
+                    elif risk_score > 3: rating = 'High'
+                    elif risk_score > 1.5: rating = 'Medium'
                     
                     results.append({
                         'symbol': item['symbol'],
                         'price': current_price,
                         'change_24h': item['change_24h'],
-                        'change_1h': item.get('change_1h', 0),
                         'volatility': round(volatility, 1),
-                        'risk_score': round(risk_score, 2),
+                        'risk_score': round(risk_score, 1),
                         'rating': rating,
                         'rsi': round(rsi_val, 1),
-                        'bb_position': round(bb_data['position'], 2),
-                        'signal_reason': signal_reason
+                        'bb_position': round(bb_data['position'], 2)
                     })
                 except:
                     continue
         
-        # Sort by risk score (lowest risk first)
         results.sort(key=lambda x: x['risk_score'])
         return results
 

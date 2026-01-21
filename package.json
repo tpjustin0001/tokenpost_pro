@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "concurrently \"npm run next-dev\" \"npm run flask-dev\"",
     "next-dev": "next dev",
-    "flask-dev": "python3 flask-backend/app.py",
+    "flask-dev": "python flask-backend/app.py",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

@@ -5,36 +5,78 @@ import Link from 'next/link';
 import styles from './page.module.css';
 import { flaskApi, MarketGateData, VcpSignal } from '@/services/flaskApi';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
+import { getAnalyticsSummary, getUserActivities, AnalyticsSummary, UserActivity } from '@/services/analytics';
 
-import { Shield, Lock, Activity, Server, FileText, Database, RefreshCw, LayoutDashboard, Plus, Save, FilePlus } from 'lucide-react';
+import { Shield, Lock, Activity, Server, FileText, Database, RefreshCw, LayoutDashboard, Plus, Save, FilePlus, LogIn, AlertTriangle, BarChart3, Users, Eye, Clock } from 'lucide-react';
+
+// Admin Email Whitelist
+const ADMIN_EMAILS = [
+    'james@tokenpost.kr',
+    'justin@tokenpost.kr',
+    'simon@tokenpost.kr',
+    'dan@tokenpost.kr',
+    'sonny@tokenpost.kr',
+    'ain@tokenpost.kr',
+];
 
 export default function AdminPage() {
     const [marketGate, setMarketGate] = useState<MarketGateData | null>(null);
     const [vcpSignals, setVcpSignals] = useState<VcpSignal[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Auth State
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+    // OAuth Auth State (replaces password auth)
+    const { user, isLoggedIn, loading: authLoading, login, logout } = useAuth();
+
+    // Development mode: bypass authentication for easier testing
+    const isDevelopment = process.env.NODE_ENV === 'development';
+
+    // Check if user is in admin whitelist (bypassed in development)
+    const isAdmin = isDevelopment || (isLoggedIn && user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
 
     // CMS State
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'news' | 'research'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'news' | 'research' | 'analytics'>('dashboard');
+
+    // Analytics State
+    const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
+    const [userActivities, setUserActivities] = useState<UserActivity[]>([]);
+    const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
     // Form States
     const [newsForm, setNewsForm] = useState({ title: '', category: 'Market', summary: '', source: 'Admin' });
     const [researchForm, setResearchForm] = useState({ title: '', type: 'ANALYSIS', content: '', isPro: true });
 
     useEffect(() => {
-        // Check session
-        const session = localStorage.getItem('admin_session');
-        if (session === 'valid') {
-            setIsAuthenticated(true);
+        // Load data when admin is authenticated
+        if (isAdmin) {
             loadData();
-        } else {
-            setLoading(false); // Stop loading if not auth
+        } else if (!authLoading) {
+            setLoading(false);
         }
-    }, []);
+    }, [isAdmin, authLoading]);
+
+    // Load analytics when tab is selected
+    useEffect(() => {
+        if (activeTab === 'analytics' && isAdmin) {
+            loadAnalytics();
+        }
+    }, [activeTab, isAdmin]);
+
+    async function loadAnalytics() {
+        setAnalyticsLoading(true);
+        try {
+            const [summary, activities] = await Promise.all([
+                getAnalyticsSummary(7),
+                getUserActivities(7)
+            ]);
+            if (summary) setAnalyticsSummary(summary);
+            setUserActivities(activities);
+        } catch (error) {
+            console.error('Failed to load analytics:', error);
+        } finally {
+            setAnalyticsLoading(false);
+        }
+    }
 
     async function loadData() {
         setLoading(true);
@@ -53,16 +95,9 @@ export default function AdminPage() {
         }
     }
 
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        // Simple password for demo
-        if (password === 'tokenpost123!') {
-            localStorage.setItem('admin_session', 'valid');
-            setIsAuthenticated(true);
-            loadData();
-        } else {
-            setError('Invalid credentials');
-        }
+    // Login is now handled by useAuth() hook
+    const handleLogin = () => {
+        login(); // Redirects to TokenPost OAuth
     };
 
     const handleNewsSubmit = async (e: React.FormEvent) => {
@@ -114,7 +149,23 @@ export default function AdminPage() {
         }
     };
 
-    if (!isAuthenticated) {
+    // Show loading state
+    if (authLoading) {
+        return (
+            <main className={styles.loginWrapper}>
+                <div className={styles.loginCard}>
+                    <div className={styles.loginHeader}>
+                        <Shield size={32} color="var(--accent-blue)" />
+                        <h1>인증 확인 중...</h1>
+                        <p>잠시만 기다려 주세요</p>
+                    </div>
+                </div>
+            </main>
+        );
+    }
+
+    // Not logged in - show login button
+    if (!isLoggedIn) {
         return (
             <main className={styles.loginWrapper}>
                 <div className={styles.loginCard}>
@@ -125,30 +176,58 @@ export default function AdminPage() {
                             </div>
                         </div>
                         <h1>관리자 콘솔</h1>
-                        <p>보안 시스템 접근 승인이 필요합니다</p>
+                        <p>TokenPost 계정으로 로그인이 필요합니다</p>
                     </div>
 
-                    <form onSubmit={handleLogin} className={styles.loginForm}>
-                        <div style={{ position: 'relative' }}>
-                            <Lock size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                            <input
-                                type="password"
-                                placeholder="접근 키 입력 (Access Key)"
-                                className={styles.inputField}
-                                style={{ paddingLeft: '40px', width: '100%' }}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
-                        {error && <span style={{ color: '#ef4444', fontSize: '12px', textAlign: 'center' }}>인증 정보가 올바르지 않습니다.</span>}
-                        <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-                            시스템 접속
+                    <div className={styles.loginForm}>
+                        <button
+                            onClick={handleLogin}
+                            className="btn btn-primary"
+                            style={{ width: '100%', justifyContent: 'center', display: 'flex', gap: '8px', alignItems: 'center' }}
+                        >
+                            <LogIn size={18} />
+                            TokenPost 계정으로 로그인
                         </button>
-                    </form>
+                    </div>
 
                     <div className={styles.systemBadge}>
                         <Activity size={12} />
                         <span>보안 연결됨 (Secure)</span>
+                    </div>
+                </div>
+            </main>
+        );
+    }
+
+    // Logged in but not admin - show access denied
+    if (!isAdmin) {
+        return (
+            <main className={styles.loginWrapper}>
+                <div className={styles.loginCard}>
+                    <div className={styles.loginHeader}>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                            <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '50%', color: '#ef4444' }}>
+                                <AlertTriangle size={32} />
+                            </div>
+                        </div>
+                        <h1>접근 권한 없음</h1>
+                        <p>관리자 권한이 없는 계정입니다</p>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>
+                            로그인: {user?.email || '알 수 없음'}
+                        </p>
+                    </div>
+
+                    <div className={styles.loginForm}>
+                        <button
+                            onClick={logout}
+                            className="btn btn-secondary"
+                            style={{ width: '100%', justifyContent: 'center' }}
+                        >
+                            다른 계정으로 로그인
+                        </button>
+                        <Link href="/" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '8px', textDecoration: 'none' }}>
+                            메인으로 돌아가기
+                        </Link>
                     </div>
                 </div>
             </main>
@@ -162,8 +241,9 @@ export default function AdminPage() {
                     <Shield size={24} color="var(--accent-blue)" />
                     <h1>최고 관리자 (Administrator)</h1>
                 </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                    <button onClick={() => { localStorage.removeItem('admin_session'); setIsAuthenticated(false); }} className="btn btn-secondary">
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{user?.email}</span>
+                    <button onClick={logout} className="btn btn-secondary">
                         로그아웃
                     </button>
                     <Link href="/" className="btn btn-primary">
@@ -191,6 +271,12 @@ export default function AdminPage() {
                     onClick={() => setActiveTab('research')}
                 >
                     <FilePlus size={18} /> 리서치 발행
+                </button>
+                <button
+                    className={`${styles.navTab} ${activeTab === 'analytics' ? styles.active : ''}`}
+                    onClick={() => setActiveTab('analytics')}
+                >
+                    <BarChart3 size={18} /> 사용자 분석
                 </button>
             </nav>
 
@@ -401,6 +487,163 @@ export default function AdminPage() {
                     </form>
                 </section>
             )}
+
+            {activeTab === 'analytics' && (
+                <>
+                    {/* Analytics Summary Cards */}
+                    <section className={styles.statsGrid}>
+                        <div className={`card ${styles.statCard}`}>
+                            <span className={styles.statLabel}>
+                                <Eye size={14} style={{ marginRight: '4px' }} />
+                                총 페이지 뷰
+                            </span>
+                            <span className={`font-mono ${styles.statValue} text-blue`}>
+                                {analyticsLoading ? '...' : analyticsSummary?.totalPageViews ?? 0}
+                            </span>
+                            <span className="text-xs text-muted">최근 7일</span>
+                        </div>
+                        <div className={`card ${styles.statCard}`}>
+                            <span className={styles.statLabel}>
+                                <Users size={14} style={{ marginRight: '4px' }} />
+                                고유 사용자
+                            </span>
+                            <span className={`font-mono ${styles.statValue} text-green`}>
+                                {analyticsLoading ? '...' : analyticsSummary?.uniqueUsers ?? 0}
+                            </span>
+                            <span className="text-xs text-muted">로그인 사용자 기준</span>
+                        </div>
+                        <div className={`card ${styles.statCard}`}>
+                            <span className={styles.statLabel}>
+                                <BarChart3 size={14} style={{ marginRight: '4px' }} />
+                                인기 페이지
+                            </span>
+                            <span className={`font-mono ${styles.statValue}`}>
+                                {analyticsLoading ? '...' : analyticsSummary?.topPages?.[0]?.page_path || '-'}
+                            </span>
+                            <span className="text-xs text-muted">
+                                {analyticsSummary?.topPages?.[0]?.count || 0}회 방문
+                            </span>
+                        </div>
+                        <div className={`card ${styles.statCard}`}>
+                            <span className={styles.statLabel}>
+                                <Clock size={14} style={{ marginRight: '4px' }} />
+                                데이터 기간
+                            </span>
+                            <span className={`font-mono ${styles.statValue}`}>7일</span>
+                            <span className="text-xs text-muted">분석 기간</span>
+                        </div>
+                    </section>
+
+                    <div className={styles.contentGrid}>
+                        {/* Top Pages */}
+                        <section className="card">
+                            <div className="card-header">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <BarChart3 size={20} color="var(--accent-blue)" />
+                                    <h2 className="card-title">인기 페이지 TOP 10</h2>
+                                </div>
+                                <button onClick={loadAnalytics} className="btn btn-secondary" style={{ padding: '6px 12px' }}>
+                                    <RefreshCw size={14} />
+                                </button>
+                            </div>
+                            <div className="card-body" style={{ padding: 0, overflowX: 'auto' }}>
+                                <table className="table">
+                                    <thead>
+                                        <tr>
+                                            <th>순위</th>
+                                            <th>페이지 경로</th>
+                                            <th>방문 수</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {analyticsLoading ? (
+                                            <tr><td colSpan={3} className="text-center p-4">로딩 중...</td></tr>
+                                        ) : !analyticsSummary?.topPages?.length ? (
+                                            <tr><td colSpan={3} className="text-center p-4 text-muted">데이터가 없습니다</td></tr>
+                                        ) : (
+                                            analyticsSummary.topPages.map((page, idx) => (
+                                                <tr key={page.page_path}>
+                                                    <td className="font-mono font-bold">{idx + 1}</td>
+                                                    <td className="font-mono" style={{ fontSize: '13px' }}>{page.page_path}</td>
+                                                    <td className="font-mono text-blue">{page.count}</td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        {/* User Activity */}
+                        <section className="card">
+                            <div className="card-header">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Users size={20} color="var(--accent-green)" />
+                                    <h2 className="card-title">사용자별 활동</h2>
+                                </div>
+                                <span className="badge badge-primary">{userActivities.length}명</span>
+                            </div>
+                            <div className="card-body" style={{ padding: 0, overflowX: 'auto' }}>
+                                <table className="table">
+                                    <thead>
+                                        <tr>
+                                            <th>이메일</th>
+                                            <th>페이지 뷰</th>
+                                            <th>마지막 접속</th>
+                                            <th>자주 방문</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {analyticsLoading ? (
+                                            <tr><td colSpan={4} className="text-center p-4">로딩 중...</td></tr>
+                                        ) : !userActivities.length ? (
+                                            <tr><td colSpan={4} className="text-center p-4 text-muted">로그인 사용자 데이터가 없습니다</td></tr>
+                                        ) : (
+                                            userActivities.slice(0, 15).map((user) => (
+                                                <tr key={user.email}>
+                                                    <td style={{ fontSize: '13px' }}>{user.email}</td>
+                                                    <td className="font-mono text-blue">{user.pageViews}</td>
+                                                    <td className="text-muted" style={{ fontSize: '12px' }}>
+                                                        {user.lastSeen ? new Date(user.lastSeen).toLocaleString('ko-KR', {
+                                                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                                        }) : '-'}
+                                                    </td>
+                                                    <td style={{ fontSize: '12px' }}>
+                                                        {user.topPages.slice(0, 2).join(', ') || '-'}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+
+                    {/* Recent Activity (if needed) */}
+                    {analyticsSummary?.recentActivity && analyticsSummary.recentActivity.length > 0 && (
+                        <section className="card" style={{ marginTop: '24px' }}>
+                            <div className="card-header">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Activity size={20} color="var(--accent-blue)" />
+                                    <h2 className="card-title">최근 활동</h2>
+                                </div>
+                            </div>
+                            <div className="card-body" style={{ padding: '12px', maxHeight: '200px', overflowY: 'auto' }}>
+                                {analyticsSummary.recentActivity.slice(0, 10).map((event, idx) => (
+                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-color)' }}>
+                                        <span style={{ fontSize: '13px' }}>{event.page_path}</span>
+                                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                                            {event.user_email || '익명'} • {new Date(event.created_at).toLocaleTimeString('ko-KR')}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+                </>
+            )}
         </main>
     );
 }
+

@@ -270,6 +270,17 @@ def trigger_screener():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/api/admin/trigger-vcp', methods=['POST'], strict_slashes=False)
+def trigger_vcp():
+    """Manual trigger for VCP scan job"""
+    try:
+        from scheduler_service import scheduler_service
+        # Run synchronous for immediate feedback
+        scheduler_service.run_vcp_scan()
+        return jsonify({"success": True, "message": "VCP Scan triggered and completed"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.route('/api/analysis/latest', methods=['GET'])
 def get_latest_analysis():
     """Get latest analysis directly from AI Service (bypassing Supabase RLS)"""
@@ -1146,7 +1157,7 @@ def test_market_fetch(symbol):
 
 if __name__ == '__main__':
     # Deployment Safety: Use provided PORT or default to 5002
-    port = int(os.environ.get('PORT', 5002))
+    port = int(os.environ.get('PORT', 5001))
     debug = os.environ.get('FLASK_ENV') == 'development' or os.environ.get('FLASK_DEBUG') == '1'
     print(f"[START] TokenPost PRO API starting on port {port}...")
     app.run(host='0.0.0.0', port=port, debug=debug)

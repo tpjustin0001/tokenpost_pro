@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 };
 
 import { XRayProvider } from '@/context/XRayContext';
+import { AnalyticsProvider } from '@/context/AnalyticsProvider';
 
 export default function RootLayout({
   children,
@@ -40,12 +41,14 @@ export default function RootLayout({
         </a>
         <ThemeProvider>
           <AuthProvider>
-            {/* Header removed - logout now in Sidebar */}
-            <XRayProvider>
-              <div className="page-wrapper">
-                {children}
-              </div>
-            </XRayProvider>
+            <AnalyticsProvider>
+              {/* Header removed - logout now in Sidebar */}
+              <XRayProvider>
+                <div className="page-wrapper">
+                  {children}
+                </div>
+              </XRayProvider>
+            </AnalyticsProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

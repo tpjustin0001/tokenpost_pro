@@ -132,3 +132,132 @@ def find_support_resistance(df: pd.DataFrame, lookback: int = 50) -> dict:
         'resistance_distance': float(resistance_distance)
     }
 
+
+def detect_rsi_divergence(price_series: pd.Series, rsi_series: pd.Series, lookback: int = 20) -> str:
+    """
+    RSI Divergence 감지
+    - bullish_div: 가격 하락 but RSI 상승 → 매수 신호
+    - bearish_div: 가격 상승 but RSI 하락 → 매도 신호
+    - none: 다이버전스 없음
+    """
+    if len(price_series) < lookback or len(rsi_series) < lookback:
+        return 'none'
+    
+    recent_prices = price_series.tail(lookback)
+    recent_rsi = rsi_series.tail(lookback)
+    
+    # 최근 저점 2개 찾기
+    price_lows = []
+    rsi_lows = []
+    
+    for i in range(2, lookback - 2):
+        if (recent_prices.iloc[i] < recent_prices.iloc[i-1] and 
+            recent_prices.iloc[i] < recent_prices.iloc[i-2] and
+            recent_prices.iloc[i] < recent_prices.iloc[i+1] and
+            recent_prices.iloc[i] < recent_prices.iloc[i+2]):
+            price_lows.append((i, recent_prices.iloc[i]))
+            rsi_lows.append((i, recent_rsi.iloc[i]))
+    
+    # 강세 다이버전스: 가격 저점 하락, RSI 저점 상승
+    if len(price_lows) >= 2:
+        if (price_lows[-1][1] < price_lows[-2][1] and 
+            rsi_lows[-1][1] > rsi_lows[-2][1]):
+            return 'bullish_div'
+    
+    # 최근 고점 2개 찾기
+    price_highs = []
+    rsi_highs = []
+    
+    for i in range(2, lookback - 2):
+        if (recent_prices.iloc[i] > recent_prices.iloc[i-1] and 
+            recent_prices.iloc[i] > recent_prices.iloc[i-2] and
+            recent_prices.iloc[i] > recent_prices.iloc[i+1] and
+            recent_prices.iloc[i] > recent_prices.iloc[i+2]):
+            price_highs.append((i, recent_prices.iloc[i]))
+            rsi_highs.append((i, recent_rsi.iloc[i]))
+    
+    # 약세 다이버전스: 가격 고점 상승, RSI 고점 하락
+    if len(price_highs) >= 2:
+        if (price_highs[-1][1] > price_highs[-2][1] and 
+            rsi_highs[-1][1] < rsi_highs[-2][1]):
+            return 'bearish_div'
+    
+    return 'none'
+
+
+def calculate_risk_reward(current_price: float, support: float, resistance: float) -> float:
+    """
+    위험보상비율 계산
+    R/R >= 2.0 : 좋은 기회
+    R/R >= 3.0 : 매우 좋은 기회
+    """
+    risk = current_price - support
+    reward = resistance - current_price
+    
+    if risk <= 0 or reward <= 0:
+        return 0.0
+    
+    return round(reward / risk, 2)
+
+
+def get_entry_quality(rr_ratio: float, rsi: float, macd_cross: str, divergence: str) -> dict:
+    """
+    진입 적합도 종합 평가
+    """
+    score = 0
+    reasons = []
+    
+    # 위험보상비율
+    if rr_ratio >= 3.0:
+        score += 3
+        reasons.append("R/R 3:1 이상")
+    elif rr_ratio >= 2.0:
+        score += 2
+        reasons.append("R/R 2:1 이상")
+    elif rr_ratio >= 1.0:
+        score += 1
+    
+    # RSI
+    if rsi < 30:
+        score += 2
+        reasons.append("RSI 과매도")
+    elif rsi < 40:
+        score += 1
+    elif rsi > 70:
+        score -= 1
+        reasons.append("RSI 과열")
+    
+    # MACD
+    if macd_cross == 'bullish_cross':
+        score += 2
+        reasons.append("MACD 골든크로스")
+    elif macd_cross == 'bearish_cross':
+        score -= 2
+    
+    # Divergence
+    if divergence == 'bullish_div':
+        score += 3
+        reasons.append("강세 다이버전스")
+    elif divergence == 'bearish_div':
+        score -= 3
+    
+    # 등급 결정
+    if score >= 6:
+        grade = 'A'
+        label = '매우 좋은 진입 시점'
+    elif score >= 4:
+        grade = 'B'
+        label = '좋은 진입 시점'
+    elif score >= 2:
+        grade = 'C'
+        label = '보통'
+    else:
+        grade = 'D'
+        label = '진입 주의'
+    
+    return {
+        'score': score,
+        'grade': grade,
+        'label': label,
+        'reasons': reasons
+    }

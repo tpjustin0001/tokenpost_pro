@@ -242,7 +242,10 @@ export default function ContentModal({ contentData, isOpen, onClose }: ContentMo
     console.log('[ContentModal] Rendering with data:', { title, hasContent: !!content, contentLength: content?.length });
     // console.log('[ContentModal] Content raw:', content);
 
-    return (
+    // Use createPortal to render at document.body level (fullscreen overlay)
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
         <div className={styles.overlay} onClick={onClose}>
             <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
                 <button className={styles.closeBtn} onClick={onClose}>×</button>
@@ -286,7 +289,7 @@ export default function ContentModal({ contentData, isOpen, onClose }: ContentMo
                 )}
 
                 {/* Image Lightbox Popup */}
-                {lightboxOpen && thumbnail && typeof document !== 'undefined' && createPortal(
+                {lightboxOpen && thumbnail && createPortal(
                     <div
                         onClick={() => setLightboxOpen(false)}
                         style={{
@@ -359,6 +362,7 @@ export default function ContentModal({ contentData, isOpen, onClose }: ContentMo
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

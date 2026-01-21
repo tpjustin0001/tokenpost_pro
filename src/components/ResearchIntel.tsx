@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
-import ContentModal from './ContentModal';
 import { supabase } from '@/lib/supabase';
 import styles from './ResearchIntel.module.css';
 import XRayTooltip from './XRayTooltip';
@@ -41,11 +41,11 @@ function getTimeAgo(dateString: string): string {
 
 export default function ResearchIntel() {
     console.log('[DEBUG-RESEARCH] ResearchIntel Component Function Called');
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<TabType>('ALL');
     const [data, setData] = useState<IntelItem[]>([]);
     const [rssNews, setRssNews] = useState<IntelItem[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedId, setSelectedId] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
 
     useEffect(() => {
@@ -168,7 +168,6 @@ export default function ResearchIntel() {
             : rssNews; // NEWS tab uses RSS feed
 
     const breakingCount = data.filter(item => item.isBreaking).length;
-    const viewItem = data.find(item => item.id === selectedId) || rssNews.find(item => item.id === selectedId);
 
     const getTypeColor = (type: string) => {
         switch (type) {
@@ -232,7 +231,7 @@ export default function ResearchIntel() {
                                     if (item.link) {
                                         window.open(item.link, '_blank');
                                     } else {
-                                        setSelectedId(item.id);
+                                        router.push(`/content/${item.id}`);
                                     }
                                 }}
                             >
@@ -296,12 +295,6 @@ export default function ResearchIntel() {
                     </>
                 )}
             </div>
-
-            <ContentModal
-                contentData={viewItem || null}
-                isOpen={!!selectedId}
-                onClose={() => setSelectedId(null)}
-            />
-        </div >
+        </div>
     );
 }

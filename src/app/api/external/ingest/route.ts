@@ -9,6 +9,54 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 // API Key for authentication
 const EXTERNAL_API_KEY = process.env.EXTERNAL_API_KEY;
 
+/**
+ * Parse Korean date format to ISO timestamp
+ * Supports: "2026년 1월 21일 오후 6:05", "2026년 1월 21일 18:05", "2026-01-21T18:05:00"
+ * Assumes KST (Asia/Seoul) timezone and converts to UTC
+ */
+function parseKoreanDate(dateStr: string): string {
+    if (!dateStr) return new Date().toISOString();
+
+    // If already ISO format, return as-is
+    if (dateStr.includes('T') && (dateStr.includes('Z') || dateStr.includes('+'))) {
+        return dateStr;
+    }
+
+    // Korean format: "2026년 1월 21일 오후 6:05" or "2026년 1월 21일 18:05"
+    const koreanRegex = /(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\s*(오전|오후)?\s*(\d{1,2}):(\d{2})/;
+    const match = dateStr.match(koreanRegex);
+
+    if (match) {
+        const [, year, month, day, ampm, hourStr, minute] = match;
+        let hour = parseInt(hourStr);
+
+        // Handle AM/PM (오전/오후)
+        if (ampm === '오후' && hour < 12) hour += 12;
+        if (ampm === '오전' && hour === 12) hour = 0;
+
+        // Create date in KST (UTC+9)
+        const kstDate = new Date(Date.UTC(
+            parseInt(year),
+            parseInt(month) - 1,
+            parseInt(day),
+            hour - 9, // Convert KST to UTC by subtracting 9 hours
+            parseInt(minute)
+        ));
+
+        return kstDate.toISOString();
+    }
+
+    // Try parsing as regular date string
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString();
+    }
+
+    // Fallback to current time
+    console.warn(`[Ingest API] Could not parse date: ${dateStr}, using current time`);
+    return new Date().toISOString();
+}
+
 export async function POST(request: NextRequest) {
     try {
         // 1. Auth check
@@ -77,7 +125,7 @@ export async function POST(request: NextRequest) {
                 summary: payload.summary,
                 content: payload.content,
                 source: payload.source || 'External',
-                published_at: payload.published_at || new Date().toISOString(),
+                published_at: parseKoreanDate(payload.published_at),
                 sentiment_score: payload.sentiment_score,
                 image_url: payload.image_url,
                 category: payload.category,
@@ -116,7 +164,8 @@ export async function POST(request: NextRequest) {
                 tags: payload.tags || [],
                 is_premium: payload.is_premium ?? false,
                 image_url: payload.thumbnail_url,
-                category: payload.type || 'REPORT'
+                category: payload.type || 'REPORT',
+                published_at: parseKoreanDate(payload.published_at)
             };
 
             const { data, error } = await supabase

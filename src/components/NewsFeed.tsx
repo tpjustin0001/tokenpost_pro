@@ -14,6 +14,7 @@ interface NewsItem {
     summary?: string;
     content?: string;
     tickers: string[];
+    related_coin?: string | null;  // DB에서 직접 가져온 관련 코인
 }
 
 const PAGE_SIZE = 15;
@@ -137,9 +138,14 @@ export default function NewsFeed() {
             timeZone: 'Asia/Seoul'
         }).format(date);
 
-        // Extract tickers from title and content
+        // Extract tickers from title and content (fallback)
         const searchText = `${row.title || ''} ${row.content || ''} ${row.summary || ''}`;
-        const tickers = extractTickers(searchText);
+        const extractedTickers = extractTickers(searchText);
+
+        // Use related_coin from DB if available, otherwise use extracted tickers
+        const tickers = row.related_coin
+            ? [row.related_coin.toUpperCase(), ...extractedTickers.filter(t => t !== row.related_coin?.toUpperCase())]
+            : extractedTickers;
 
         return {
             id: row.id.toString(),
@@ -148,13 +154,22 @@ export default function NewsFeed() {
             title: row.title,
             summary: row.summary || undefined,
             content: row.content || undefined,
-            tickers,
+            tickers: tickers.slice(0, 3),
+            related_coin: row.related_coin || null,
         };
     }
 
+    // Filter by related_coin (primary) or extracted tickers (fallback)
     const filteredNews = filter === 'ALL'
         ? newsItems
-        : newsItems.filter(news => news.tickers.includes(filter));
+        : newsItems.filter(news => {
+            // Primary: check related_coin from DB
+            if (news.related_coin && news.related_coin.toUpperCase() === filter) {
+                return true;
+            }
+            // Fallback: check extracted tickers
+            return news.tickers.includes(filter);
+        });
 
     const tickerFilters = ['ALL', 'BTC', 'ETH', 'XRP', 'SOL', 'BNB'];
 

@@ -113,13 +113,23 @@
 }
 
 .metricCard {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: var(--glass-bg-card);
+    backdrop-filter: var(--blur-md);
+    -webkit-backdrop-filter: var(--blur-md);
+    border: var(--glass-border);
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
+    box-shadow: var(--glass-shadow);
+    transition: all 0.3s ease;
+}
+
+.metricCard:hover {
+    border: var(--glass-border-hover);
+    box-shadow: var(--glass-shadow-hover);
+    transform: translateY(-2px);
 }
 
 .metricLabel {
@@ -135,9 +145,12 @@
 }
 
 .tableWrapper {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: var(--glass-bg-card);
+    backdrop-filter: var(--blur-md);
+    -webkit-backdrop-filter: var(--blur-md);
+    border: var(--glass-border);
     border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
     overflow: hidden;
 }
 

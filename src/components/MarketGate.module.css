@@ -54,12 +54,21 @@
 }
 
 .metricItem {
-    background: var(--bg-tertiary);
+    background: var(--glass-bg-light);
+    backdrop-filter: var(--blur-sm);
+    -webkit-backdrop-filter: var(--blur-sm);
+    border: var(--glass-border);
     padding: var(--spacing-sm);
     border-radius: var(--radius-sm);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: all 0.2s ease;
+}
+
+.metricItem:hover {
+    background: var(--glass-bg);
+    border: var(--glass-border-hover);
 }
 
 .metricName {

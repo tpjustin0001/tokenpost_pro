@@ -434,8 +434,8 @@
 .tableHeader,
 .tableRow {
     display: grid;
-    grid-template-columns: 110px 100px 55px 85px 100px 75px 100px;
-    gap: 16px;
+    grid-template-columns: 120px 110px 50px 90px 80px 90px 130px;
+    gap: 12px;
     padding: 14px 20px;
     background: var(--bg-card);
     align-items: center;

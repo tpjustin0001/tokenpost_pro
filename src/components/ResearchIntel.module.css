@@ -1,11 +1,20 @@
 .widget {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: var(--glass-bg-card);
+    backdrop-filter: var(--blur-md);
+    -webkit-backdrop-filter: var(--blur-md);
+    border: var(--glass-border);
     border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
     overflow: hidden;
     display: flex;
     flex-direction: column;
     height: 100%;
+    transition: all 0.3s ease;
+}
+
+.widget:hover {
+    border: var(--glass-border-hover);
+    box-shadow: var(--glass-shadow-hover);
 }
 
 .header {
@@ -110,24 +119,24 @@
     align-items: flex-start;
     gap: var(--spacing-sm);
     padding: 16px 12px;
-    border-bottom: 1px solid var(--border-color);
-    transition: background var(--transition-fast);
+    border-bottom: var(--glass-border);
+    transition: all 0.2s ease;
     cursor: pointer;
     text-decoration: none;
     color: inherit;
 }
 
 .intelItem:hover {
-    background: var(--bg-tertiary);
+    background: var(--glass-bg-light);
 }
 
 .intelItem.breaking {
-    background: rgba(248, 113, 113, 0.05);
+    background: rgba(248, 113, 113, 0.08);
     border-left: 2px solid var(--accent-red);
 }
 
 .intelItem.breaking:hover {
-    background: rgba(248, 113, 113, 0.1);
+    background: rgba(248, 113, 113, 0.12);
 }
 
 .intelItem:last-child {

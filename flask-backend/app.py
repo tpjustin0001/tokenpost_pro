@@ -256,6 +256,20 @@ def trigger_analysis():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/api/admin/trigger-screener', methods=['POST'], strict_slashes=False)
+def trigger_screener():
+    """Manual trigger for screener job"""
+    try:
+        from scheduler_service import scheduler_service
+        # Run in thread pool to avoid blocking response too long
+        # But for manual trigger, waiting a bit is fine or returning accepted.
+        # Let's run synchronously to see result or return Accepted.
+        # Re-using internal method
+        scheduler_service.run_screeners()
+        return jsonify({"success": True, "message": "Screener scan triggered and saved"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.route('/api/analysis/latest', methods=['GET'])
 def get_latest_analysis():
     """Get latest analysis directly from AI Service (bypassing Supabase RLS)"""

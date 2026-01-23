@@ -91,6 +91,34 @@ class SchedulerService:
             except Exception as e:
                 logger.error(f"⚠️ Initial Price Performance failed: {e}")
 
+            # Run Market Gate immediately on startup to prevent stale data
+            logger.info("🚀 Running Market Gate immediately on startup...")
+            try:
+                self.run_market_gate()
+            except Exception as e:
+                logger.error(f"⚠️ Initial Market Gate failed: {e}")
+
+            # Run News Feed immediately
+            logger.info("🚀 Running News Feed immediately...")
+            try:
+                self.update_news_feed()
+            except Exception as e:
+                logger.error(f"⚠️ Initial News Feed failed: {e}")
+
+            # Run Grok Pulse immediately
+            logger.info("🚀 Running Grok Pulse immediately...")
+            try:
+                self.update_market_analysis()
+            except Exception as e:
+                logger.error(f"⚠️ Initial Grok Pulse failed: {e}")
+
+            # Run ETH Staking immediately
+            logger.info("🚀 Running ETH Staking immediately...")
+            try:
+                self.update_eth_staking()
+            except Exception as e:
+                logger.error(f"⚠️ Initial ETH Staking failed: {e}")
+
     def update_eth_staking(self):
         logger.info("⏰ Running ETH Staking Job...")
         try:

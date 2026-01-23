@@ -1017,6 +1017,7 @@ def api_xray_global():
         print(f"Global X-Ray Error: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/api/crypto/xray/deep', methods=['GET'])
 def api_xray_deep():
     """
@@ -1025,16 +1026,21 @@ def api_xray_deep():
     try:
         from market_provider import market_data_service
         from ai_service import ai_service
+        import concurrent.futures
         
         # Reuse logic to gather market data (Simplified)
-        with ThreadPoolExecutor() as executor:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
             future_global = executor.submit(market_data_service.get_global_metrics)
             future_btc = executor.submit(market_data_service.get_asset_data, 'BTC')
             future_eth = executor.submit(market_data_service.get_asset_data, 'ETH')
             
-            global_metrics = future_global.result(timeout=5) or {}
+            # Safe retrieval with timeouts
+            try: global_metrics = future_global.result(timeout=5) or {}
+            except: global_metrics = {}
+
             try: btc_data = future_btc.result(timeout=5)
             except: btc_data = {'current_price': 0}
+
             try: eth_data = future_eth.result(timeout=5)
             except: eth_data = {'current_price': 0}
 

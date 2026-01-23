@@ -88,7 +88,15 @@ export default function PricePerformance() {
                                         alt={coin.symbol}
                                         className={styles.coinIcon}
                                         onError={(e) => {
-                                            e.currentTarget.src = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/32/icon/generic.png';
+                                            // Fallback Strategy: CoinCap (Default) -> SpotHQ (GitHub) -> Generic
+                                            const target = e.currentTarget;
+                                            const symbol = coin.symbol.toLowerCase();
+
+                                            if (target.src.includes('assets.coincap.io')) {
+                                                target.src = `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${symbol}.png`;
+                                            } else if (target.src.includes('githubusercontent')) {
+                                                target.src = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/32/icon/generic.png';
+                                            }
                                         }}
                                     />
                                 )}

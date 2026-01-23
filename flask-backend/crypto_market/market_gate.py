@@ -375,9 +375,13 @@ def run_market_gate_sync() -> MarketGateResult:
         comps['volatility'] = comps['volatility'] # Keep
         comps['leverage'] = comps['leverage'] # Keep
         
-        # New Total
         new_total = sum(comps.values())
         result.score = int(min(100, max(0, new_total)))
+        
+        # Log breakdown
+        import logging
+        logger = logging.getLogger("MARKET_GATE")
+        logger.info(f"Market Gate Components: {comps} -> Total: {result.score}")
         
         # Update Gate Color
         if result.score >= 72: result.gate = "GREEN"

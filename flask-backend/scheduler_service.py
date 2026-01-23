@@ -119,6 +119,13 @@ class SchedulerService:
             except Exception as e:
                 logger.error(f"⚠️ Initial ETH Staking failed: {e}")
 
+            # Run GPT Deep Analysis immediately
+            logger.info("🚀 Running GPT Deep Analysis immediately...")
+            try:
+                self.update_deep_analysis()
+            except Exception as e:
+                logger.error(f"⚠️ Initial GPT Deep Analysis failed: {e}")
+
     def update_eth_staking(self):
         logger.info("⏰ Running ETH Staking Job...")
         try:

@@ -4,6 +4,7 @@
 TokenPost PRO - Flask API Server
 """
 from flask import Flask, jsonify, request
+print("CRITICAL DEBUG: I AM RUNNING SERVER_DEBUG.PY")
 from flask_cors import CORS
 from datetime import datetime
 import os
@@ -310,51 +311,22 @@ def api_pingtest():
     return jsonify({"status": "ok"}), 200
 
 @app.route('/api/prices/performance')
-@cache.cached(timeout=60, query_string=True)  # 60초 캐시, exchange 파라미터별 개별 캐시
+@cache.cached(timeout=60, query_string=True)
 def api_price_performance():
     """
-    Get Price Performance (DB First, then Live Fallback)
-    Cached for 60 seconds to prevent API overload
+    Get 1-Hour Price Performance for specific exchange.
+    Query: exchange (upbit|bithumb|binance), limit (default 20)
     """
+    from market_provider import market_data_service
+    
     exchange = request.args.get('exchange', 'upbit')
     limit = request.args.get('limit', default=20, type=int)
     
-    # 1. Try DB First (Fast Path)
-    try:
-        if supabase:
-            res = supabase.table('analysis_results') \
-                .select('data_json, created_at') \
-                .eq('analysis_type', f'PERFORMANCE_{exchange.upper()}') \
-                .order('created_at', desc=True) \
-                .limit(1) \
-                .execute()
-            
-            if res.data and len(res.data) > 0:
-                data = res.data[0]['data_json']
-                # Ensure proper format for frontend
-                return jsonify({'data': data, 'source': 'db', 'cached_at': res.data[0].get('created_at')})
-    except Exception as e:
-        print(f"[PERF] DB Cache Miss/Error: {e}")
-
-    # 2. Live Fallback (Slow Path - only if DB empty)
-    try:
-        from market_provider import market_data_service
-        data = market_data_service.get_exchange_performance(exchange, limit=limit)
-        
-        # Save to DB for next request (insert, not upsert to avoid on_conflict issue)
-        try:
-            if supabase and data:
-                supabase.table('analysis_results').insert({
-                    'analysis_type': f'PERFORMANCE_{exchange.upper()}',
-                    'data_json': data,
-                }).execute()
-        except Exception as save_err:
-            print(f"[PERF] DB Save Error (ignored): {save_err}")
-
-        return jsonify({'data': data, 'source': 'live'})
-    except Exception as e:
-        print(f"[PERF] Live Fallback Error: {e}")
-        return jsonify({'error': str(e), 'data': []}), 500
+    data = market_data_service.get_exchange_performance(exchange, limit=limit)
+    return jsonify({
+        'exchange': exchange,
+        'data': data
+    })
 
 # ============================================================
 # SIMPLE ASSET DATA API (for Market Gate cards)
@@ -1222,7 +1194,7 @@ if __name__ == '__main__':
     with app.app_context():
         print(app.url_map)
         
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    app.run(host='0.0.0.0', port=port, debug=False)
 
 # ============================================================
 # START SCHEDULER (Gunicorn/Prod)

@@ -135,5 +135,17 @@ export const flaskApi = {
             console.error('Error fetching listings:', error);
             return [];
         }
+    },
+
+    async getPricePerformance(exchange: string = 'upbit', limit: number = 20): Promise<any[]> {
+        try {
+            const res = await fetch(`${API_PREFIX}/prices/performance?exchange=${exchange}&limit=${limit}`);
+            if (!res.ok) throw new Error('Failed to fetch price performance');
+            const json = await res.json();
+            return json.data || [];
+        } catch (error) {
+            console.error('Error fetching price performance:', error);
+            return [];
+        }
     }
 };

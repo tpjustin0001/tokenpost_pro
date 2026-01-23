@@ -407,21 +407,44 @@ export default function TradingChart({ symbol, interval = '5m' }: TradingChartPr
             {/* Backdrop */}
             {selectedNews && <div className={styles.modalBackdrop} onClick={() => setSelectedNews(null)} />}
 
-            {isLive && (
-                <div className={styles.liveStatus}>
-                    <XRayTooltip dataKey="live_feed">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {currentPrice && (
-                                <span className={styles.livePrice}>
-                                    ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                </span>
-                            )}
-                            <div className={styles.liveDot} />
-                            <span>LIVE</span>
-                        </div>
-                    </XRayTooltip>
+            <div className={styles.statusContainer}>
+                {/* News Marker Status */}
+                <div className={`${styles.newsStatusBadge} ${newsMarkers.length > 0 ? styles.newsActive : styles.newsEmpty}`}>
+                    <span>NEWS: {newsMarkers.length}</span>
                 </div>
-            )}
+
+                {/* Live Status */}
+                {isLive && (
+                    <div className={styles.liveBadge}>
+                        <XRayTooltip dataKey="live_feed">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                {currentPrice && (
+                                    <span className={styles.livePrice}>
+                                        ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </span>
+                                )}
+                                <div className={styles.liveDot} />
+                                <span>LIVE</span>
+                            </div>
+                        </XRayTooltip>
+                    </div>
+                )}
+            </div>
+            {/* Legend */}
+            <div className={styles.chartLegend}>
+                <div className={styles.legendRow}>
+                    <div className={`${styles.legendItem} ${styles.legendItemBull}`}>
+                        <div className={styles.arrowUp} />
+                        <span>호재</span>
+                    </div>
+                    <div className={`${styles.legendItem} ${styles.legendItemBear}`}>
+                        <div className={styles.arrowDown} />
+                        <span>악재</span>
+                    </div>
+                </div>
+                <div className={styles.legendHelp}>호재/악재 마커를 눌러 관련 뉴스를 확인해 보세요</div>
+            </div>
+
             {loading && <div className={styles.loadingOverlay}><span>Loading Chart...</span></div>}
             <div ref={chartContainerRef} className={styles.chart} />
         </div>

@@ -461,3 +461,143 @@
     color: #ffffff;
     border-color: rgba(255, 255, 255, 0.2);
 }
+
+/* Status Container for multiple badges */
+.statusContainer {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 8px;
+    z-index: 20;
+}
+
+.newsStatusBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 9999px;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+.newsActive {
+    color: #60a5fa;
+    /* Blue-400 */
+    background: rgba(37, 99, 235, 0.2);
+    /* Blue tint */
+    border: 1px solid rgba(96, 165, 250, 0.3);
+}
+
+.newsEmpty {
+    color: #9ca3af;
+    /* Gray-400 */
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.liveBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #4ade80;
+    font-weight: 600;
+    background: rgba(6, 78, 59, 0.4);
+    padding: 4px 8px;
+    border-radius: 9999px;
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    backdrop-filter: blur(4px);
+}
+
+/* Legend Top Left */
+.chartLegend {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 20;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.7);
+    /* Force Dark */
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    min-width: 140px;
+}
+
+.legendHelp {
+    font-size: 12px;
+    color: #d1d5db;
+    /* Gray-300 */
+    font-weight: 400;
+    margin-top: 4px;
+    opacity: 0.9;
+}
+
+.legendTitle {
+    font-size: 10px;
+    color: #9ca3af;
+    /* Gray-400 */
+    font-weight: 700;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.legendRow {
+    display: flex;
+    gap: 12px;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 11px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: #ffffff;
+    /* Force White */
+}
+
+.legendItemBull {
+    color: #4ade80;
+}
+
+.legendItemBear {
+    color: #f87171;
+}
+
+.arrowUp {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 9px solid #4ade80;
+    /* Green-400 */
+    filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.8));
+    transform: translateY(-1px);
+}
+
+.arrowDown {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 9px solid #f87171;
+    /* Red-400 */
+    filter: drop-shadow(0 0 4px rgba(248, 113, 113, 0.8));
+    transform: translateY(1px);
+}

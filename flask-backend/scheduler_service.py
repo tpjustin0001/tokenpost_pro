@@ -62,6 +62,10 @@ class SchedulerService:
             self.scheduler.add_job(self.run_whale_monitor, IntervalTrigger(minutes=5), id='whale', replace_existing=True)
             time.sleep(2)
 
+            # 6. Price Performance (Every 5 mins)
+            self.scheduler.add_job(self.run_price_performance_update, IntervalTrigger(minutes=5), id='price_perf', replace_existing=True)
+            time.sleep(2)
+
             # 6. Market Gate (Every 1 hour)
             self.scheduler.add_job(self.run_market_gate, IntervalTrigger(hours=1), id='gate', replace_existing=True)
             time.sleep(2)
@@ -80,6 +84,13 @@ class SchedulerService:
             logger.info("All scheduler jobs added successfully.")
             atexit.register(lambda: self.scheduler.shutdown())
 
+            # Run Price Performance immediately on startup for instant data
+            logger.info("🚀 Running Price Performance immediately on startup...")
+            try:
+                self.run_price_performance_update()
+            except Exception as e:
+                logger.error(f"⚠️ Initial Price Performance failed: {e}")
+
     def update_eth_staking(self):
         logger.info("⏰ Running ETH Staking Job...")
         try:
@@ -88,6 +99,32 @@ class SchedulerService:
         except Exception as e:
             logger.error(f"❌ ETH Job Failed: {e}")
     
+    def run_price_performance_update(self):
+        """Fetch Price Performance from Exchanges and Save to DB"""
+        logger.info("⏰ Running Price Performance Update...")
+        try:
+            from market_provider import market_data_service
+            
+            exchanges = ['upbit', 'bithumb', 'binance']
+            for ex in exchanges:
+                data = market_data_service.get_exchange_performance(exchange_name=ex, limit=30)
+                if data and self.supabase:
+                    # Save to 'price_performance_cache' table or similar (using analysis_results for simplicity now)
+                    # Ideally we should use a dedicated table or cache. 
+                    # Let's use 'analysis_results' with a specific type for now.
+                    try:
+                        self.supabase.table('analysis_results').insert({
+                            'analysis_type': f'PERFORMANCE_{ex.upper()}',
+                            'data_json': data,
+                            'created_at': datetime.now().isoformat()
+                        }).execute()
+                    except Exception as db_err:
+                        logger.warning(f"[PERF] DB Insert Error (ignored): {db_err}")
+            
+            logger.info("✅ Price Performance Saved")
+        except Exception as e:
+            logger.error(f"❌ Price Performance Job Failed: {e}")
+
     def run_screeners(self):
         logger.info("⏰ Running Crypto Screener Scan...")
         try:

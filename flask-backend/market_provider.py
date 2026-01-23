@@ -438,7 +438,13 @@ class MarketDataService:
                     except:
                         pass
             
-            return results
+            # Filter out items with invalid price only (allow zero change_24h for display)
+            valid_results = [r for r in results if r.get('price', 0) > 0]
+            
+            # Sort by absolute change_24h for better presentation
+            valid_results.sort(key=lambda x: abs(x.get('change_24h', 0)), reverse=True)
+            
+            return valid_results
 
         except Exception as e:
             print(f"Error fetching {exchange_name} performance: {e}")

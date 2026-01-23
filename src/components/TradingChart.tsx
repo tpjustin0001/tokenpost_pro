@@ -388,7 +388,7 @@ export default function TradingChart({ symbol, interval = '5m' }: TradingChartPr
                         >
                             {selectedNews.sentiment_score > 0 ? 'BULLISH' : (selectedNews.sentiment_score < 0 ? 'BEARISH' : 'NEUTRAL')}
                         </span>
-                        <span className={styles.modalDate}>
+                        <span className={styles.modalDate} suppressHydrationWarning>
                             {new Date(selectedNews.published_at).toLocaleString(undefined, {
                                 month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                             })}

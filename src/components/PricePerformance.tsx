@@ -88,27 +88,34 @@ export default function PricePerformance() {
                                         alt={coin.symbol}
                                         className={styles.coinIcon}
                                         onError={(e) => {
-                                            // Fallback Strategy: CoinCap -> CryptoIcons -> SpotHQ -> Generic
-                                            const target = e.currentTarget;
-                                            const symbol = coin.symbol.toLowerCase();
-                                            // Prevent infinite loops
-                                            const currentSrc = target.src;
+                                            try {
+                                                // Fallback Strategy: CoinCap -> CryptoIcons -> SpotHQ -> Generic
+                                                const target = e.currentTarget;
+                                                // Safety check: sometimes current target might not be fully initialized or symbol missing
+                                                const symbol = coin.symbol ? coin.symbol.toLowerCase() : '';
+                                                if (!symbol || !target.src) return;
 
-                                            // 1. If CoinCap failed (current), try CryptoIcons
-                                            if (currentSrc.includes('assets.coincap.io')) {
-                                                target.src = `https://cryptoicons.org/api/icon/${symbol}/200`;
-                                            }
-                                            // 2. If CryptoIcons failed, try SpotHQ
-                                            else if (currentSrc.includes('cryptoicons.org')) {
-                                                target.src = `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${symbol}.png`;
-                                            }
-                                            // 3. If SpotHQ failed, use Generic
-                                            else if (currentSrc.includes('githubusercontent')) {
-                                                target.src = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/32/icon/generic.png';
-                                            }
-                                            // 4. Safety net
-                                            else {
-                                                target.style.display = 'none'; // Hide if all fail
+                                                const currentSrc = target.src;
+
+                                                // 1. If CoinCap failed
+                                                if (currentSrc.includes('assets.coincap.io')) {
+                                                    target.src = `https://cryptoicons.org/api/icon/${symbol}/200`;
+                                                }
+                                                // 2. If CryptoIcons failed
+                                                else if (currentSrc.includes('cryptoicons.org')) {
+                                                    target.src = `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${symbol}.png`;
+                                                }
+                                                // 3. If SpotHQ failed
+                                                else if (currentSrc.includes('githubusercontent')) {
+                                                    target.src = 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/32/icon/generic.png';
+                                                }
+                                                // 4. Safety net
+                                                else {
+                                                    target.style.display = 'none';
+                                                }
+                                            } catch (err) {
+                                                console.warn("Image fallback error", err);
+                                                e.currentTarget.style.display = 'none';
                                             }
                                         }}
                                     />

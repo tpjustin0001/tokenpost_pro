@@ -109,6 +109,7 @@ class CustomJSONProvider(DefaultJSONProvider):
 
 app.json = CustomJSONProvider(app)
 
+
 # ----------------------------------------------------
 # SCHEDULER STARTUP
 # ----------------------------------------------------
@@ -149,7 +150,7 @@ class VercelMiddleware(object):
             environ['PATH_INFO'] = path.replace('/api/python', '/api', 1)
         return self.app(environ, start_response)
 
-app.wsgi_app = VercelMiddleware(app.wsgi_app)
+# app.wsgi_app = VercelMiddleware(app.wsgi_app)
 
 # NOTE: Imports are now lazy-loaded inside routes to prevent startup crashes on Vercel
 # from ai_service import ai_service
@@ -301,7 +302,59 @@ def get_latest_analysis():
 @app.route('/api/test/hello')
 def api_test_hello():
     """Dependency-free test route"""
-    return jsonify({'message': 'Hello from Vercel!', 'status': 'ok'})
+    return jsonify({'message': 'MODIFIED_VERIFIED', 'status': 'ok'})
+
+@app.route('/api/pingtest')
+def api_pingtest():
+    """Test Route Refactored"""
+    return jsonify({"status": "ok"}), 200
+
+@app.route('/api/prices/performance')
+@cache.cached(timeout=60, query_string=True)  # 60초 캐시, exchange 파라미터별 개별 캐시
+def api_price_performance():
+    """
+    Get Price Performance (DB First, then Live Fallback)
+    Cached for 60 seconds to prevent API overload
+    """
+    exchange = request.args.get('exchange', 'upbit')
+    limit = request.args.get('limit', default=20, type=int)
+    
+    # 1. Try DB First (Fast Path)
+    try:
+        if supabase:
+            res = supabase.table('analysis_results') \
+                .select('data_json, created_at') \
+                .eq('analysis_type', f'PERFORMANCE_{exchange.upper()}') \
+                .order('created_at', desc=True) \
+                .limit(1) \
+                .execute()
+            
+            if res.data and len(res.data) > 0:
+                data = res.data[0]['data_json']
+                # Ensure proper format for frontend
+                return jsonify({'data': data, 'source': 'db', 'cached_at': res.data[0].get('created_at')})
+    except Exception as e:
+        print(f"[PERF] DB Cache Miss/Error: {e}")
+
+    # 2. Live Fallback (Slow Path - only if DB empty)
+    try:
+        from market_provider import market_data_service
+        data = market_data_service.get_exchange_performance(exchange, limit=limit)
+        
+        # Save to DB for next request
+        try:
+            if supabase and data:
+                supabase.table('analysis_results').upsert({
+                    'analysis_type': f'PERFORMANCE_{exchange.upper()}',
+                    'data_json': data,
+                }, on_conflict='analysis_type').execute()
+        except Exception as save_err:
+            print(f"[PERF] DB Save Error: {save_err}")
+
+        return jsonify({'data': data, 'source': 'live'})
+    except Exception as e:
+        print(f"[PERF] Live Fallback Error: {e}")
+        return jsonify({'error': str(e), 'data': []}), 500
 
 # ============================================================
 # SIMPLE ASSET DATA API (for Market Gate cards)
@@ -970,11 +1023,14 @@ def api_xray_deep():
     GPT-4o Deep Analysis Endpoint (for GlobalXRay modal)
     """
     try:
+        from market_provider import market_data_service
+        from ai_service import ai_service
+        
         # Reuse logic to gather market data (Simplified)
         with ThreadPoolExecutor() as executor:
-            future_global = executor.submit(market_service.get_global_metrics)
-            future_btc = executor.submit(market_service.get_asset_data, 'BTC')
-            future_eth = executor.submit(market_service.get_asset_data, 'ETH')
+            future_global = executor.submit(market_data_service.get_global_metrics)
+            future_btc = executor.submit(market_data_service.get_asset_data, 'BTC')
+            future_eth = executor.submit(market_data_service.get_asset_data, 'ETH')
             
             global_metrics = future_global.result(timeout=5) or {}
             try: btc_data = future_btc.result(timeout=5)
@@ -1155,11 +1211,17 @@ def test_market_fetch(symbol):
         result["traceback"] = traceback.format_exc()
         return jsonify(result), 500
 
+
 if __name__ == '__main__':
     # Deployment Safety: Use provided PORT or default to 5002
     port = int(os.environ.get('PORT', 5001))
     debug = os.environ.get('FLASK_ENV') == 'development' or os.environ.get('FLASK_DEBUG') == '1'
     print(f"[START] TokenPost PRO API starting on port {port}...")
+    
+    # DEBUG: Print all registered routes
+    with app.app_context():
+        print(app.url_map)
+        
     app.run(host='0.0.0.0', port=port, debug=debug)
 
 # ============================================================

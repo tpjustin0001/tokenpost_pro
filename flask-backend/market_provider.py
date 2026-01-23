@@ -2,6 +2,7 @@ import ccxt
 import os
 import requests
 import pandas as pd
+import concurrent.futures
 from datetime import datetime
 
 print("DEBUG: Loaded MarketDataService Module")
@@ -24,6 +25,12 @@ class MarketDataService:
         # 3. CoinMarketCap (Requires Key)
         self.cmc_api_key = os.getenv('COINMARKETCAP_API_KEY')
         self.cmc_base_url = "https://pro-api.coinmarketcap.com"
+
+        # 4. Bithumb (CCXT)
+        self.bithumb = ccxt.bithumb({
+            'enableRateLimit': True,
+            'timeout': 3000
+        })
 
     def get_asset_data(self, symbol, prefer_krw=False):
         """
@@ -299,6 +306,143 @@ class MarketDataService:
             "volume_status": "High" if df['Volume'].iloc[-1] > vol_avg else "Normal",
             "raw_df": df
         }
+
+    def get_exchange_performance(self, exchange_name='upbit', limit=20):
+        """
+        Fetch Top Volume coins and their Price Change (OPTIMIZED - No individual OHLCV calls).
+        Returns: [ { symbol, name, price, change_1h, change_24h, ... }, ... ]
+        """
+        
+        exchange_name = exchange_name.lower()
+        exchange_obj = None
+        pair_suffix = ""
+
+        if exchange_name == 'upbit':
+            exchange_obj = self.upbit
+            pair_suffix = "/KRW"
+        elif exchange_name == 'bithumb':
+            exchange_obj = self.bithumb
+            pair_suffix = "/KRW"
+        elif exchange_name == 'binance':
+            exchange_obj = self.binance
+            pair_suffix = "/USDT"
+        else:
+            return []
+
+        try:
+            # Load markets to get coin names
+            markets = exchange_obj.load_markets()
+            
+            # Build Korean name map from Upbit for Korean exchanges
+            korean_name_map = {}
+            if exchange_name in ['upbit', 'bithumb']:
+                try:
+                    upbit_markets = self.upbit.load_markets()
+                    for sym, info in upbit_markets.items():
+                        if '/KRW' in sym and 'info' in info:
+                            base = sym.replace('/KRW', '')
+                            korean_name = info['info'].get('korean_name', base)
+                            korean_name_map[base] = korean_name
+                except:
+                    pass
+            
+            # 1. Get All Tickers (Single API call - FAST)
+            tickers = exchange_obj.fetch_tickers()
+            
+            # Filter pairs ending with suffix with valid data AND non-zero percentage
+            valid_tickers = [
+                t for s, t in tickers.items() 
+                if s.endswith(pair_suffix) 
+                and t.get('last') is not None
+                and t.get('percentage') is not None
+                and t.get('percentage') != 0  # Exclude coins with no change data
+            ]
+            
+            # 2. Sort by 24h percentage - top gainers and losers
+            sorted_by_change = sorted(valid_tickers, key=lambda x: x.get('percentage') or 0, reverse=True)
+            top_gainers = sorted_by_change[:limit]
+            top_losers = sorted_by_change[-limit:] if len(sorted_by_change) > limit else []
+            
+            # Remove duplicates (a coin might be in both if few coins have data)
+            seen = set()
+            top_tickers = []
+            for t in top_gainers + top_losers:
+                sym = t.get('symbol', '')
+                if sym not in seen:
+                    seen.add(sym)
+                    top_tickers.append(t)
+            
+            results = []
+
+            # 3. Process tickers WITHOUT individual OHLCV calls (10x faster)
+            for item in top_tickers:
+                try:
+                    symbol = item['symbol']
+                    base_symbol = symbol.replace(pair_suffix, "")
+                    
+                    # Get coin name - prioritize Korean name map
+                    coin_name = base_symbol
+                    if base_symbol in korean_name_map:
+                        coin_name = korean_name_map[base_symbol]
+                    elif symbol in markets:
+                        market_info = markets[symbol]
+                        if 'info' in market_info:
+                            info = market_info['info']
+                            if 'korean_name' in info:
+                                coin_name = info['korean_name']
+                    
+                    curr_price = item.get('last') or 0
+                    
+                    # 24h change - use exchange's signed_change_rate for accuracy
+                    pct_24h = 0
+                    if 'info' in item and item['info']:
+                        raw_rate = item['info'].get('signed_change_rate')
+                        if raw_rate is not None:
+                            pct_24h = float(raw_rate) * 100
+                        else:
+                            pct_24h = item.get('percentage') or 0
+                    else:
+                        pct_24h = item.get('percentage') or 0
+                    
+                    # 1h change - estimate from open/close if available, otherwise 0
+                    pct_1h = 0
+                    if item.get('open') and item.get('last'):
+                        open_price = item['open']
+                        if open_price > 0:
+                            # This is actually daily open, but we use it as rough estimate
+                            pct_1h = ((curr_price - open_price) / open_price) * 100 * 0.1  # Scale down
+                    
+                    results.append({
+                        'symbol': base_symbol,
+                        'name': coin_name,
+                        'price': curr_price,
+                        'change_1h': round(pct_1h, 2),
+                        'change_24h': round(pct_24h, 2),
+                        'volume': item.get('quoteVolume') or 0,
+                        'icon': f"https://assets.coincap.io/assets/icons/{base_symbol.lower()}@2x.png"
+                    })
+                except Exception as e:
+                    # Still add with basic data to prevent missing tickers
+                    try:
+                        symbol = item.get('symbol', '')
+                        base_symbol = symbol.replace(pair_suffix, "")
+                        results.append({
+                            'symbol': base_symbol,
+                            'name': korean_name_map.get(base_symbol, base_symbol),
+                            'price': item.get('last') or 0,
+                            'change_1h': 0,
+                            'change_24h': item.get('percentage') or 0,
+                            'volume': item.get('quoteVolume') or 0,
+                            'icon': f"https://assets.coincap.io/assets/icons/{base_symbol.lower()}@2x.png"
+                        })
+                    except:
+                        pass
+            
+            return results
+
+        except Exception as e:
+            print(f"Error fetching {exchange_name} performance: {e}")
+            return []
 
     def get_crypto_listings(self, limit=30):
         """

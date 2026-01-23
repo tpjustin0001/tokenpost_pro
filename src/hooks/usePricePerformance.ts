@@ -1,66 +1,52 @@
 'use client';
-
 import useSWR from 'swr';
+import { flaskApi } from '@/services/flaskApi';
 
-const fetcher = (url: string) => fetch(url).then(r => r.json());
-
-interface MarketData {
+export interface PerformanceItem {
     symbol: string;
+    name: string;
     price: number;
-    change: number; // 24h change
-    volume: number;
-    market_cap: number;
+    change: number; // 1h change
+    change_24h: number; // 24h change
+    icon?: string;
 }
 
-// Helper to get reliable icon URLs
-// Helper to get reliable icon URLs
-function getCoinIconUrl(symbol: string): string {
-    // Normalize symbol: remove -USDT, -KRW, etc.
-    let clean = symbol.toUpperCase();
-    clean = clean.replace('KRW-', '').replace('-KRW', '');
-    clean = clean.replace('USDT-', '').replace('-USDT', '');
-    clean = clean.replace('BTC-', '').replace('-BTC', '');
-
-    // Use CoinCap assets (High coverage)
-    return `https://assets.coincap.io/assets/icons/${clean.toLowerCase()}@2x.png`;
-}
-
-export function usePricePerformance() {
-    const { data, error, isLoading } = useSWR<MarketData[]>(
-        '/api/markets',
-        fetcher,
+export function usePricePerformance(exchange: string = 'upbit') {
+    const { data, error, isLoading } = useSWR(
+        ['price-performance', exchange],
+        () => flaskApi.getPricePerformance(exchange, 30),
         {
             refreshInterval: 60000,
             revalidateOnFocus: false,
+            dedupingInterval: 30000, // 30초 내 동일 요청 무시
+            keepPreviousData: true,  // 탭 전환 시 이전 데이터 유지
         }
     );
 
-    if (!data || !Array.isArray(data)) {
-        return { gainers: [], losers: [], isLoading, error };
-    }
 
-    // Filter out null changes just in case
-    const withChange = data.filter(c => c.change !== undefined && c.change !== null);
+    const safeData = Array.isArray(data) ? data : [];
 
-    // API returns 24h/1h change (mapped to 'change' prop), we use that for performance sorting
-    const sorted = [...withChange].sort((a, b) => b.change - a.change);
+    // Filter valid items
+    const items = safeData.map(item => ({
+        symbol: item.symbol,
+        name: item.name || item.symbol,
+        price: item.price,
+        change: item.change_1h,
+        change_24h: item.change_24h || 0,
+        icon: item.icon
+    }));
+
+    // Sort by 24h change
+    const sorted = [...items].sort((a, b) => b.change_24h - a.change_24h);
+
+    // Limit to top 10 gainers and losers
+    const gainers = sorted.slice(0, 10);
+    const losers = sorted.slice().reverse().slice(0, 10);
 
     return {
-        gainers: sorted.slice(0, 7).map(c => ({
-            symbol: c.symbol,
-            name: c.symbol, // We don't have full names in this lightweight API
-            change: c.change,
-            price: c.price,
-            icon: getCoinIconUrl(c.symbol)
-        })),
-        losers: sorted.slice(-7).reverse().map(c => ({
-            symbol: c.symbol,
-            name: c.symbol,
-            change: c.change,
-            price: c.price,
-            icon: getCoinIconUrl(c.symbol)
-        })),
+        gainers,
+        losers,
         isLoading,
-        error,
+        error
     };
 }

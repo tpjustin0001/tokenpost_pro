@@ -217,10 +217,57 @@ JSON Response Format:
         grok_result = self._get_grok_social_pulse(market_context)
         
         if not grok_result:
-            print("❌ Grok returned None - returning mock")
-            return self._get_mock_global_analysis()
-        
-        # Transform Grok output to our expected format
+            print("⚠️ Grok failed/deprecated - switching to GPT-4o Fallback")
+            if not self.client_gpt:
+                return self._get_mock_global_analysis()
+                
+            # Fallback: Use GPT-4o to generate similar insights from News + Market Data
+            current_time = datetime.now().strftime("%Y-%m-%d %H:%M KST")
+            news_context = "\n".join([f"- {n.get('title')} ({n.get('source', 'News')})" for n in news_list[:10]])
+            
+            try:
+                response = self.client_gpt.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": f"""
+You are a crypto market analyst replacing a social listening AI.
+Analyze the provided market data and news headlines to generate a 'Social Pulse' report.
+
+Input Data:
+- Time: {current_time}
+- Market: {market_context}
+- Top Headlines:
+{news_context}
+
+Your Task:
+1. Synthesize the overall market vibe (Bullish/Bearish/Neutral) and write a witty, insightful summary paragraph (Korean).
+2. Extract 3-5 trending keywords.
+3. Identify 3 major topics/events.
+
+Return strict JSON:
+{{
+    "vibe": "Summary paragraph here...",
+    "keywords": ["#Key1", "#Key2", ...],
+    "fear_greed": 50, // Assessment 0-100 based on news sentiment
+    "issues": [
+        {{"handle": "@Analyst", "author": "GPT Analyst", "content": "Event 1 detail...", "likes": "N/A", "time": "1h"}},
+        {{"handle": "@Market", "author": "GPT Monitor", "content": "Event 2 detail...", "likes": "N/A", "time": "2h"}}
+    ]
+}}
+"""},
+                        {"role": "user", "content": "Generate Social Pulse analysis."}
+                    ],
+                    response_format={"type": "json_object"},
+                    temperature=0.7
+                )
+                grok_result = json.loads(response.choices[0].message.content)
+                print("✅ GPT-4o Fallback Successful")
+                
+            except Exception as e:
+                print(f"❌ GPT Fallback Failed: {e}")
+                return self._get_mock_global_analysis()
+
+        # Transform result to our expected format
         result = {
             "grok_saying": grok_result.get("vibe", "시장 분석 중..."),
             "market_keywords": grok_result.get("keywords", []),
@@ -247,7 +294,7 @@ JSON Response Format:
             result['atmosphere_label'] = label_map.get(real_fng['label'], real_fng['label'])
         
         self._set_cache_data(cache_key, result)
-        print(f"Grok-only analysis complete: {len(result.get('top_influencers', []))} issues")
+        print(f"Global analysis complete: {len(result.get('top_influencers', []))} issues")
 
         return result
     

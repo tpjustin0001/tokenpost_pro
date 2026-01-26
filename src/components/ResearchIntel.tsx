@@ -137,27 +137,31 @@ export default function ResearchIntel() {
             typeKo = '속보';
         }
 
+        // Safe Date Parsing
+        const rawDate = row.created_at ? new Date(row.created_at) : new Date();
+        const safeDate = isNaN(rawDate.getTime()) ? new Date() : rawDate;
+
         return {
             id: String(row.id),
             type,
             typeKo,
-            title: row.title,
+            title: row.title || '제목 없음',
             source: row.author || 'TokenPost',
             time: new Intl.DateTimeFormat('ko-KR', {
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: false,
                 timeZone: 'Asia/Seoul'
-            }).format(new Date(row.created_at)),
+            }).format(safeDate),
             isPro,
             isBreaking: type === 'BREAKING',
             thumbnail: row.thumbnail_url || row.image_url || undefined,
             // Map detail fields
-            summary: row.summary || row.title,
+            summary: row.summary || row.title || '',
             content: row.content || '내용이 없습니다.',
             tags: row.tags || [],
             readTime: '3분', // Estimate or stored
-            date: new Date(row.created_at).toLocaleDateString()
+            date: safeDate.toLocaleDateString()
         };
     }
 
@@ -263,7 +267,7 @@ export default function ResearchIntel() {
                                             {item.isBreaking && <span className={styles.liveTag}>LIVE</span>}
                                         </div>
                                         <div className={styles.meta}>
-                                            {item.source} · {item.time}
+                                            {item.source} · <span suppressHydrationWarning>{item.time}</span>
                                             {item.tags && item.tags.length > 0 && (
                                                 <span style={{ marginLeft: '6px', fontSize: '10px', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.12)', padding: '2px 6px', borderRadius: '4px', fontWeight: 500 }}>
                                                     #{item.tags[0]}

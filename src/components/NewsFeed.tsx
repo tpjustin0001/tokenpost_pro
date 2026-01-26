@@ -213,7 +213,7 @@ export default function NewsFeed() {
                                 onClick={() => setSelectedNews(news)}
                             >
                                 <div className={styles.itemMeta}>
-                                    <span className={styles.time}>{news.time}</span>
+                                    <span className={styles.time} suppressHydrationWarning>{news.time}</span>
                                     <span className={styles.source}>{news.source}</span>
                                 </div>
 

@@ -57,7 +57,7 @@ export default function MarketGate() {
                     <span style={{ color: mainColor, fontWeight: 'bold' }}>MARKET GATE</span>
                     <span className="card-title"> SYSTEM</span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#888' }}>
+                <div style={{ fontSize: '11px', color: '#888' }} suppressHydrationWarning>
                     {new Date(data.timestamp).toLocaleTimeString()}
                 </div>
             </div>

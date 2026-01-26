@@ -957,7 +957,6 @@ def api_xray_asset(symbol):
 def api_xray_global():
     """Global Market AI X-Ray Analysis using Binance API (Requests) + News"""
     try:
-        import requests
         import concurrent.futures
         from news_service import news_service
         from ai_service import ai_service
@@ -966,6 +965,7 @@ def api_xray_global():
         # Parallel Fetching of Data Inputs
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             future_news = executor.submit(news_service.get_crypto_news, "Bitcoin")
+            # Reuse market data service for global metrics
             future_metrics = executor.submit(market_data_service.get_global_metrics)
             future_btc = executor.submit(market_data_service.get_asset_data, "BTC")
             future_eth = executor.submit(market_data_service.get_asset_data, "ETH")
@@ -1007,7 +1007,6 @@ def api_xray_global():
                     'model_used': 'grok-4.1-fast (x_search)',
                     'is_latest': True
                 }).execute()
-                print("AI Analysis saved to Supabase")
             except Exception as db_err:
                 print(f"⚠️ Supabase save failed: {db_err}")
         

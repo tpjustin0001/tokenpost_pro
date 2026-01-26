@@ -269,7 +269,7 @@ Return strict JSON:
 
         # Transform result to our expected format
         result = {
-            "grok_saying": grok_result.get("vibe", "시장 분석 중..."),
+            "grok_saying": f"(Live AI) {grok_result.get('vibe', '시장 분석 중...')}",
             "market_keywords": grok_result.get("keywords", []),
             "atmosphere_score": grok_result.get("fear_greed", 50),
             "atmosphere_label": "중립",
@@ -339,7 +339,7 @@ REQUIRED JSON STRUCTURE (Must match exactly):
 {{
     "overallScore": 65,  // 0-100 Market Health Score
     "marketPhase": "Accumulation", // e.g., Accumulation, Markup, Distribution, Markdown, Capitulation
-    "summary": "Detailed market summary...",
+    "summary": "Detailed market summary (Live AI)...",
     "radar_data": [
         {{"label": "Macro", "value": 60}},
         {{"label": "Technical", "value": 70}},

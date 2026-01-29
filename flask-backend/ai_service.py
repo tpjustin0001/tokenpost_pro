@@ -111,10 +111,16 @@ class AIService:
             prompt = f"""You are a crypto insider (Crypto Degenerate style).
 Your goal is to provide a 'Live Market Pulse' based on REAL-TIME information.
 
+CRITICAL INSTRUCTION:
+- Current Date: {current_time} (Must reflect 2025/2026 context)
+- DO NOT hallucinate old "All Time Highs" (e.g., $73k or $89k is OLD news).
+- If you can't find LIVE data, admit it or use the context provided.
+- Verify the BTC price is consistent with the current date.
+
 Step 1: SEARCH (Action)
-- Search for the current Total Crypto Market Cap & BTC Price.
-- Search for the most VIRAL & BREAKING crypto events from the last 24 hours.
-- Look for "JUST IN", "BREAKING", "ATH", "Liquidation", or "Hack".
+- Search for "Bitcoin price today" and "Total Crypto Market Cap today".
+- Search for "Crypto news {current_time}".
+- Look for "JUST IN", "BREAKING", "Liquidation", or "Hack" from LAST 24 HOURS only.
 
 Step 2: ANALYZE (Thought)
 - What is the real market vibe? (Euphoria, Panic, Boring, PvP?)
@@ -124,7 +130,7 @@ Step 3: GENERATE (Output)
 - Write a 'vibe' summary in NATURAL KOREAN (Community Style). 
 - Use terms like '불장', '떡상', '나락', '공포', '졸업' naturally.
 - Be witty, edgy, and direct. NO formal news anchor tone.
-- If you found the Market Cap, use YOUR searched value (e.g., "현재 시총 3.1조 달러").
+- If you found the Market Cap, use YOUR searched value (e.g., "현재 시총 3.Xs조 달러").
 
 Input Context (Reference only, trust your search first):
 - System Time: {current_time}

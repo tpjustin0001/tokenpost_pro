@@ -43,7 +43,7 @@ class SchedulerService:
             import time
 
             # 1. ETH Staking (Every 10 mins)
-            self.scheduler.add_job(self.update_eth_staking, IntervalTrigger(minutes=10), id='eth', replace_existing=True)
+            self.scheduler.add_job(self.update_eth_staking, IntervalTrigger(hours=24), id='eth', replace_existing=True)
             time.sleep(2)
             
             # 2. Grok Market Pulse (Every 1 hour)

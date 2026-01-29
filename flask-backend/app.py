@@ -282,6 +282,47 @@ def trigger_vcp():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/api/admin/trigger-deep-analysis', methods=['POST'], strict_slashes=False)
+def trigger_deep_analysis():
+    """Manual trigger for GPT Deep Analysis job"""
+    try:
+        from scheduler_service import scheduler_service
+        scheduler_service.update_deep_analysis()
+        return jsonify({"success": True, "message": "Deep Analysis triggered and saved"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/admin/system-status', methods=['GET'])
+def system_status():
+    """Get status of AI subsystems (Last Updated, Mock vs Real)"""
+    try:
+        if not supabase:
+             return jsonify({'error': 'Database not connected'}), 503
+
+        # 1. Market Pulse (Grok)
+        pulse = supabase.table('global_market_snapshots').select('*').eq('is_latest', True).limit(1).execute()
+        pulse_data = pulse.data[0] if pulse.data else None
+        
+        # 2. Deep Analysis (GPT)
+        deep = supabase.table('global_deep_analysis').select('*').eq('is_latest', True).limit(1).execute()
+        deep_data = deep.data[0] if deep.data else None
+
+        return jsonify({
+            "market_pulse": {
+                "timestamp": pulse_data['created_at'] if pulse_data else None,
+                "model": pulse_data.get('model_used', 'Unknown'),
+                "is_active": bool(pulse_data)
+            },
+            "deep_analysis": {
+                "timestamp": deep_data['created_at'] if deep_data else None,
+                "model": deep_data.get('model_used', 'Unknown'),
+                "is_active": bool(deep_data)
+            },
+            "server_time": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/analysis/latest', methods=['GET'])
 def get_latest_analysis():
     """Get latest analysis directly from AI Service (bypassing Supabase RLS)"""
@@ -577,6 +618,28 @@ def api_vcp_signals():
 
 
 # ============================================================
+# LONG/SHORT RATIO API
+# ============================================================
+@app.route('/api/crypto/long-short')
+@cache.cached(timeout=300, query_string=True) # 5 min cache
+def api_long_short():
+    """
+    Get Long/Short Ratio from Binance
+    """
+    symbol = request.args.get('symbol', 'BTCUSDT')
+    period = request.args.get('period', '5m')
+    
+    try:
+        from market_provider import market_data_service
+        data = market_data_service.get_long_short_ratio(symbol, period)
+        if data:
+            return jsonify({'success': True, 'data': data})
+        return jsonify({'success': False, 'msg': 'No data'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================
 # ETH STAKING INTELLIGENCE API
 # ============================================================
 @app.route('/api/eth/staking')
@@ -640,28 +703,46 @@ def api_eth_staking():
 
 
 @app.route('/api/eth/staking/history')
-@cache.cached(timeout=300)  # 5분 캐시
+@cache.cached(timeout=300, query_string=True)  # 5분 캐시, Query String 포함
 def api_eth_staking_history():
     """
-    ETH Staking History API - 7-day queue data for chart
-    Returns: array of {entry_queue, exit_queue, timestamp}
+    ETH Staking History API
+    Params: days (default 7)
     """
     try:
+        days = request.args.get('days', default=7, type=int)
+        if days > 365: days = 365 # Limit max days
+        
         if not supabase:
             raise Exception("Database not available")
         
-        # Get last 7 days of data (max 1008 rows) 
-        # Filter out anomalous spikes > 500k (e.g. bad data)
+        # Calculate limit based on days (approx 6 samples per hour if standard scheduler? No, scheduler is 10 min)
+        # 10 min = 6 per hour = 144 per day. 
+        # But we probably don't need all points for 1 year.
+        # Let's just limit by time if possible, but Supabase simple query uses limit usually.
+        # 7 days * 144 = 1008. 
+        # 30 days = 4320.
+        limit = days * 144 
+        
+        # Get data
         response = supabase.table('eth_staking_metrics').select(
             'entry_queue, exit_queue, entry_wait_seconds, exit_wait_seconds, created_at'
-        ).lt('entry_queue', 500000).order('created_at', desc=True).limit(1008).execute()
+        ).lt('entry_queue', 500000).order('created_at', desc=True).limit(limit).execute()
         
         if response.data:
             # Reverse to chronological order
             data = list(reversed(response.data))
+            
+            # Valid variable for downsampling if too many points
+            if len(data) > 2000:
+                # Simple downsample: take every Nth
+                step = len(data) // 1000
+                data = data[::step]
+
             return jsonify({
                 'success': True,
                 'count': len(data),
+                'days': days,
                 'data': data
             })
         else:
@@ -669,7 +750,7 @@ def api_eth_staking_history():
                 'success': True,
                 'count': 0,
                 'data': [],
-                'message': 'No historical data yet. Data collection starts when scheduler runs.'
+                'message': 'No historical data yet.'
             })
             
     except Exception as e:
@@ -1216,6 +1297,47 @@ def test_market_fetch(symbol):
         result["traceback"] = traceback.format_exc()
         return jsonify(result), 500
 
+
+# ============================================================
+# VALIDATOR QUEUE HISTORY (External GitHub Data)
+# ============================================================
+@app.route('/api/validator-queue/history')
+@cache.cached(timeout=3600, query_string=True)  # Cache for 1 hour, include query params in cache key
+def api_validator_queue_history():
+    """
+    Fetch historical validator queue data from GitHub (etheralpha/validatorqueue-com)
+    Returns entry_queue and exit_queue in ETH units
+    """
+    try:
+        import requests
+        
+        # Fetch from GitHub raw data
+        github_url = "https://raw.githubusercontent.com/etheralpha/validatorqueue-com/main/historical_data.json"
+        response = requests.get(github_url, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        # Process and return (data already has entry_queue/exit_queue in ETH)
+        # Optional: filter by period
+        period = request.args.get('period', 'all')
+        
+        if period != 'all':
+            days = int(period)
+            data = data[-days:] if len(data) > days else data
+        
+        return jsonify({
+            'success': True,
+            'count': len(data),
+            'data': data
+        })
+        
+    except Exception as e:
+        print(f"[ERROR] Validator Queue History: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 if __name__ == '__main__':
     # Deployment Safety: Use provided PORT or default to 5002

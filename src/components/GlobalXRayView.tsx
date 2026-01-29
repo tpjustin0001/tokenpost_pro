@@ -26,14 +26,16 @@ interface MarketAnalysis {
     recommendation: string;
     actionable_insight_summary: string;
     recent_news?: { title: string; link: string; pubDate: string; source: string }[];
+    timestamp?: string;
 }
 
 interface GlobalXRayViewProps {
     analysis: MarketAnalysis | null;
     loading: boolean;
+    longShortData?: any;
 }
 
-export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProps) {
+export default function GlobalXRayView({ analysis, loading, longShortData }: GlobalXRayViewProps) {
     if (loading) {
         return (
             <div className={styles.body} style={{ position: 'relative' }}>
@@ -209,6 +211,23 @@ export default function GlobalXRayView({ analysis, loading }: GlobalXRayViewProp
                                     <div className={styles.metricComment}>{m.detail}</div>
                                 </div>
                             ))}
+
+                            {/* Long/Short Ratio Card */}
+                            {longShortData && (
+                                <div className={styles.metricCard} style={{ borderLeft: '3px solid #3b82f6' }}>
+                                    <div className={styles.mLabel}>BTC Long/Short Ratio</div>
+                                    <div className={styles.mValue} style={{ fontSize: '16px', color: '#fff', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                                        {longShortData.ratio}
+                                        <span style={{ fontSize: '11px', color: longShortData.ratio > 1 ? '#10b981' : '#ef4444' }}>
+                                            {longShortData.ratio > 1 ? 'Long Dominant' : 'Short Dominant'}
+                                        </span>
+                                    </div>
+                                    <div className={styles.metricComment} style={{ display: 'flex', gap: '8px', fontSize: '10px' }}>
+                                        <span style={{ color: '#10b981' }}>Long {longShortData.long_account}%</span>
+                                        <span style={{ color: '#ef4444' }}>Short {longShortData.short_account}%</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

@@ -1,11 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import styles from './ETHSupplyRadar.module.css';
-
-// Dynamic import to avoid SSR issues with Chart.js
-const ValidatorQueueChart = dynamic(() => import('./ValidatorQueueChart'), { ssr: false });
 
 interface ETHStakingData {
     success: boolean;
@@ -40,36 +36,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 export default function ETHSupplyRadar() {
     const [data, setData] = useState<ETHStakingData | null>(null);
-    const [history, setHistory] = useState<HistoryPoint[]>([]);
-    const [allHistory, setAllHistory] = useState<HistoryPoint[]>([]);
-    const [period, setPeriod] = useState<'7d' | '30d' | '90d' | '1y' | 'all'>('90d');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Filter history based on selected period
-    useEffect(() => {
-        if (allHistory.length === 0) return;
 
-        let filtered: HistoryPoint[];
-        switch (period) {
-            case '7d':
-                filtered = allHistory.slice(-7);
-                break;
-            case '30d':
-                filtered = allHistory.slice(-30);
-                break;
-            case '90d':
-                filtered = allHistory.slice(-90);
-                break;
-            case '1y':
-                filtered = allHistory.slice(-365);
-                break;
-            case 'all':
-            default:
-                filtered = allHistory;
-        }
-        setHistory(filtered);
-    }, [period, allHistory]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -81,19 +51,7 @@ export default function ETHSupplyRadar() {
                 setData(result);
                 setError(null);
 
-                // Fetch history data for chart
-                try {
-                    const historyRes = await fetch('/api/eth/staking/history');
-                    if (historyRes.ok) {
-                        const historyData = await historyRes.json();
-                        if (historyData.data && historyData.data.length > 0) {
-                            // Store all history (daily data)
-                            setAllHistory(historyData.data);
-                        }
-                    }
-                } catch (histErr) {
-                    console.log('History not available yet');
-                }
+                // Note: History chart now on separate Data page component
             } catch (err) {
                 console.error('ETH Staking fetch error:', err);
                 setError('데이터를 불러올 수 없습니다');
@@ -246,39 +204,7 @@ export default function ETHSupplyRadar() {
                     </div>
                 </div>
 
-                {/* Validator Queue Chart */}
-                {history.length > 1 && (
-                    <div className={styles.chartSection}>
-                        <div className={styles.chartHeader}>
-                            <span className={styles.chartTitle}>
-                                Validator Queue ({period === '7d' ? '7일' : period === '30d' ? '30일' : period === '90d' ? '90일' : period === '1y' ? '1년' : '전체'})
-                            </span>
-                            <div className={styles.periodTabs}>
-                                <button
-                                    className={`${styles.periodTab} ${period === '7d' ? styles.periodTabActive : ''}`}
-                                    onClick={() => setPeriod('7d')}
-                                >7D</button>
-                                <button
-                                    className={`${styles.periodTab} ${period === '30d' ? styles.periodTabActive : ''}`}
-                                    onClick={() => setPeriod('30d')}
-                                >30D</button>
-                                <button
-                                    className={`${styles.periodTab} ${period === '90d' ? styles.periodTabActive : ''}`}
-                                    onClick={() => setPeriod('90d')}
-                                >90D</button>
-                                <button
-                                    className={`${styles.periodTab} ${period === '1y' ? styles.periodTabActive : ''}`}
-                                    onClick={() => setPeriod('1y')}
-                                >1Y</button>
-                                <button
-                                    className={`${styles.periodTab} ${period === 'all' ? styles.periodTabActive : ''}`}
-                                    onClick={() => setPeriod('all')}
-                                >All</button>
-                            </div>
-                        </div>
-                        <ValidatorQueueChart data={history} period={period} />
-                    </div>
-                )}
+                {/* Validator Queue Chart - Now displayed separately on Data page */}
 
                 {/* AI Report */}
                 <div className={styles.aiReport}>

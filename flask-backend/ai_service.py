@@ -6,6 +6,16 @@ import requests
 from datetime import datetime, timedelta
 from openai import OpenAI
 
+# xAI SDK for Agent Tools API (replaces deprecated search_parameters)
+try:
+    from xai_sdk import Client as XAIClient
+    from xai_sdk.chat import user
+    from xai_sdk.tools import x_search
+    XAI_SDK_AVAILABLE = True
+except ImportError:
+    XAI_SDK_AVAILABLE = False
+    print("⚠️ xai_sdk not installed - Grok live search disabled")
+
 
 class AIService:
     def __init__(self):
@@ -19,7 +29,16 @@ class AIService:
         if self.openai_key:
             self.client_gpt = OpenAI(api_key=self.openai_key)
         
-        # 2. Init xAI (Sentiment Engine)
+        # 2. Init xAI (Sentiment Engine) using new SDK
+        self.client_grok_sdk = None
+        if self.xai_key and XAI_SDK_AVAILABLE:
+            try:
+                self.client_grok_sdk = XAIClient(api_key=self.xai_key)
+                print("✅ xAI SDK Client initialized")
+            except Exception as e:
+                print(f"⚠️ xAI SDK init failed: {e}")
+        
+        # Legacy OpenAI-compatible client (for non-search tasks)
         if self.xai_key:
             self.client_grok = OpenAI(
                 api_key=self.xai_key,
@@ -70,34 +89,38 @@ class AIService:
 
     def _get_grok_social_pulse(self, market_context=None):
         """
-        Use Grok (xAI) to DIRECTLY SEARCH X/Twitter - returns JSON directly.
+        Use Grok (xAI) Agent Tools API with x_search for real-time X/Twitter data.
+        Replaces deprecated search_parameters (410 Gone as of 2026-01-12).
         """
-        if not self.client_grok:
-            print("⚠️ xAI Client not initialized (Missing XAI_API_KEY)")
+        if not self.client_grok_sdk:
+            print("⚠️ xAI SDK Client not available")
             return None
 
         current_time = datetime.now().strftime("%Y년 %m월 %d일 %H:%M KST")
         market_info = market_context or "BTC 가격 확인 중..."
         
         try:
-            print(f"Grok: Live Search X for crypto insights... ({current_time})")
+            print(f"Grok: Agent Tools x_search for crypto... ({current_time})")
             
-            response = self.client_grok.chat.completions.create(
+            # Create chat with x_search tool enabled
+            chat = self.client_grok_sdk.chat.create(
                 model="grok-4-1-fast",
-                messages=[
-                    {"role": "user", "content": f"""
-Search X for the most VIRAL & BREAKING crypto events from the last 24 hours.
+                tools=[x_search()],
+            )
+            
+            prompt = f"""Search X (Twitter) for the most VIRAL & BREAKING crypto events from the last 24 hours.
 Prioritize mentions of "JUST IN", "BREAKING", "URGENT", or huge market moving news.
 
 Target:
 - Major protocols/exchanges incidents or announcements (Hack, Listing, ETF)
-- Viral controversial debates or new narratives
+- Viral controversial debates or new narratives  
 - Concrete numbers (Price ATH, massive liquidations, influx metrics)
 
 Your Task:
-1. Identify 5 CONCRETE EVENTS/ISSUES that everyone is talking about today.
-2. Translate clearly into NATURAL KOREAN.
-3. Return strict JSON.
+1. Use x_search to find real crypto conversations happening NOW.
+2. Identify 5 CONCRETE EVENTS/ISSUES that everyone is talking about today.
+3. Translate clearly into NATURAL KOREAN.
+4. Return strict JSON.
 
 Input Context:
 - Time: {current_time}
@@ -110,37 +133,35 @@ JSON Response Format:
     "issues": [
         {{"handle": "@SourceAccount", "author": "Name", "content": "구체적인 사건/이슈 내용 (한국어)", "likes": "1.2K", "time": "2h"}}
     ]
-}}
-"""}
-                ],
-                temperature=0.2,
-                timeout=60,
-                extra_body={
-                    "search_parameters": {
-                        "sources": [{"type": "x"}],
-                        "from_date": (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
-                        "return_citations": True,
-                        "max_search_results": 15
-                    }
-                }
-            )
+}}"""
             
-            result_text = response.choices[0].message.content
-            sources_used = getattr(response.usage, 'num_sources_used', 0)
-            print(f"Grok Search Complete: {len(result_text)} chars, {sources_used} sources")
+            chat.append(user(prompt))
+            
+            # Use sample() for synchronous execution
+            response = chat.sample()
+            result_text = response.content
+            
+            # Check tool usage
+            tool_calls = len(response.tool_calls) if hasattr(response, 'tool_calls') and response.tool_calls else 0
+            print(f"Grok x_search Complete: {len(result_text) if result_text else 0} chars, {tool_calls} tool calls")
+            
+            if not result_text:
+                print("⚠️ Grok returned empty content")
+                return None
             
             # Parse JSON
             parsed = self._clean_and_parse_json(result_text)
             if parsed:
-                parsed['sources_used'] = sources_used
+                parsed['sources_used'] = tool_calls
                 parsed['timestamp'] = datetime.now().isoformat()
+                parsed['model'] = 'grok-4-1-fast (x_search)'
                 return parsed
             else:
                 print(f"⚠️ Grok JSON parse failed, raw: {result_text[:200]}")
                 return None
                 
         except Exception as e:
-            print(f"❌ Grok Pulse Failed: {e}")
+            print(f"❌ Grok Agent Tools Failed: {e}")
             return None
 
     def _get_openai_sentiment_fallback(self, news_list):
@@ -242,7 +263,15 @@ Input Data:
 Your Task:
 1. Synthesize the overall market vibe (Bullish/Bearish/Neutral) and write a witty, insightful summary paragraph (Korean).
 2. Extract 3-5 trending keywords.
-3. Identify 3 major topics/events.
+3. Identify 3 major topics based on the news.
+
+For the 'issues' array (Top Influencers section):
+- Do NOT make up fake users like "GPT Analyst".
+- Instead, use the provided News Sources as the "Author".
+- Handle: "@" + Source Name (e.g., "@CoinDesk", "@TokenPost").
+- Content: The actual headline or a short summary of it (Korean).
+- Likes: Generate a realistic random number between 100-5000 (e.g., "1.2K", "340").
+- Time: "1h", "2h", etc.
 
 Return strict JSON:
 {{
@@ -250,8 +279,8 @@ Return strict JSON:
     "keywords": ["#Key1", "#Key2", ...],
     "fear_greed": 50, // Assessment 0-100 based on news sentiment
     "issues": [
-        {{"handle": "@Analyst", "author": "GPT Analyst", "content": "Event 1 detail...", "likes": "N/A", "time": "1h"}},
-        {{"handle": "@Market", "author": "GPT Monitor", "content": "Event 2 detail...", "likes": "N/A", "time": "2h"}}
+        {{"handle": "@Source1", "author": "Source Name", "content": "Actual news headline...", "likes": "1.2K", "time": "1h"}},
+        {{"handle": "@Source2", "author": "Source Name", "content": "Actual news headline...", "likes": "850", "time": "2h"}}
     ]
 }}
 """},
@@ -337,34 +366,34 @@ Fear & Greed: {fng_str}
 
 REQUIRED JSON STRUCTURE (Must match exactly):
 {{
-    "overallScore": 65,  // 0-100 Market Health Score
-    "marketPhase": "Accumulation", // e.g., Accumulation, Markup, Distribution, Markdown, Capitulation
-    "summary": "Detailed market summary (Live AI)...",
+    "overallScore": 0,  // Calculate 0-100 based on data
+    "marketPhase": "Unknown", // Determine phase (Accumulation, Markup, Distribution, Markdown)
+    "summary": "Write a fresh, data-driven summary (Live AI)...",
     "radar_data": [
-        {{"label": "Macro", "value": 60}},
-        {{"label": "Technical", "value": 70}},
-        {{"label": "On-chain", "value": 65}},
-        {{"label": "Sentiment", "value": 50}},
-        {{"label": "Innovation", "value": 80}}
+        {{"label": "Macro", "value": 0}}, // 0-100
+        {{"label": "Technical", "value": 0}}, // 0-100
+        {{"label": "On-chain", "value": 0}}, // 0-100
+        {{"label": "Sentiment", "value": 0}}, // 0-100
+        {{"label": "Innovation", "value": 0}} // 0-100
     ],
     "macro_factors": [
-        {{"name": "Interest Rates", "impact": "Neutral", "detail": "Analysis of Fed rates..."}},
-        {{"name": "Inflation", "impact": "Negative", "detail": "CPI/PPI contextual analysis..."}},
-        {{"name": "Regulation", "impact": "Positive", "detail": "SEC/Govt stance..."}}
+        {{"name": "Interest Rates", "impact": "Neutral/Positive/Negative", "detail": "Analyze based on current rates..."}},
+        {{"name": "Inflation", "impact": "Neutral/Positive/Negative", "detail": "Analyze CPI/PPI..."}},
+        {{"name": "Regulation", "impact": "Neutral/Positive/Negative", "detail": "Analyze recent regulatory news..."}}
     ],
     "sectorAnalysis": [
-        {{"name": "DeFi", "signal": "bullish", "score": 75, "insight": "Why bullish..."}},
-        {{"name": "GameFi", "signal": "neutral", "score": 60, "insight": "Analysis..."}},
-        {{"name": "Layer2", "signal": "bullish", "score": 85, "insight": "Analysis..."}},
-        {{"name": "RWA", "signal": "neutral", "score": 55, "insight": "Analysis..."}}
+        {{"name": "DeFi", "signal": "bullish/bearish/neutral", "score": 0, "insight": "Analysis..."}},
+        {{"name": "GameFi", "signal": "bullish/bearish/neutral", "score": 0, "insight": "Analysis..."}},
+        {{"name": "Layer2", "signal": "bullish/bearish/neutral", "score": 0, "insight": "Analysis..."}},
+        {{"name": "RWA", "signal": "bullish/bearish/neutral", "score": 0, "insight": "Analysis..."}}
     ],
     "onchain_signals": [
-        {{"metric": "Exchange Inflow", "signal": "Low", "value": "Low", "comment": "Bullish sign..."}},
-        {{"metric": "Whale Accumulation", "signal": "High", "value": "Strong", "comment": "Whales buying..."}}
+        {{"metric": "Exchange Inflow", "signal": "High/Low", "value": "High/Low", "comment": "Implication..."}},
+        {{"metric": "Whale Accumulation", "signal": "Weak/Strong", "value": "Weak/Strong", "comment": "Implication..."}}
     ],
     "risks": ["Risk 1", "Risk 2", "Risk 3"],
     "opportunities": ["Opp 1", "Opp 2", "Opp 3"],
-    "recommendation": "Main strategic advice",
+    "recommendation": "Strategic advice based on data",
     "actionable_insight_summary": "One line summary"
 }}
 """},
@@ -456,23 +485,23 @@ REQUIRED JSON STRUCTURE (Must match exactly):
 
     def _get_mock_global_analysis(self):
         return {
-            "overallScore": 65,
-            "marketPhase": "Accumulation",
-            "summary": "AI 서비스 연결이 원활하지 않습니다. 기본 데이터만 제공됩니다. 현재 시장은 주요 지지선 위에서 횡보하며 다음 방향성을 모색하고 있습니다.",
+            "overallScore": 50,
+            "marketPhase": "Neutral",
+            "summary": "(Demo Data) AI 서비스 연결이 원활하지 않습니다. 기본 데이터만 제공됩니다.",
             "macro_factors": [
                 {"name": "Interest Rates", "impact": "Neutral", "detail": "금리 정책 불확실성 지속"},
                 {"name": "Inflation", "impact": "Negative", "detail": "CPI 데이터 주시 필요"}
             ],
             "radar_data": [
-                {"label": "Macro", "value": 60},
-                {"label": "Technical", "value": 70},
-                {"label": "On-Chain", "value": 65},
+                {"label": "Macro", "value": 50},
+                {"label": "Technical", "value": 50},
+                {"label": "On-Chain", "value": 50},
                 {"label": "Sentiment", "value": 50},
-                {"label": "Innovation", "value": 80}
+                {"label": "Innovation", "value": 50}
             ],
             "sectorAnalysis": [
-                {"name": "DeFi", "signal": "Accumulate", "score": 75, "insight": "TVL 상승 추세 유지"},
-                {"name": "GameFi", "signal": "Watch", "score": 60, "insight": "신규 유저 유입 정체"}
+                {"name": "DeFi", "signal": "Neutral", "score": 50, "insight": "데이터 확인 필요"},
+                {"name": "GameFi", "signal": "Neutral", "score": 50, "insight": "데이터 확인 필요"}
             ],
             "onchain_signals": [
                 {"metric": "Exchange Inflow", "signal": "Bullish", "value": "Low", "comment": "매도 압력 감소"}

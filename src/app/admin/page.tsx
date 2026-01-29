@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import styles from './page.module.css';
-import { flaskApi, MarketGateData, VcpSignal } from '@/services/flaskApi';
+
+import { flaskApi, MarketGateData, VcpSignal, SystemStatus } from '@/services/flaskApi';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { getAnalyticsSummary, getUserActivities, AnalyticsSummary, UserActivity } from '@/services/analytics';
@@ -22,7 +23,9 @@ const ADMIN_EMAILS = [
 
 export default function AdminPage() {
     const [marketGate, setMarketGate] = useState<MarketGateData | null>(null);
+
     const [vcpSignals, setVcpSignals] = useState<VcpSignal[]>([]);
+    const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
     const [loading, setLoading] = useState(true);
 
     // OAuth Auth State (replaces password auth)
@@ -81,13 +84,15 @@ export default function AdminPage() {
     async function loadData() {
         setLoading(true);
         try {
-            const [gateData, signalsData] = await Promise.all([
+            const [gateData, signalsData, statusData] = await Promise.all([
                 flaskApi.getMarketGate(),
-                flaskApi.getVcpSignals()
+                flaskApi.getVcpSignals(),
+                flaskApi.getSystemStatus()
             ]);
 
             if (gateData) setMarketGate(gateData);
             if (signalsData) setVcpSignals(signalsData.signals);
+            if (statusData) setSystemStatus(statusData);
         } catch (error) {
             console.error('Admin Dashboard Data Error:', error);
         } finally {
@@ -146,6 +151,26 @@ export default function AdminPage() {
         } catch (err) {
             console.error('Research Publish Error:', err);
             alert('리서치 발행에 실패했습니다. (테이블이 존재하는지 확인해주세요)');
+        }
+    };
+
+    const handleTriggerUpdate = async (type: 'pulse' | 'deep') => {
+        if (!confirm('AI 분석을 즉시 실행하시겠습니까? (약 30초 소요)')) return;
+
+        try {
+            let success = false;
+            if (type === 'pulse') success = await flaskApi.triggerAnalysis();
+            if (type === 'deep') success = await flaskApi.triggerDeepAnalysis();
+
+            if (success) {
+                alert('명령이 전송되었습니다. 잠시 후 새로고침하세요.');
+                loadData(); // Reload status
+            } else {
+                alert('실패했습니다.');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('오류 발생');
         }
     };
 
@@ -317,6 +342,80 @@ export default function AdminPage() {
                             <span className="text-xs text-muted">Flask 백엔드</span>
                         </div>
                     </section>
+
+                    {/* AI Service Status Card */}
+                    <div className={styles.contentGrid} style={{ marginBottom: '24px' }}>
+                        <section className="card">
+                            <div className="card-header">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Activity size={20} color="#8b5cf6" />
+                                    <h2 className="card-title">AI 서비스 상태 (Grok & GPT)</h2>
+                                </div>
+                                <span className="badge badge-primary">Live Monitor</span>
+                            </div>
+                            <div className="card-body">
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+                                    {/* Grok Pulse Status */}
+                                    <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                            <span style={{ fontWeight: 600 }}>Market Pulse (Grok)</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: systemStatus?.market_pulse?.is_active ? '#10b981' : '#ef4444' }} />
+                                                <span style={{ fontSize: '12px', color: systemStatus?.market_pulse?.is_active ? '#10b981' : '#ef4444' }}>
+                                                    {systemStatus?.market_pulse?.is_active ? 'Active' : 'No Data'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                                            Last Updated: <span className="font-mono" style={{ color: 'var(--text-primary)' }}>
+                                                {systemStatus?.market_pulse?.timestamp ? new Date(systemStatus.market_pulse.timestamp).toLocaleString('ko-KR') : '-'}
+                                            </span>
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                                            Model: {systemStatus?.market_pulse?.model || '-'}
+                                        </div>
+                                        <button
+                                            className="btn btn-secondary"
+                                            style={{ width: '100%', justifyContent: 'center', fontSize: '12px' }}
+                                            onClick={() => handleTriggerUpdate('pulse')}
+                                        >
+                                            <RefreshCw size={12} style={{ marginRight: '6px' }} />
+                                            지금 업데이트 (Force)
+                                        </button>
+                                    </div>
+
+                                    {/* GPT Deep Analysis Status */}
+                                    <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                            <span style={{ fontWeight: 600 }}>Deep Analysis (GPT)</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: systemStatus?.deep_analysis?.is_active ? '#10b981' : '#ef4444' }} />
+                                                <span style={{ fontSize: '12px', color: systemStatus?.deep_analysis?.is_active ? '#10b981' : '#ef4444' }}>
+                                                    {systemStatus?.deep_analysis?.is_active ? 'Active' : 'No Data'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                                            Last Updated: <span className="font-mono" style={{ color: 'var(--text-primary)' }}>
+                                                {systemStatus?.deep_analysis?.timestamp ? new Date(systemStatus.deep_analysis.timestamp).toLocaleString('ko-KR') : '-'}
+                                            </span>
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                                            Model: {systemStatus?.deep_analysis?.model || '-'}
+                                        </div>
+                                        <button
+                                            className="btn btn-secondary"
+                                            style={{ width: '100%', justifyContent: 'center', fontSize: '12px' }}
+                                            onClick={() => handleTriggerUpdate('deep')}
+                                        >
+                                            <RefreshCw size={12} style={{ marginRight: '6px' }} />
+                                            지금 업데이트 (Force)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
 
                     <div className={styles.contentGrid}>
                         {/* VCP Signals Management */}

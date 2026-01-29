@@ -31,6 +31,20 @@ export interface VcpSignal {
     signal_type: string;
 }
 
+export interface SystemStatus {
+    market_pulse: {
+        timestamp: string | null;
+        model: string;
+        is_active: boolean;
+    };
+    deep_analysis: {
+        timestamp: string | null;
+        model: string;
+        is_active: boolean;
+    };
+    server_time: string;
+}
+
 // All Flask backend routes go through /api/python/ proxy to Render
 const API_PREFIX = '/api/python';
 
@@ -145,6 +159,61 @@ export const flaskApi = {
             return json.data || [];
         } catch (error) {
             console.error('Error fetching price performance:', error);
+            return [];
+        }
+    },
+
+    async getSystemStatus(): Promise<SystemStatus | null> {
+        try {
+            const res = await fetch(`${API_PREFIX}/admin/system-status`);
+            if (!res.ok) throw new Error('Failed to fetch system status');
+            return await res.json();
+        } catch (error) {
+            console.error('Error fetching System Status:', error);
+            return null;
+        }
+    },
+
+    async triggerAnalysis(): Promise<boolean> {
+        try {
+            const res = await fetch(`${API_PREFIX}/admin/trigger-analysis`, { method: 'POST' });
+            return res.ok;
+        } catch (error) {
+            console.error('Error triggering analysis:', error);
+            return false;
+        }
+    },
+
+    async triggerDeepAnalysis(): Promise<boolean> {
+        try {
+            const res = await fetch(`${API_PREFIX}/admin/trigger-deep-analysis`, { method: 'POST' });
+            return res.ok;
+        } catch (error) {
+            console.error('Error triggering deep analysis:', error);
+            return false;
+        }
+    },
+
+    async getgetLongShortRatio(symbol: string = 'BTCUSDT', period: string = '5m'): Promise<any | null> {
+        try {
+            const res = await fetch(`${API_PREFIX}/crypto/long-short?symbol=${symbol}&period=${period}`);
+            if (!res.ok) return null;
+            const json = await res.json();
+            return json.success ? json.data : null;
+        } catch (error) {
+            console.error('LS Ratio Error:', error);
+            return null;
+        }
+    },
+
+    async getEthStakingHistory(days: number = 7): Promise<any[]> {
+        try {
+            const res = await fetch(`${API_PREFIX}/eth/staking/history?days=${days}`);
+            if (!res.ok) return [];
+            const json = await res.json();
+            return json.success ? json.data : [];
+        } catch (error) {
+            console.error('ETH History Error:', error);
             return [];
         }
     }

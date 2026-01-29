@@ -602,4 +602,35 @@ class MarketDataService:
         results.sort(key=lambda x: x['timestamp'], reverse=True)
         return results
 
+    def get_long_short_ratio(self, symbol="BTCUSDT", period="5m", limit=30):
+        """
+        Fetch Global Long/Short Account Ratio from Binance Futures.
+        """
+        try:
+            # Endpoint: https://fapi.binance.com/futures/data/globalLongShortAccountRatio
+            url = "https://fapi.binance.com/futures/data/globalLongShortAccountRatio"
+            params = {
+                "symbol": symbol,
+                "period": period,
+                "limit": limit
+            }
+            resp = requests.get(url, params=params, timeout=5)
+            data = resp.json()
+            
+            # Data format: [{"symbol": "BTCUSDT", "longShortRatio": "1.23", "longAccount": "0.55", "shortAccount": "0.45", "timestamp": ...}, ...]
+            if isinstance(data, list) and len(data) > 0:
+                # Parse latest
+                latest = data[-1]
+                return {
+                    "symbol": symbol,
+                    "ratio": float(latest['longShortRatio']),
+                    "long_account": float(latest['longAccount']),
+                    "short_account": float(latest['shortAccount']),
+                    "timestamp": latest['timestamp']
+                }
+            return None
+        except Exception as e:
+            print(f"Long/Short Ratio Error: {e}")
+            return None
+
 market_data_service = MarketDataService()

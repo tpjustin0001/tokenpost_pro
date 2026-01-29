@@ -5,6 +5,7 @@ import { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { useMarketMetrics } from '@/hooks/useMarketMetrics';
 import SmartScreener from '@/components/data/SmartScreener';
+import ValidatorQueueChart from '@/components/data/ValidatorQueueChart';
 import TokenUnlocks from '@/components/TokenUnlocks';
 import WhaleTracker from '@/components/WhaleTracker';
 import { StablecoinInterestChart, BlockchainRevChart, ETFFlowsChart } from '@/components/DataWidgets';
@@ -69,6 +70,11 @@ export default function DataPage() {
                         <SmartScreener />
                     </section>
 
+                    {/* 3. Validator Queue Chart (검증자 대기열) */}
+                    <section className={styles.section}>
+                        <ValidatorQueueChart />
+                    </section>
+
                     {/* 3. Supply & Whales (Grid) */}
                     <section className={styles.section}>
                         <h2 className={styles.sectionTitle}>토큰 언락 & 고래 추적 (Supply & Whales)</h2>
@@ -87,8 +93,6 @@ export default function DataPage() {
                             <ETFFlowsChart />
                         </div>
                     </section>
-
-
 
                 </main>
             </div>

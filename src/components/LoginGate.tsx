@@ -1,5 +1,6 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import styles from './LoginGate.module.css';
 
@@ -9,13 +10,18 @@ interface LoginGateProps {
 
 export default function LoginGate({ children }: LoginGateProps) {
     const { user, isLoggedIn, loading, login, logout } = useAuth();
+    const searchParams = useSearchParams();
 
     // DEV: Skip login on localhost ONLY in development mode
     const isDev = process.env.NODE_ENV === 'development';
     const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
-    // Allow bypass only if explicitly in DEV mode and on localhost
-    if (isDev && isLocalhost) {
+    // Allow bypass only if explicitly in DEV mode and on localhost OR capture mode
+    const isCaptureMode = searchParams.get('mode') === 'capture';
+    const captureKey = searchParams.get('key');
+    const isValidCapture = isCaptureMode && captureKey === (process.env.NEXT_PUBLIC_CAPTURE_KEY || 'tokenpost-capture-secret');
+
+    if ((isDev && isLocalhost) || isValidCapture) {
         return <>{children}</>;
     }
 

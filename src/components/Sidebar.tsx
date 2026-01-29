@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { useXRay } from '@/context/XRayContext';
@@ -23,6 +23,11 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const isCaptureMode = searchParams.get('mode') === 'capture';
+
+    if (isCaptureMode) return null;
+
     const { theme, toggleTheme } = useTheme();
     const { isXRayActive, toggleXRay } = useXRay();
     const { user, login, logout } = useAuth();

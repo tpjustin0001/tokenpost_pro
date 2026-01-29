@@ -208,6 +208,8 @@ export default function ValidatorQueueChart() {
 
             {/* Chart Card */}
             <div className={styles.chartCard}>
+                <div className={styles.watermark}>TOKENPOST PRO</div>
+
                 {/* Legend */}
                 <div className={styles.legend}>
                     <div className={styles.legendItem}>

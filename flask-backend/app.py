@@ -1299,29 +1299,51 @@ def test_market_fetch(symbol):
 
 
 # ============================================================
-# VALIDATOR QUEUE HISTORY (External GitHub Data)
+# VALIDATOR QUEUE HISTORY (Supabase + GitHub Fallback)
 # ============================================================
 @app.route('/api/validator-queue/history')
-@cache.cached(timeout=3600, query_string=True)  # Cache for 1 hour, include query params in cache key
+@cache.cached(timeout=600, query_string=True)  # Cache for 10 mins
 def api_validator_queue_history():
     """
-    Fetch historical validator queue data from GitHub (etheralpha/validatorqueue-com)
-    Returns entry_queue and exit_queue in ETH units
+    Fetch historical validator queue data from Supabase.
+    Falls back to GitHub if Supabase is empty or fails.
+    Returns entry_queue and exit_queue in ETH units.
     """
     try:
-        import requests
+        period = request.args.get('period', 'all')
         
-        # Fetch from GitHub raw data
+        # Try Supabase first
+        if supabase:
+            try:
+                query = supabase.table('validator_queue_history').select('date, entry_queue, exit_queue, apr').order('date', desc=False)
+                result = query.execute()
+                
+                if result.data and len(result.data) > 0:
+                    data = result.data
+                    
+                    # Filter by period
+                    if period != 'all':
+                        days = int(period)
+                        data = data[-days:] if len(data) > days else data
+                    
+                    return jsonify({
+                        'success': True,
+                        'count': len(data),
+                        'source': 'supabase',
+                        'data': data
+                    })
+            except Exception as db_err:
+                print(f"[WARN] Supabase query failed, falling back to GitHub: {db_err}")
+        
+        # Fallback: Fetch from GitHub
+        import requests
         github_url = "https://raw.githubusercontent.com/etheralpha/validatorqueue-com/main/historical_data.json"
         response = requests.get(github_url, timeout=10)
         response.raise_for_status()
         
         data = response.json()
         
-        # Process and return (data already has entry_queue/exit_queue in ETH)
-        # Optional: filter by period
-        period = request.args.get('period', 'all')
-        
+        # Filter by period
         if period != 'all':
             days = int(period)
             data = data[-days:] if len(data) > days else data
@@ -1329,6 +1351,7 @@ def api_validator_queue_history():
         return jsonify({
             'success': True,
             'count': len(data),
+            'source': 'github',
             'data': data
         })
         

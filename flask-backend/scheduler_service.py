@@ -80,6 +80,10 @@ class SchedulerService:
 
             # 9. Calendar Events (Every 12 hours)
             self.scheduler.add_job(self.update_calendar_events, IntervalTrigger(hours=12), id='calendar', replace_existing=True)
+            time.sleep(2)
+
+            # 10. Validator Queue History (Every 12 hours - sync from GitHub)
+            self.scheduler.add_job(self.sync_validator_queue_history, IntervalTrigger(hours=12), id='validator_queue', replace_existing=True)
             
             logger.info("All scheduler jobs added successfully.")
             atexit.register(lambda: self.scheduler.shutdown())
@@ -334,4 +338,56 @@ class SchedulerService:
         except Exception as e:
             logger.error(f"❌ Calendar Job Failed: {e}")
 
+    def sync_validator_queue_history(self):
+        """Sync Validator Queue History from GitHub to Supabase"""
+        logger.info("⏰ Running Validator Queue Sync...")
+        try:
+            import requests
+            
+            # Fetch from GitHub
+            github_url = "https://raw.githubusercontent.com/etheralpha/validatorqueue-com/main/historical_data.json"
+            response = requests.get(github_url, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+            
+            if not data:
+                logger.warning("⚠️ No data from GitHub")
+                return
+            
+            if self.supabase:
+                # Upsert data - use date as unique key
+                # First, get existing dates to avoid duplicates
+                existing = self.supabase.table('validator_queue_history').select('date').execute()
+                existing_dates = set(row['date'] for row in existing.data) if existing.data else set()
+                
+                # Filter new records
+                new_records = [
+                    {
+                        'date': item['date'],
+                        'entry_queue': item.get('entry_queue', 0),
+                        'exit_queue': item.get('exit_queue', 0),
+                        'apr': item.get('apr'),
+                        'created_at': datetime.now().isoformat()
+                    }
+                    for item in data
+                    if item.get('date') and item['date'] not in existing_dates
+                ]
+                
+                if new_records:
+                    # Insert in batches of 100
+                    batch_size = 100
+                    for i in range(0, len(new_records), batch_size):
+                        batch = new_records[i:i + batch_size]
+                        self.supabase.table('validator_queue_history').insert(batch).execute()
+                    
+                    logger.info(f"✅ Validator Queue Synced: {len(new_records)} new records")
+                else:
+                    logger.info("✅ Validator Queue: No new records to sync")
+            else:
+                logger.warning("⚠️ Supabase not initialized for Validator Queue sync")
+                
+        except Exception as e:
+            logger.error(f"❌ Validator Queue Sync Failed: {e}")
+
 scheduler_service = SchedulerService()
+

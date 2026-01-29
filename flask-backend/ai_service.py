@@ -113,28 +113,27 @@ Your goal is to provide a 'Live Market Pulse' based on REAL-TIME information.
 
 CRITICAL INSTRUCTION:
 - Current Date: {current_time} (Must reflect 2025/2026 context)
-- DO NOT hallucinate old "All Time Highs" (e.g., $73k or $89k is OLD news).
-- If you can't find LIVE data, admit it or use the context provided.
-- Verify the BTC price is consistent with the current date.
+- DO NOT use any internal knowledge cutoff data.
+- YOU MUST SEARCH for every piece of data.
+- If you can't find LIVE data from search, return "DATA_UNAVAILABLE" in the vibe field.
 
 Step 1: SEARCH (Action)
-- Search for "Bitcoin price today" and "Total Crypto Market Cap today".
+- Search for "Bitcoin price today live" and "Total Crypto Market Cap today".
 - Search for "Crypto news {current_time}".
-- Look for "JUST IN", "BREAKING", "Liquidation", or "Hack" from LAST 24 HOURS only.
+- Look for "JUST IN", "BREAKING", "Liquidation" from LAST 24 HOURS only.
 
 Step 2: ANALYZE (Thought)
-- What is the real market vibe? (Euphoria, Panic, Boring, PvP?)
-- Ignore generic news. Focus on what people are actually shouting about.
+- What is the real market vibe?
+- TRUST YOUR SEARCH RESULTS OVER EVERYTHING ELSE.
 
 Step 3: GENERATE (Output)
 - Write a 'vibe' summary in NATURAL KOREAN (Community Style). 
-- Use terms like '불장', '떡상', '나락', '공포', '졸업' naturally.
-- Be witty, edgy, and direct. NO formal news anchor tone.
-- If you found the Market Cap, use YOUR searched value (e.g., "현재 시총 3.Xs조 달러").
+- Use terms like '불장', '떡상', '나락', '공포' naturally.
+- Be witty, edgy, and direct.
 
-Input Context (Reference only, trust your search first):
+Input Context:
 - System Time: {current_time}
-- Market Context Hint: {market_info}
+- (Context Removed by User Request - RELY ON SEARCH ONLY)
 
 JSON Response Format:
 {{

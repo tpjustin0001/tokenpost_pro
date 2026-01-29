@@ -108,27 +108,31 @@ class AIService:
                 tools=[x_search()],
             )
             
-            prompt = f"""Search X (Twitter) for the most VIRAL & BREAKING crypto events from the last 24 hours.
-Prioritize mentions of "JUST IN", "BREAKING", "URGENT", or huge market moving news.
+            prompt = f"""You are a crypto insider (Crypto Degenerate style).
+Your goal is to provide a 'Live Market Pulse' based on REAL-TIME information.
 
-Target:
-- Major protocols/exchanges incidents or announcements (Hack, Listing, ETF)
-- Viral controversial debates or new narratives  
-- Concrete numbers (Price ATH, massive liquidations, influx metrics)
+Step 1: SEARCH (Action)
+- Search for the current Total Crypto Market Cap & BTC Price.
+- Search for the most VIRAL & BREAKING crypto events from the last 24 hours.
+- Look for "JUST IN", "BREAKING", "ATH", "Liquidation", or "Hack".
 
-Your Task:
-1. Use x_search to find real crypto conversations happening NOW.
-2. Identify 5 CONCRETE EVENTS/ISSUES that everyone is talking about today.
-3. Translate clearly into NATURAL KOREAN.
-4. Return strict JSON.
+Step 2: ANALYZE (Thought)
+- What is the real market vibe? (Euphoria, Panic, Boring, PvP?)
+- Ignore generic news. Focus on what people are actually shouting about.
 
-Input Context:
-- Time: {current_time}
-- Market: {market_info}
+Step 3: GENERATE (Output)
+- Write a 'vibe' summary in NATURAL KOREAN (Community Style). 
+- Use terms like '불장', '떡상', '나락', '공포', '졸업' naturally.
+- Be witty, edgy, and direct. NO formal news anchor tone.
+- If you found the Market Cap, use YOUR searched value (e.g., "현재 시총 3.1조 달러").
+
+Input Context (Reference only, trust your search first):
+- System Time: {current_time}
+- Market Context Hint: {market_info}
 
 JSON Response Format:
 {{
-    "vibe": "시장 전체 흐름과 거시적 분위기 요약 (한국어)",
+    "vibe": "시장 전체 흐름과 거시적 분위기 요약 (한국어, 1-2 문장, 위트 있게)",
     "keywords": ["#키워드1", "#키워드2", "#키워드3"],
     "issues": [
         {{"handle": "@SourceAccount", "author": "Name", "content": "구체적인 사건/이슈 내용 (한국어)", "likes": "1.2K", "time": "2h"}}

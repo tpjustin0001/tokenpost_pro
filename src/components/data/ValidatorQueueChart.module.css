@@ -252,14 +252,16 @@
 
 .watermark {
     position: absolute;
-    bottom: 20px;
-    right: 20px;
-    font-size: 24px;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 60px;
     font-weight: 900;
-    color: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.04);
     pointer-events: none;
     z-index: 0;
     font-family: var(--font-mono);
-    letter-spacing: -1px;
+    letter-spacing: -2px;
     user-select: none;
+    white-space: nowrap;
 }
